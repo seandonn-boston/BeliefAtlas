@@ -42,12 +42,18 @@ jobs:
       - run: npm test
       - run: npm run build
       # The runner's own pg_dump is newer than the Postgres 16 service and writes settings
-      # (transaction_timeout) that 16 can't restore, so use the matching client tools.
-      - name: Postgres 16 client tools
+      # (transaction_timeout) that 16 can't restore, and the runner has no 16 client package.
+      # So pg_dump and pg_restore run from the same postgres:16 image as the service.
+      - name: Postgres 16 dump tools
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client-16
-          echo /usr/lib/postgresql/16/bin >> "$GITHUB_PATH"
+          bin="$RUNNER_TEMP/pg16-bin"
+          mkdir -p "$bin"
+          for tool in pg_dump pg_restore; do
+            printf '#!/bin/sh\nexec docker run --rm --network host --user "%s" -v "%s:%s" postgres:16 %s "$@"\n' \
+              "$(id -u):$(id -g)" "$RUNNER_TEMP" "$RUNNER_TEMP" "$tool" > "$bin/$tool"
+            chmod +x "$bin/$tool"
+          done
+          echo "$bin" >> "$GITHUB_PATH"
       # Keeps the backup and restore scripts working: dump the CI database, restore it into a
       # scratch database, check the row counts, drop it.
       - name: Backup and restore drill
