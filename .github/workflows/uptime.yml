@@ -1,0 +1,38 @@
+name: Uptime
+
+# Checks that the live site answers: the home page and /api/feed. Free: it runs on GitHub's
+# own runners and needs no account or key. A failed run is the alert (GitHub emails whoever
+# last changed this schedule, by default; see DEPLOY.md).
+#
+# Off until the repository variable UPTIME_URL is set (Settings > Secrets and variables >
+# Actions > Variables), for example https://example.com. Without it the job is skipped,
+# which costs no runner minutes. Each run that does go ahead bills about one minute against
+# a private repository's free Actions allowance; change the cron line to check more or less often.
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: ${{ vars.UPTIME_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Check the site
+        env:
+          UPTIME_URL: ${{ vars.UPTIME_URL }}
+        run: npx tsx scripts/ops/uptime-check.ts
