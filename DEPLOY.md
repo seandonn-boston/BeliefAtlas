@@ -71,5 +71,4 @@ A **Review** link appears in the header for moderators and admins.
 ## Before you open to the public
 
 - Have a lawyer review `/terms` and `/privacy`, then set `LEGAL_DRAFT = false` in `lib/legal.ts`.
-- Highcharts needs a commercial licence for a commercial site.
 - Neon's free plan keeps 24 hours of history to restore from; a paid plan keeps more.

@@ -28,7 +28,7 @@ npm run dev
 - **Changing your mind.** One change per question per UTC day, on every tier. Delete withdraws the vote; the question goes back into the pool.
 - **History.** `vote_events` is append-only, so the state of any question at any past moment can be rebuilt.
 - **Feed.** Unanswered questions from three slots: random, contested, and new. Every vote records the slot or route it arrived by.
-- **Stats.** Split, share who changed once / more than once / recently, public versus private, blind first votes, arrival routes, and a 14-day trend, with charts drawn in Highcharts. How much of it a viewer gets depends on their tier (below). Breakdowns for groups smaller than `MIN_GROUP_SIZE` are withheld.
+- **Stats.** Split, share who changed once / more than once / recently, public versus private, blind first votes, arrival routes, and a 14-day trend, with charts drawn by Apache ECharts. How much of it a viewer gets depends on their tier (below). Breakdowns for groups smaller than `MIN_GROUP_SIZE` are withheld.
 - **Three layouts.** Compact single column, masonry tiles, or one question per screen with swipe-to-next. The switcher is in the header and the choice is kept in a cookie.
 - **Black theme.** True black background for OLED and QLED screens. Colour is used only for answers: blue for true, orange for false, grey for unsure.
 
@@ -114,9 +114,15 @@ db/             SQL migrations and runner, the question catalog and its loader, 
 tests/          rule tests
 ```
 
-## Highcharts licence
+## Charts
 
-Highcharts is free for personal and non-commercial use and needs a paid licence for commercial use. All charts go through `components/Chart.tsx` and `lib/charts.ts`, so swapping in another library touches two files.
+Charts are drawn by [Apache ECharts](https://echarts.apache.org) (Apache-2.0, free for commercial use), in its SVG renderer.
+
+The library sits behind one seam so it can be replaced, for example by an in-house chart system:
+
+- `lib/charts.ts` describes each chart as a `ChartSpec`: plain data with no library types.
+- `components/Chart.tsx` is the only chart component pages use. It takes a `ChartSpec` and an accessible label.
+- `components/charts/renderer.ts` is the only file that imports ECharts. Replacing the library means writing a new `renderChart(el, spec)` there; pages and spec builders stay as they are.
 
 ## Launch features
 

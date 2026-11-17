@@ -190,7 +190,7 @@ function Details({ stats, level, signedIn, back }: { stats: QuestionStats; level
         {days.length >= 2 ? (
           <>
             <Chart
-              options={trendChart(history)}
+              spec={trendChart(history)}
               label={`Share answering true went from ${first.pctTrue}% on ${first.day} to ${last.pctTrue}% on ${last.day}; false went from ${first.pctFalse}% to ${last.pctFalse}%.`}
             />
             <p className="note">
@@ -208,7 +208,7 @@ function Details({ stats, level, signedIn, back }: { stats: QuestionStats; level
         {visibility.public && visibility.private ? (
           <>
             <Chart
-              options={visibilityChart(visibility.public, visibility.private)}
+              spec={visibilityChart(visibility.public, visibility.private)}
               label={`Public votes: ${visibility.public.pctTrue}% true, ${visibility.public.pctFalse}% false. Private votes: ${visibility.private.pctTrue}% true, ${visibility.private.pctFalse}% false.`}
             />
             <p className="note">
