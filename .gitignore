@@ -44,3 +44,8 @@ next-env.d.ts
 # Agent worktrees
 /.claude/
 /backups
+
+# SDK build output (sdks/javascript) and Python caches
+/sdks/javascript/dist/
+__pycache__/
+*.egg-info/

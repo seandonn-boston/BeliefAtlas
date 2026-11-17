@@ -8,6 +8,10 @@ import { CHOICES, type Choice } from "@/lib/vote-engine";
 // W4 consent gate: answers count only after the 'answering' agreement (lib/consent/gate.ts).
 import { consentUrl, voteWithConsent } from "@/lib/consent/gate";
 import { requestContext } from "@/lib/consent/request";
+// Headless front door (lib/headless): label a tap made through an org's placement, and carry
+// the org page's origin so the page can be told the vote counted.
+import { placementSurfaceContext } from "@/lib/headless/handoff";
+import { cleanOrigin } from "@/lib/headless/placements";
 
 const str = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
 
@@ -20,9 +24,10 @@ export async function tapAction(form: FormData) {
   const at = cleanPlacement(str(form, "at"));
   const shown = str(form, "shown");
   const popup = str(form, "popup") === "1";
+  const ret = cleanOrigin(str(form, "ret"));
   const page = (extra: Record<string, string>) => {
     const params = new URLSearchParams({
-      ...(via !== "web" ? { via } : {}), ...(at ? { at } : {}), ...(popup ? { popup: "1" } : {}), ...extra,
+      ...(via !== "web" ? { via } : {}), ...(at ? { at } : {}), ...(popup ? { popup: "1" } : {}), ...(ret ? { ret } : {}), ...extra,
     });
     return `/v/${questionId}?${params}`;
   };
@@ -35,6 +40,7 @@ export async function tapAction(form: FormData) {
     value,
     surface: via,
     placement: at,
+    surfaceContext: await placementSurfaceContext(at),
     shownAt: readShownToken(shown, questionId),
     // One rendered page, one answer: a double tap or a resubmitted form changes nothing.
     idempotencyKey: shown ? `page:${shown}` : null,

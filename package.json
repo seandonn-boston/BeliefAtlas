@@ -24,6 +24,8 @@
     "jobs:work": "tsx --env-file-if-exists=.env.local lib/jobs/cli.ts",
     "load:votes": "tsx --env-file-if-exists=.env.local scripts/load/votes.ts",
     "load:test": "npm run load:votes -- --rate=1000 --seconds=10",
+    "headless:test-data": "tsx --env-file-if-exists=.env.local scripts/headless/test-data.ts",
+    "test:sdk:python": "cd sdks/python && python3 -I -m unittest discover -s tests -t .",
     "db:migrate:deploy": "tsx db/migrate.ts",
     "vercel-build": "npm run db:migrate:deploy && tsx db/preview-seed.ts && next build"
   },

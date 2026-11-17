@@ -26,6 +26,11 @@ export const RULES = {
   mfaPerAccount:   { name: "mfa-acct",     limit: 10,  windowSeconds: 15 * 60 },
   passkeyPerIp:    { name: "passkey-ip",   limit: 60,  windowSeconds: 15 * 60 },
   checkoutPerAccount: { name: "checkout",  limit: 10,  windowSeconds: 3600 },
+  // The headless front door (lib/headless). Votes keep the per-account rules above.
+  headlessReadPerIp:  { name: "hl-read-ip",  limit: 120, windowSeconds: 60 },
+  votesPerIdentity:   { name: "vote-ident",  limit: 60,  windowSeconds: 60 },
+  relayPerOrg:        { name: "hl-relay-org", limit: 600, windowSeconds: 60 },
+  resultsPerAccount:  { name: "hl-results",  limit: 60,  windowSeconds: 60 },
 } satisfies Record<string, Rule>;
 
 const keyFor = (rule: Rule, subject: string) =>

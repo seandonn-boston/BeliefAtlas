@@ -1,0 +1,181 @@
+openapi: 3.1.0
+info:
+  title: BeliefAtlas headless front door
+  version: "1"
+  summary: Question cards for organizations' sites, apps, checkout screens and CMSs.
+  description: |
+    Design: belief-map/headless-front-door.md. Switched off unless the deployment sets
+    HEADLESS_ENABLED=true; off, every route is 404.
+
+    Votes are never cast by opening a link. A hosted tap opens BeliefAtlas's own vote page (a
+    choice's `answerUrl`), where the person taps once more, signed in as themselves. The server
+    relay (`POST /votes`) is switched off and has no real credentials yet.
+
+    The API never creates or edits questions: organizations ask in the BeliefAtlas app.
+servers:
+  - url: "{base}/api/headless/v1"
+    variables:
+      base:
+        default: http://localhost:3000
+paths:
+  /:
+    get:
+      summary: What this deployment offers
+      responses:
+        "200": { description: Version and switches }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /questions/{id}:
+    get:
+      summary: One question card (no split)
+      parameters:
+        - $ref: "#/components/parameters/QuestionId"
+        - { name: lang, in: query, schema: { type: string, example: es } }
+        - { name: placement, in: query, schema: { $ref: "#/components/schemas/PlacementId" } }
+        - name: origin
+          in: query
+          description: Your page's origin. Told when a hosted tap counts, if the placement allows it.
+          schema: { type: string, format: uri }
+      responses:
+        "200":
+          description: The card
+          content: { application/json: { schema: { $ref: "#/components/schemas/QuestionCard" } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/SlowDown" }
+  /questions/{id}/split:
+    get:
+      summary: Percentages only, for after an answer counted
+      parameters: [{ $ref: "#/components/parameters/QuestionId" }]
+      responses:
+        "200":
+          description: The split
+          content: { application/json: { schema: { $ref: "#/components/schemas/Split" } } }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /placements/{placementId}:
+    get:
+      summary: A placement and its question cards, in order
+      parameters:
+        - { name: placementId, in: path, required: true, schema: { $ref: "#/components/schemas/PlacementId" } }
+        - { name: lang, in: query, schema: { type: string } }
+        - { name: origin, in: query, schema: { type: string, format: uri } }
+      responses:
+        "200":
+          description: The placement
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [version, placement, questions]
+                properties:
+                  version: { type: integer, const: 1 }
+                  placement:
+                    type: object
+                    properties:
+                      id: { $ref: "#/components/schemas/PlacementId" }
+                      kind: { type: string, enum: [site, app, cms, pos, ad, kiosk] }
+                      label: { type: string }
+                      org: { type: object, properties: { slug: { type: string }, name: { type: string } } }
+                  questions: { type: array, items: { $ref: "#/components/schemas/QuestionCard" } }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /placements/{placementId}/results:
+    get:
+      summary: Aggregate answers given through a placement (org members, signed in to BeliefAtlas)
+      description: Small groups are hidden; seed votes never count; nothing is person-level.
+      security: [{ beliefatlasSession: [] }]
+      parameters:
+        - { name: placementId, in: path, required: true, schema: { $ref: "#/components/schemas/PlacementId" } }
+      responses:
+        "200": { description: Results }
+        "401": { description: Not signed in }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /votes:
+    post:
+      summary: Server relay of a tap (switched off)
+      description: Server to server only; a request with a browser Origin header is refused.
+      security: [{ orgCredential: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [placementId, userId, questionId, value, idempotencyKey]
+              properties:
+                placementId: { $ref: "#/components/schemas/PlacementId" }
+                userId: { type: string, pattern: "^[A-Za-z0-9._:-]{1,128}$", description: Your opaque id for the person; never an email or phone number }
+                questionId: { type: integer }
+                value: { $ref: "#/components/schemas/Choice" }
+                idempotencyKey: { type: string }
+                shown: { type: string }
+                lang: { type: string }
+      responses:
+        "200":
+          description: The outcome
+          content: { application/json: { schema: { $ref: "#/components/schemas/RelayOutcome" } } }
+        "400": { description: invalid }
+        "401": { description: No valid credential }
+        "403": { description: forbidden or server_only }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { description: slow_down }
+components:
+  securitySchemes:
+    orgCredential: { type: http, scheme: bearer, description: Not issued yet. }
+    beliefatlasSession: { type: apiKey, in: cookie, name: bm_session }
+  parameters:
+    QuestionId: { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
+  responses:
+    NotFound:
+      description: Not found (or the front door is switched off)
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    SlowDown:
+      description: Too many requests
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+  schemas:
+    Choice: { type: string, enum: ["true", "false", "unsure", "skip"] }
+    PlacementId: { type: string, pattern: "^pl-[a-z0-9]{12}$" }
+    Error:
+      type: object
+      properties: { error: { type: string }, message: { type: string } }
+    QuestionCard:
+      type: object
+      required: [version, id, text, lang, translated, status, approved, choices, shown, links]
+      properties:
+        version: { type: integer, const: 1 }
+        id: { type: integer }
+        mergedFrom: { type: integer }
+        text: { type: string }
+        lang: { type: string }
+        translated: { type: boolean }
+        status: { type: string, enum: [active, archived] }
+        approved: { type: boolean, description: Passed moderator review }
+        choices:
+          type: array
+          items:
+            type: object
+            properties:
+              value: { $ref: "#/components/schemas/Choice" }
+              label: { type: string }
+              counts: { type: boolean, description: false for Skip }
+              answerUrl: { type: [string, "null"], format: uri, description: Opens BeliefAtlas's vote page; never votes by itself }
+        shown: { type: [string, "null"], description: Signed time the card was drawn }
+        links:
+          type: object
+          properties: { question: { type: string, format: uri }, results: { type: string, format: uri } }
+    Split:
+      type: object
+      properties:
+        questionId: { type: integer }
+        hasVotes: { type: boolean }
+        percentages:
+          type: object
+          properties: { "true": { type: number }, "false": { type: number }, unsure: { type: number } }
+    RelayOutcome:
+      type: object
+      required: [outcome, questionId]
+      properties:
+        outcome:
+          type: string
+          enum: [cast, same, changed, skipped, needs_link, needs_consent, limit_reached, change_used, closed, slow_down, invalid, forbidden]
+        questionId: { type: integer }
+        value: { $ref: "#/components/schemas/Choice" }
+        linkUrl: { type: string, format: uri }
+        message: { type: string }

@@ -12,6 +12,7 @@ import { getAccount } from "@/lib/auth";
 import {
   baseUrl, brandName, cleanPlacement, cleanSurface, confirmationLinks, HOLD_COOKIE, shownToken, voteUrl,
 } from "@/lib/front-door";
+import { returnOrigin } from "@/lib/headless/handoff";
 import { localizeQuestion } from "@/lib/i18n/questions";
 import { getQuestion, mergedInto } from "@/lib/questions";
 import { tallies } from "@/lib/stats";
@@ -27,10 +28,14 @@ import "../front-door.css";
 //                            only a tap does, so scanners and previews can't vote for anyone.
 //   /v/12?via=qr&at=poster7  labels where the tap came from
 //   /v/12?done=cast          the confirmation after a vote
+//   /v/12?via=headless&at=pl-…&ret=https://shop.example
+//                            a hosted tap from an org's placement (lib/headless): once it counts,
+//                            the org page (if the placement allows it) is told the question id,
+//                            never the answer or the handle
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ via?: string; at?: string; pick?: string; done?: string; error?: string; popup?: string }>;
+  searchParams: Promise<{ via?: string; at?: string; pick?: string; done?: string; error?: string; popup?: string; ret?: string }>;
 };
 
 
@@ -91,6 +96,7 @@ export default async function VotePage({ params, searchParams }: Props) {
   const showSplit = Boolean(myVote) || closed;
   const links = confirmationLinks(questionId);
   const counted = myVote && (done === "cast" || done === "changed" || done === "same");
+  const tellOrg = await returnOrigin(at, query.ret);
 
   return (
     <main className="fd">
@@ -122,9 +128,17 @@ export default async function VotePage({ params, searchParams }: Props) {
               close={query.popup === "1"}
               message={{ questionId, value: myVote.value, handle: account!.username }}
             />
+            {tellOrg && (
+              <TellOpener origin={tellOrg} close={query.popup === "1"} message={{ type: "beliefatlas:counted", questionId }} />
+            )}
           </div>
         ) : done === "skipped" ? (
-          <p className="fd-done-line" role="status">{t("skipped")}</p>
+          <p className="fd-done-line" role="status">
+            {t("skipped")}
+            {tellOrg && (
+              <TellOpener origin={tellOrg} close={query.popup === "1"} message={{ type: "beliefatlas:skipped", questionId }} />
+            )}
+          </p>
         ) : done === "limit_reached" ? (
           <p className="notice" role="status">
             {t.rich("limitReached", { link: (x) => <Link href="/membership">{x}</Link> })}
@@ -141,6 +155,7 @@ export default async function VotePage({ params, searchParams }: Props) {
             <input type="hidden" name="via" value={via} />
             {at && <input type="hidden" name="at" value={at} />}
             {query.popup === "1" && <input type="hidden" name="popup" value="1" />}
+            {tellOrg && <input type="hidden" name="ret" value={tellOrg} />}
             <input type="hidden" name="shown" value={shownToken(questionId)} />
             {(["true", "false", "unsure"] as const).map((v) => (
               <button

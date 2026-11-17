@@ -19,6 +19,9 @@ export const SURFACES = [
   "slack", "discord", "teams", "telegram", "messenger", "instagram", "reddit",
   "x", "threads", "bluesky", "mastodon", "truth", "pinterest", "snapchat", "facebook",
   "twitch", "youtube", "wechat", "google", "ad", "extension",
+  // The headless front door (lib/headless): an org's own site, app or CMS, and its checkout
+  // screens and receipts.
+  "headless", "pos",
 ] as const;
 export type Surface = (typeof SURFACES)[number];
 

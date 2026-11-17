@@ -40,6 +40,10 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      # The Python SDK for the headless front door: standard library only, no network.
+      - name: Python SDK tests
+        working-directory: sdks/python
+        run: python3 -I -m unittest discover -s tests -t .
       - run: npm run build
       # The runner's own pg_dump is newer than the Postgres 16 service and writes settings
       # (transaction_timeout) that 16 can't restore, and the runner has no 16 client package.
