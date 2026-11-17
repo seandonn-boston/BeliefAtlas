@@ -11,3 +11,14 @@ export async function clientIp(): Promise<string> {
 export function ipFromRequest(request: Request): string {
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "local";
 }
+
+// The origin the browser is on, for passkeys. Browsers send Origin with every form post and
+// server action; the Host header is the fallback.
+export async function requestOrigin(): Promise<string> {
+  const h = await headers();
+  const origin = h.get("origin");
+  if (origin) return origin;
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}`;
+}

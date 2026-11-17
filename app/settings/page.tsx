@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { billingPortalAction, deleteAccountAction } from "@/app/actions";
+import { ConfirmFields } from "@/components/ConfirmFields";
 import { ErrorBanner, Header } from "@/components/Header";
 import { getAccount } from "@/lib/auth";
 import { query } from "@/lib/db";
@@ -14,8 +15,9 @@ export default async function SettingsPage({ searchParams }: Props) {
   const account = await getAccount();
   if (!account) redirect("/login?next=%2Fsettings");
   const { error } = await searchParams;
-  const [info] = await query<{ created_at: Date; phone_verified_at: Date | null; votes: number; subscription_status: string | null; stripe_customer_id: string | null }>(
+  const [info] = await query<{ created_at: Date; phone_verified_at: Date | null; votes: number; subscription_status: string | null; stripe_customer_id: string | null; has_pin: boolean; has_password: boolean }>(
     `select created_at, phone_verified_at, subscription_status, stripe_customer_id,
+            pin_hash is not null as has_pin, password_hash is not null as has_password,
             (select count(*)::int from votes where account_id = a.id) as votes
        from accounts a where id = $1`,
     [account.id],
@@ -30,6 +32,7 @@ export default async function SettingsPage({ searchParams }: Props) {
         <ErrorBanner message={error} />
         <dl>
           <div className="settings-row"><dt>Username</dt><dd>{account.username}</dd></div>
+          <div className="settings-row"><dt>Sign-in and security</dt><dd><Link href="/settings/security">Passkeys, PIN, authenticator</Link></dd></div>
           <div className="settings-row"><dt>Phone</dt><dd>{info.phone_verified_at ? "Confirmed" : "Not confirmed"}</dd></div>
           <div className="settings-row"><dt>Joined</dt><dd>{date(info.created_at)}</dd></div>
           <div className="settings-row"><dt>Current votes</dt><dd>{info.votes.toLocaleString("en-US")}</dd></div>
@@ -65,7 +68,7 @@ export default async function SettingsPage({ searchParams }: Props) {
           </p>
           <form action={deleteAccountAction} className="form">
             <label>Type your username to confirm<input name="confirm" autoComplete="off" required /></label>
-            <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
+            <ConfirmFields hasPin={info.has_pin} hasPassword={info.has_password} />
             <button className="btn danger-solid">Delete my account</button>
           </form>
         </section>

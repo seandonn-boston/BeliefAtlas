@@ -3,9 +3,14 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { query } from "@/lib/db";
-import { endSession, getAccount, startSession, verifyPassword } from "@/lib/auth";
+import { endSession, getAccount, startSession } from "@/lib/auth";
+import { passwordLogin } from "@/lib/login";
+import { confirmIdentity } from "@/lib/pin";
 import { hit, RULES, tooMany } from "@/lib/rate-limit";
 import { clientIp } from "@/lib/request";
+import { AGE_GATE_COOKIE, AGE_GATE_HOURS } from "@/lib/age";
+import { deviceId } from "@/lib/device";
+import { CHALLENGE_FIELD } from "@/lib/human-check";
 import { resendCode, startSignup, verifySignup } from "@/lib/signup";
 import { toCard, type CardItem } from "@/lib/cards";
 import { deleteAccount } from "@/lib/account";
@@ -63,15 +68,21 @@ const source = (form: FormData): Source => {
 
 export async function signupAction(form: FormData) {
   const next = backPath(form);
+  const jar = await cookies();
+  if (jar.get(AGE_GATE_COOKIE)) redirect(`/signup?next=${encodeURIComponent(next)}`);
   const result = await startSignup({
     username: str(form, "username"),
     phone: str(form, "phone"),
     password: String(form.get("password") ?? ""),
-    adult: form.get("adult") === "on",
-    consent: form.get("consent") === "on",
+    dob: str(form, "dob"),
     next,
     ip: await clientIp(),
+    device: await deviceId(),
+    challengeToken: str(form, CHALLENGE_FIELD),
   });
+  if (!result.ok && result.underage) {
+    jar.set(AGE_GATE_COOKIE, "1", { path: "/", httpOnly: true, sameSite: "lax", maxAge: AGE_GATE_HOURS * 3600 });
+  }
   if (!result.ok) redirect(withError(`/signup?next=${encodeURIComponent(next)}`, result.error));
   redirect(`/signup/verify?t=${result.token}`);
 }
@@ -83,7 +94,9 @@ export async function verifySignupAction(form: FormData) {
     redirect(result.restart ? withError("/signup", result.error) : withError(`/signup/verify?t=${token}`, result.error));
   }
   await startSession(result.accountId);
-  redirect(result.next.startsWith("/") && !result.next.startsWith("//") ? result.next : "/");
+  // New accounts land on Security, which offers a passkey first.
+  const next = result.next.startsWith("/") && !result.next.startsWith("//") ? result.next : "/";
+  redirect(`/settings/security?welcome=1&next=${encodeURIComponent(next)}`);
 }
 
 export async function resendCodeAction(form: FormData) {
@@ -93,19 +106,11 @@ export async function resendCodeAction(form: FormData) {
 }
 
 export async function loginAction(form: FormData) {
-  const username = str(form, "username").toLowerCase();
-  const password = String(form.get("password") ?? "");
   const next = backPath(form);
-  const limited = await hit([RULES.loginPerIp, await clientIp()], [RULES.loginPerName, username]);
-  if (limited) redirect(withError(`/login?next=${encodeURIComponent(next)}`, tooMany(limited)));
-  const rows = await query<{ id: number; password_hash: string }>(
-    "select id, password_hash from accounts where username = $1 and deleted_at is null",
-    [username],
-  );
-  if (!rows[0] || !verifyPassword(password, rows[0].password_hash)) {
-    redirect(withError(`/login?next=${encodeURIComponent(next)}`, "Wrong username or password."));
-  }
-  await startSession(rows[0].id);
+  const result = await passwordLogin(str(form, "username"), String(form.get("password") ?? ""), await clientIp(), next);
+  if (!result.ok) redirect(withError(`/login?next=${encodeURIComponent(next)}`, result.error));
+  if ("mfaToken" in result) redirect(`/login/mfa?t=${result.mfaToken}`);
+  await startSession(result.accountId);
   redirect(next);
 }
 
@@ -124,10 +129,16 @@ export async function askAction(form: FormData) {
   redirect(withError(backPath(form), result.error));
 }
 
+// Vote limits are per account only, never per IP address or browser, so people who share a
+// computer or a connection each get the full allowance of their own tier.
+async function voteLimit(accountId: number) {
+  return hit([RULES.votesPerAccount, String(accountId)]);
+}
+
 export async function voteAction(form: FormData) {
   const account = await requireAccount(form);
   const back = backPath(form);
-  const limited = await hit([RULES.votesPerAccount, String(account.id)]);
+  const limited = await voteLimit(account.id);
   if (limited) redirect(withError(back, tooMany(limited)));
   const id = questionId(form);
   const value = str(form, "value") as VoteValue;
@@ -199,7 +210,7 @@ const validId = (id: number) => Number.isInteger(id) && id > 0;
 export async function voteInline(input: InlineInput & { value: string; isPrivate: boolean }): Promise<InlineResult> {
   const account = await getAccount();
   if (!account) return { ok: false, error: "Sign in to vote." };
-  const limited = await hit([RULES.votesPerAccount, String(account.id)]);
+  const limited = await voteLimit(account.id);
   if (limited) return { ok: false, error: tooMany(limited) };
   if (!validId(input.questionId) || !VOTE_VALUES.includes(input.value as VoteValue)) {
     return { ok: false, error: "That vote wasn't valid." };
@@ -285,10 +296,8 @@ export async function deleteAccountAction(form: FormData) {
   const account = await requireAccount(form);
   const fail = (message: string) => redirect(withError("/settings", message));
   if (str(form, "confirm").toLowerCase() !== account.username) fail("Type your username to confirm.");
-  const [row] = await query<{ password_hash: string }>("select password_hash from accounts where id = $1", [account.id]);
-  const limited = await hit([RULES.loginPerName, account.username]);
-  if (limited) fail(tooMany(limited));
-  if (!row || !verifyPassword(String(form.get("password") ?? ""), row.password_hash)) fail("That password isn't right.");
+  const confirmed = await confirmIdentity(account.id, { pin: str(form, "pin"), password: String(form.get("password") ?? "") });
+  if (!confirmed.ok) fail(confirmed.error);
   const cancelled = await cancelForDeletion(account.id);
   if (!cancelled.ok) fail(cancelled.error);
   await deleteAccount(account.id);

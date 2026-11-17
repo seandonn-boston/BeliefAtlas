@@ -11,6 +11,10 @@ export const RULES = {
   smsPerPhoneDay:  { name: "sms-phone-d",  limit: 6,   windowSeconds: 24 * 3600 },
   smsPerIp:        { name: "sms-ip",       limit: 10,  windowSeconds: 3600 },
   signupPerIp:     { name: "signup-ip",    limit: 10,  windowSeconds: 3600 },
+  signupPerIpDay:  { name: "signup-ip-d",  limit: 30,  windowSeconds: 24 * 3600 },
+  // Anti-abuse ceilings only: a household sharing one computer or one connection, each person
+  // with their own account, never comes near them.
+  signupPerDevice: { name: "signup-dev",   limit: 10,  windowSeconds: 24 * 3600 },
   loginPerName:    { name: "login-name",   limit: 8,   windowSeconds: 15 * 60 },
   loginPerIp:      { name: "login-ip",     limit: 40,  windowSeconds: 15 * 60 },
   votesPerAccount: { name: "vote-acct",    limit: 60,  windowSeconds: 60 },
@@ -18,6 +22,9 @@ export const RULES = {
   reportsPerAccount: { name: "report-acct", limit: 20, windowSeconds: 3600 },
   feedPerIp:       { name: "feed-ip",      limit: 120, windowSeconds: 60 },
   statsPerIp:      { name: "stats-ip",     limit: 60,  windowSeconds: 60 },
+  pinPerAccount:   { name: "pin-acct",     limit: 5,   windowSeconds: 15 * 60 },
+  mfaPerAccount:   { name: "mfa-acct",     limit: 10,  windowSeconds: 15 * 60 },
+  passkeyPerIp:    { name: "passkey-ip",   limit: 60,  windowSeconds: 15 * 60 },
   checkoutPerAccount: { name: "checkout",  limit: 10,  windowSeconds: 3600 },
 } satisfies Record<string, Rule>;
 

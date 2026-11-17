@@ -48,7 +48,17 @@ Signups stay closed in production until this is set up.
 1. Create a Twilio account and upgrade it from trial (trial accounts only text verified numbers).
 2. **Verify → Services → Create**. Name it Belief Map, code length 6, SMS channel on.
 3. Under **Verify → Settings → Geo permissions**, allow only the countries you want to accept signups from. This is the main defence against SMS fraud.
-4. Add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_VERIFY_SERVICE_SID` to Vercel and redeploy.
+4. Add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_VERIFY_SERVICE_SID` to Vercel, set `TWILIO_ENABLED=true`, and redeploy. Paid services are on hold for now, so leave this until a payment plan is in place.
+5. Optional, recommended before launch: set `PHONE_LINE_CHECK=twilio` to look up each number's line type before texting it and turn away VoIP and virtual numbers. Twilio bills each lookup. Leave `PHONE_ALLOW_UNKNOWN` unset (true) unless bots get through with numbers the lookup can't classify.
+
+## 4b. Bot check on signup (Cloudflare Turnstile)
+
+Signups stay closed in production until this is set up. It is free.
+
+1. In Cloudflare, **Turnstile → Add widget**. Add your domain, widget mode **Managed**.
+2. Add `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` to Vercel and redeploy.
+
+See `docs/human-verification.md` for how this fits with the age and phone checks.
 
 ## 5. Membership (Stripe)
 
@@ -57,7 +67,7 @@ Membership shows "opens soon" in production until this is set up.
 1. In Stripe, **Product catalog → Add product**: "Belief Map membership", recurring, $5.00 monthly. Copy the price ID (`price_...`).
 2. **Developers → Webhooks → Add endpoint**: `https://<your domain>/api/stripe/webhook`, with these events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.paused`, `customer.subscription.resumed`. Copy the signing secret (`whsec_...`).
 3. **Settings → Billing → Customer portal**: turn on cancellation and payment method updates.
-4. Add `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID` and `STRIPE_WEBHOOK_SECRET` to Vercel and redeploy.
+4. Add `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID` and `STRIPE_WEBHOOK_SECRET` to Vercel, set `STRIPE_ENABLED=true`, and redeploy. On hold for now: no keys or bank details are set up until a payment plan is ready.
 
 Use test-mode keys first and buy a membership with card `4242 4242 4242 4242`. Switch to live keys when that works.
 
