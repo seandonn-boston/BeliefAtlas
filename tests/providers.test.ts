@@ -3,6 +3,8 @@
 import assert from "node:assert/strict";
 import { after, test } from "node:test";
 
+process.env.TWILIO_ENABLED = "true";
+process.env.STRIPE_ENABLED = "true";
 process.env.TWILIO_ACCOUNT_SID = "AC_test";
 process.env.TWILIO_AUTH_TOKEN = "token_test";
 process.env.TWILIO_VERIFY_SERVICE_SID = "VA_test";

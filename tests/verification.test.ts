@@ -88,9 +88,11 @@ test("line type: Twilio Lookup is asked the right way and its answer applied", a
 test("line type: the checker is chosen from the environment", async () => {
   assert.equal(lineTypeChecker({} as NodeJS.ProcessEnv).name, "none");
   assert.deepEqual(await lineTypeChecker({} as NodeJS.ProcessEnv).check("+16175550100"), { ok: true, lineType: "unknown" });
-  const env = { PHONE_LINE_CHECK: "twilio", TWILIO_ACCOUNT_SID: "AC", TWILIO_AUTH_TOKEN: "t" } as unknown as NodeJS.ProcessEnv;
+  const env = { PHONE_LINE_CHECK: "twilio", TWILIO_ENABLED: "true", TWILIO_ACCOUNT_SID: "AC", TWILIO_AUTH_TOKEN: "t" } as unknown as NodeJS.ProcessEnv;
   assert.equal(lineTypeChecker(env).name, "twilio");
-  const broken = lineTypeChecker({ PHONE_LINE_CHECK: "twilio" } as unknown as NodeJS.ProcessEnv);
+  // Paid services stay off until switched on, even with keys present.
+  assert.equal(lineTypeChecker({ ...env, TWILIO_ENABLED: undefined } as unknown as NodeJS.ProcessEnv).name, "none");
+  const broken = lineTypeChecker({ PHONE_LINE_CHECK: "twilio", TWILIO_ENABLED: "true" } as unknown as NodeJS.ProcessEnv);
   assert.equal((await broken.check("+16175550100")).ok, false);
 });
 

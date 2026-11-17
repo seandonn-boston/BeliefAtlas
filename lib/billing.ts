@@ -12,7 +12,7 @@ const KEY = process.env.STRIPE_SECRET_KEY;
 const PRICE = process.env.STRIPE_PRICE_ID;
 
 export const billingMode: "stripe" | "dev" | "off" =
-  KEY && PRICE ? "stripe" : process.env.NODE_ENV === "production" ? "off" : "dev";
+  process.env.STRIPE_ENABLED === "true" && KEY && PRICE ? "stripe" : process.env.NODE_ENV === "production" ? "off" : "dev";
 
 let client: Stripe | null = null;
 const stripe = () => (client ??= new Stripe(KEY!));

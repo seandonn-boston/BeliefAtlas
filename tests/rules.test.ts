@@ -385,6 +385,7 @@ test("signup: a virtual number is turned away before a code is texted", async ()
   const saved = { ...process.env };
   const realFetch = globalThis.fetch;
   process.env.PHONE_LINE_CHECK = "twilio";
+  process.env.TWILIO_ENABLED = "true";
   process.env.TWILIO_ACCOUNT_SID = "AC_test";
   process.env.TWILIO_AUTH_TOKEN = "token_test";
   globalThis.fetch = (async () =>
@@ -400,7 +401,7 @@ test("signup: a virtual number is turned away before a code is texted", async ()
     assert.equal((await query("select 1 from pending_signups where username = $1", [username])).length, 0);
   } finally {
     globalThis.fetch = realFetch;
-    for (const key of ["PHONE_LINE_CHECK", "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN"]) {
+    for (const key of ["PHONE_LINE_CHECK", "TWILIO_ENABLED", "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN"]) {
       if (saved[key] === undefined) delete process.env[key];
       else process.env[key] = saved[key];
     }

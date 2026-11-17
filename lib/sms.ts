@@ -4,13 +4,16 @@ import { createHash, randomInt } from "crypto";
 // Without Twilio credentials, outside production, a development mode makes its own code and
 // prints it to the server log, so signup works on a laptop. SMS_DEV_CODE fixes that code for
 // automated tests. In production without Twilio, signup is closed rather than unverified.
+//
+// Twilio is a paid service, so it stays off until TWILIO_ENABLED=true is set as well as the
+// keys. Until then nothing is sent and nothing is billed.
 
 const SID = process.env.TWILIO_ACCOUNT_SID;
 const TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const SERVICE = process.env.TWILIO_VERIFY_SERVICE_SID;
 
 export const smsMode: "twilio" | "dev" | "off" =
-  SID && TOKEN && SERVICE ? "twilio" : process.env.NODE_ENV === "production" ? "off" : "dev";
+  process.env.TWILIO_ENABLED === "true" && SID && TOKEN && SERVICE ? "twilio" : process.env.NODE_ENV === "production" ? "off" : "dev";
 
 const hashCode = (code: string) => createHash("sha256").update(code).digest("hex");
 

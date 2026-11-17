@@ -3,8 +3,8 @@
 // verification, so they are turned away.
 //
 // PHONE_LINE_CHECK picks the checker:
-//   "twilio"  Twilio Lookup v2 line type intelligence (needs TWILIO_ACCOUNT_SID and
-//             TWILIO_AUTH_TOKEN; billed per lookup)
+//   "twilio"  Twilio Lookup v2 line type intelligence (needs TWILIO_ENABLED=true,
+//             TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN; billed per lookup)
 //   unset     no check; every number passes (development, or until the lookup is paid for)
 // PHONE_ALLOW_UNKNOWN=false also turns away numbers the lookup can't classify. By default they
 // pass, because many genuine non-US mobiles come back unknown.
@@ -84,7 +84,7 @@ export function twilioLookup(sid: string, token: string, allowUnknown: boolean):
 // Read at call time so tests and config changes take effect without a restart of the module.
 export function lineTypeChecker(env: NodeJS.ProcessEnv = process.env): LineTypeChecker {
   const allowUnknown = env.PHONE_ALLOW_UNKNOWN !== "false";
-  if (env.PHONE_LINE_CHECK === "twilio") {
+  if (env.PHONE_LINE_CHECK === "twilio" && env.TWILIO_ENABLED === "true") {
     if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN) {
       console.error("PHONE_LINE_CHECK=twilio needs TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN");
       return { name: "misconfigured", check: async () => ({ ok: false, error: "Phone verification isn't set up on this server yet." }) };
