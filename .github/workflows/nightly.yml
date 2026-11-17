@@ -1,0 +1,101 @@
+name: Nightly
+
+# Once a night (and on demand): a fresh database migrated and seeded like CI, the load test
+# against it, then a backup and restore drill on the result. Runs on GitHub's runners with a
+# throwaway Postgres; nothing here touches production or needs a key.
+#
+# The load test runs only when package.json has a "load:test" script. Until then the job
+# notes that it skipped it and carries on. It gets a running app at BASE_URL
+# (http://localhost:3000) and the database at DATABASE_URL, and may use either.
+on:
+  schedule:
+    - cron: "23 7 * * *" # 07:23 UTC, the small hours in the US
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly
+  cancel-in-progress: true
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: beliefatlas
+          POSTGRES_PASSWORD: beliefatlas
+          POSTGRES_DB: beliefatlas
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U beliefatlas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://beliefatlas:beliefatlas@localhost:5432/beliefatlas
+      PHONE_PEPPER: nightly-only-pepper
+      MIN_GROUP_SIZE: "5"
+      API_KEYS: ci-api-key
+      BASE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:migrate:deploy
+      - run: npm run db:seed:questions
+      - run: npm run db:seed:demo
+
+      - name: Is there a load test?
+        id: load
+        run: |
+          if node -e 'process.exit(require("./package.json").scripts?.["load:test"] ? 0 : 1)'; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Load test skipped::package.json has no load:test script yet."
+          fi
+
+      - name: Build and start the app
+        if: steps.load.outputs.present == 'true'
+        run: |
+          npm run build
+          npm run start -- -p 3000 > next.log 2>&1 &
+          for _ in $(seq 1 60); do
+            if curl -fsS http://localhost:3000/api/health > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          echo "::error title=App did not start::no answer from /api/health within 60 seconds"
+          tail -50 next.log
+          exit 1
+
+      - name: Load test
+        if: steps.load.outputs.present == 'true'
+        shell: bash # explicit bash adds pipefail, so a failing load test fails the step
+        run: npm run load:test 2>&1 | tee load-test.log
+
+      - name: Backup and restore drill
+        # Runs even when the load test fails: the drill is independent of it.
+        if: ${{ !cancelled() }}
+        env:
+          BACKUP_DIR: ${{ runner.temp }}/backups
+        run: |
+          scripts/ops/backup.sh
+          scripts/ops/restore-drill.sh
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.load.outputs.present == 'true'
+        with:
+          name: nightly-load-test
+          path: |
+            load-test.log
+            next.log
+          if-no-files-found: ignore
+          retention-days: 14

@@ -32,9 +32,20 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Only the original 001-007 files keep 00N_ names; new ones are YYYYMMDD_HHMM_name.sql.
+      - name: Check migration file names
+        run: npx tsx scripts/ops/check-migrations.ts
       - run: npm run db:migrate:deploy
       - run: npm run db:seed:questions
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # Keeps the backup and restore scripts working: dump the CI database, restore it into a
+      # scratch database, check the row counts, drop it.
+      - name: Backup and restore drill
+        env:
+          BACKUP_DIR: ${{ runner.temp }}/backups
+        run: |
+          scripts/ops/backup.sh
+          scripts/ops/restore-drill.sh
