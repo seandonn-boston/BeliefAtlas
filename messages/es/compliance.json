@@ -1,0 +1,65 @@
+{
+  "link": "Cumplimiento: control de sanciones",
+  "title": "Cumplimiento",
+  "intro": "Control de sanciones para compradores de datos, organizaciones y las personas que acceden a través de una. Cada parte la aprueba o rechaza una persona; nada se aprueba automáticamente.",
+  "back": "Volver a la cola de revisión",
+  "sections": {
+    "lists": "Listas de sanciones",
+    "review": "Posibles coincidencias por revisar",
+    "clear": "Revisadas sin coincidencias: esperan aprobación",
+    "actions": "Acciones recientes de la OFAC por leer"
+  },
+  "lists": {
+    "lastOk": "Cargada por última vez {when}, {n, plural, one {# nombre} other {# nombres}}",
+    "never": "Nunca cargada",
+    "lastFailure": "Último fallo {when}: {error}",
+    "stale": "Desactualizada"
+  },
+  "stale": "Las listas de sanciones están desactualizadas: al menos una falta o tiene más de {hours} horas. Las aprobaciones se rechazan hasta que una actualización salga bien (npm run sanctions:refresh, o la tarea diaria sanctions.refresh).",
+  "empty": {
+    "review": "No hay posibles coincidencias pendientes.",
+    "clear": "No hay partes revisadas esperando aprobación.",
+    "actions": "No hay acciones marcadas pendientes."
+  },
+  "party": {
+    "kind": "{kind, select, buyer {Comprador de datos} org {Organización} org_member {Miembro de una organización} other {Parte}}",
+    "country": "País: {country}",
+    "noCountry": "Sin país indicado",
+    "screened": "Revisada {when}"
+  },
+  "hit": {
+    "line": "{list}: {name}, puntuación {score}",
+    "programs": "Programas: {programs}"
+  },
+  "buttons": {
+    "falseMatch": "No es la misma persona u organización",
+    "trueMatch": "Coincidencia confirmada",
+    "approve": "Aprobar",
+    "refuse": "Rechazar",
+    "reviewed": "Revisada"
+  },
+  "fields": {
+    "note": "Nota (opcional)",
+    "refuseReason": "Motivo del rechazo"
+  },
+  "action": {
+    "line": "{date}: {title}"
+  },
+  "done": {
+    "hit": "Posible coincidencia #{id} decidida.",
+    "approved": "Parte #{id} aprobada.",
+    "refused": "Parte #{id} rechazada.",
+    "reviewed": "Acción #{id} marcada como revisada."
+  },
+  "errors": {
+    "incomplete": "Faltaba algo. Inténtalo de nuevo.",
+    "not_found": "Ese elemento ya no existe.",
+    "decided": "Esa posible coincidencia ya se decidió.",
+    "open_hits": "Esta parte aún tiene posibles coincidencias abiertas. Decide cada una primero.",
+    "no_buyer_country": "No se aceptan organizaciones ni compradores de datos del país de esta parte.",
+    "refused": "Esta parte fue rechazada y no se puede aprobar.",
+    "reason": "Indica por qué se rechaza la parte.",
+    "not_screened": "Esta parte aún no se ha comprobado contra las listas.",
+    "stale": "Las listas de sanciones están desactualizadas, así que las aprobaciones se rechazan hasta que una actualización salga bien."
+  }
+}

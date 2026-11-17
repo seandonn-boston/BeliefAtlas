@@ -1,0 +1,8 @@
+﻿fileGenerationDate;Entity_LogicalId;Entity_EU_ReferenceNumber;Entity_UnitedNationId;Entity_DesignationDate;Entity_Remark;Entity_SubjectType;Entity_SubjectType_ClassificationCode;Entity_Regulation_Type;Entity_Regulation_Programme;NameAlias_LastName;NameAlias_FirstName;NameAlias_MiddleName;NameAlias_WholeName;NameAlias_Gender;NameAlias_Function;Address_City;Citizenship_CountryIso2Code;Citizenship_CountryDescription
+2026-11-16;880001;EU.9001.11;;2022-03-15;"Fictional; for tests";P;person;amendment;RUS;Volkonsky;Arkady;Sergeyevich;Arkady Sergeyevich Volkonsky;M;Businessman;;;
+2026-11-16;880001;EU.9001.11;;2022-03-15;;P;person;amendment;RUS;Volkonskiy;Arkadiy;;Arkadiy Volkonskiy;M;;;;
+2026-11-16;880001;EU.9001.11;;2022-03-15;;P;person;amendment;RUS;;;;;;;;RU;RUSSIAN FEDERATION
+2026-11-16;880001;EU.9001.11;;2022-03-15;;P;person;amendment;RUS;;;;;;;Moscow;;
+2026-11-16;880002;EU.9002.22;;2023-06-01;;E;enterprise;regulation;BLR;;;;Minsk Precision Optics OJSC;;;;;
+2026-11-16;880002;EU.9002.22;;2023-06-01;;E;enterprise;regulation;BLR;;;;ОАО «Минская прецизионная оптика»;;;;;
+2026-11-16;880003;EU.9003.33;;2024-01-10;;P;person;regulation;SYR;;;;Fadi Haddad-Example;M;;;SY;SYRIA
