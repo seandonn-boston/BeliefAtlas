@@ -12,8 +12,9 @@
 //      closed, limit_reached) and nothing threw.
 //
 // Prints a summary and exits 1 if any check fails. Uses only Node built-ins and the app's own
-// modules, against DATABASE_URL. It makes its own accounts and questions (tagged) and deletes
-// them afterwards unless --keep is given.
+// modules, against DATABASE_URL. It makes its own accounts (test data, origin 'test') and
+// questions (tagged) and deletes them afterwards unless --keep is given. It refuses to run in
+// production or against a database marked as production (lib/provenance.ts).
 //
 //   npm run load:votes -- --rate=1000 --seconds=10
 //
@@ -127,6 +128,8 @@ async function main() {
   const { vote } = await import("../../lib/vote-engine");
   const { castVote } = await import("../../lib/votes");
   const { clearSplitCache } = await import("../../lib/stats");
+  const { assertTestDataAllowedHere } = await import("../../lib/provenance");
+  await assertTestDataAllowedHere("The vote load test");
 
   const tag = `load${Date.now().toString(36)}`;
   const totalCalls = Math.round(RATE * SECONDS);
@@ -152,8 +155,8 @@ async function main() {
 
   async function makeAccounts(kind: string, count: number, tier: "free" | "paid"): Promise<Account[]> {
     const rows = await query<{ id: number; username: string }>(
-      `insert into accounts (username, phone_hash, password_hash, consented_at, tier)
-       select $1 || '_' || $2 || i, $1 || '_' || $2 || i, 'x', now(), $3 from generate_series(1, $4::int) i
+      `insert into accounts (username, phone_hash, password_hash, consented_at, tier, origin)
+       select $1 || '_' || $2 || i, $1 || '_' || $2 || i, 'x', now(), $3, 'test' from generate_series(1, $4::int) i
        returning id, username`,
       [tag, kind, tier, count],
     );

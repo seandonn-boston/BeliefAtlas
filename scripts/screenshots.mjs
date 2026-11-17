@@ -5,15 +5,18 @@
 // Needs a running app (BASE_URL, default http://localhost:3000) on a database with the
 // catalog and the demo votes loaded (npm run db:seed:questions && npm run db:seed:demo),
 // and Playwright with Chromium installed (npx playwright install chromium). It creates two
-// throwaway accounts, shot_free and shot_paid, signed in by writing sessions directly, so it
-// must never run against a production database.
+// throwaway accounts, shot_free and shot_paid (test data, origin 'test'), signed in by writing
+// sessions directly, so it must never run against a production database (which also refuses
+// test accounts itself once a production deploy has marked it).
 
 import { createHash, randomBytes } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import pg from "pg";
 import { chromium } from "playwright";
 
-if (process.env.NODE_ENV === "production") throw new Error("screenshots.mjs writes test accounts; not for production.");
+if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production") {
+  throw new Error("screenshots.mjs writes test accounts; not for production.");
+}
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const OUT = process.argv[2] ?? "screenshots";
@@ -24,8 +27,8 @@ const sha = (s) => createHash("sha256").update(s).digest("hex");
 
 async function signedIn(username, tier) {
   const { rows } = await pool.query(
-    `insert into accounts (username, phone_hash, password_hash, consented_at, phone_verified_at, tier)
-     values ($1, $2, 'screenshot-no-login', now(), now(), $3)
+    `insert into accounts (username, phone_hash, password_hash, consented_at, phone_verified_at, tier, origin)
+     values ($1, $2, 'screenshot-no-login', now(), now(), $3, 'test')
      on conflict (username) do update set tier = excluded.tier returning id`,
     [username, sha(`shot:${username}`), tier],
   );

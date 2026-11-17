@@ -2,6 +2,7 @@ import { hit, RULES, tooMany } from "@/lib/rate-limit";
 import { ipFromRequest } from "@/lib/request";
 import { countAccess, detailLevel, estimate, isApiKey, shapeStats } from "@/lib/access";
 import { getAccount } from "@/lib/auth";
+import { assertNoSeedData, SeedDataPresent } from "@/lib/provenance";
 import { getQuestion } from "@/lib/questions";
 import { questionStats } from "@/lib/stats";
 import { myVotes } from "@/lib/votes";
@@ -16,11 +17,21 @@ import { myVotes } from "@/lib/votes";
 //   API key (Authorization:     all of the above, arrival routes, and two filters:
 //   Bearer <key>)                 as_of=<ISO time>         the vote as it stood at that moment
 //                                 active_since=<ISO time>  only accounts active since then
+//
+// Keyed access is the data-buyer path, so it stays closed (503) while any seed data is left
+// (lib/provenance.ts): fictional launch votes are never sold. Unkeyed requests are unaffected.
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   // Keyed callers are metered separately; everyone else shares a per-IP allowance.
   if (!isApiKey(request.headers.get("authorization"))) {
     const limited = await hit([RULES.statsPerIp, ipFromRequest(request)]);
     if (limited) return Response.json({ error: tooMany(limited) }, { status: 429 });
+  } else {
+    try {
+      await assertNoSeedData();
+    } catch (err) {
+      if (err instanceof SeedDataPresent) return Response.json({ error: err.message }, { status: err.status });
+      throw err;
+    }
   }
   const { id } = await params;
   const questionId = Number(id);

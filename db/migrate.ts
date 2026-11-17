@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from "fs";
 import path from "path";
 import { Pool } from "pg";
+import { checkDatabaseProvenance, markProductionDatabase } from "../lib/provenance";
 
 // Applies db/migrations/*.sql in order, each in its own transaction. Runs on every deploy;
 // an advisory lock keeps two deploys from migrating at the same time.
@@ -29,6 +30,13 @@ async function main() {
       }
     }
     console.log("migrations up to date");
+
+    // A production deploy marks its database as production (never unmarked), so test data is
+    // refused there by the database itself. Then a loud warning for any test data in a
+    // production database, or a preview pointed at one (lib/provenance.ts).
+    if (await markProductionDatabase(client)) console.log("database is marked as production");
+    const report = await checkDatabaseProvenance(client);
+    for (const problem of report.problems) console.error(`\n*** ${problem} ***\n`);
   } finally {
     await client.query("select pg_advisory_unlock(727274)").catch(() => {});
     client.release();

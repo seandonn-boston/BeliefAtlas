@@ -58,6 +58,7 @@ export async function minGroupSize(code?: string | null): Promise<number> {
 // ---------- Who may be included in a sale ----------
 
 // SQL for the ids of accounts whose answers may be included in a sale, as of now. All of:
+//   * the account is a real person's (origin 'real'): test and seed accounts never are;
 //   * the account exists and isn't a deleted stand-in;
 //   * their latest 'answering' record is an agreement (answers given without it never count);
 //   * their latest 'sale' record is an opt-in, and was not made with Global Privacy Control on;
@@ -75,7 +76,8 @@ export const SALE_ELIGIBLE_ACCOUNTS = `
     join lateral (select sale_allowed from regions
                    where code = a.region or code = '*'
                    order by (code = '*') limit 1) r on r.sale_allowed
-   where a.deleted_at is null`;
+   where a.deleted_at is null
+     and a.origin = 'real'`;
 
 // True only when the account's region allows sale AND their latest sale choice is an opt-in AND
 // Global Privacy Control wasn't on when it was recorded (a GPC signal later records an opt-out,

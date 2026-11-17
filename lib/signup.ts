@@ -8,6 +8,7 @@ import { humanChallenge } from "./human-check";
 import { lineTypeChecker } from "./phone-check";
 import { TERMS_VERSION } from "./legal";
 import { generateUsername, usernameProblem } from "./usernames";
+import { signupOrigin } from "./provenance";
 
 // Signing up is two steps: details first, then the code texted to the phone. The account is
 // only created once the code checks out.
@@ -124,14 +125,17 @@ export async function verifySignup(token: string, code: string): Promise<VerifyR
     return { ok: false, error: left > 0 ? `That code didn't match. ${left} ${left === 1 ? "try" : "tries"} left.` : "That code didn't match." };
   }
 
+  // 'real' everywhere but preview test mode, where it is 'test' (lib/provenance.ts). Read from
+  // the environment, never from anything the request sent.
+  const origin = signupOrigin();
   try {
     return await transaction(async (client) => {
       const created = await client.query<{ id: number }>(
         `insert into accounts (username, phone_hash, password_hash, consented_at, phone_verified_at,
-                               age_verified_at, age_method, phone_line_type, terms_version)
-         values ($1, $2, $3, now(), now(), $4, $5, $6, $7) returning id`,
+                               age_verified_at, age_method, phone_line_type, terms_version, origin)
+         values ($1, $2, $3, now(), now(), $4, $5, $6, $7, $8) returning id`,
         [row.username, row.phone_hash, row.password_hash, row.age_verified_at, row.age_method, row.phone_line_type,
-         row.terms_version ?? TERMS_VERSION],
+         row.terms_version ?? TERMS_VERSION, origin],
       );
       await client.query("delete from pending_signups where token_hash = $1", [row.token_hash]);
       return { ok: true as const, accountId: created.rows[0].id, next: row.next_path };
