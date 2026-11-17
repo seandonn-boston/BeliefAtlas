@@ -1,0 +1,56 @@
+{
+  "title": "Translations",
+  "intro": "Every question keeps one id in every language, so answers in every language count on the same question. Readers only ever see a translation once a person has approved it.",
+  "languages": "Translate into",
+  "tabs": { "todo": "Needs a translation", "approved": "Approved" },
+  "draftsWaiting": "{n, plural, =0 {No drafts waiting} one {# draft waiting} other {# drafts waiting}}",
+  "empty": {
+    "todo": "Every live question has an approved translation into this language.",
+    "approved": "Nothing approved in this language yet."
+  },
+  "meta": "#{id} · asked in {language} · {n, plural, one {# answer} other {# answers}}",
+  "status": {
+    "none": "Not translated yet",
+    "draft": "Draft",
+    "rejected": "Rejected",
+    "approved": "Approved"
+  },
+  "machineDraft": "Machine draft, not checked by a person yet",
+  "draftedBy": "Drafted by {name}",
+  "reviewedBy": "Reviewed by {name}",
+  "field": "Translation into {language}",
+  "actions": {
+    "save": "Save draft",
+    "approve": "Approve",
+    "reject": "Reject",
+    "withdraw": "Send back to drafts"
+  },
+  "approveNote": "Approve publishes the words in the box, as they are now.",
+  "done": {
+    "save": "Draft saved for #{id}.",
+    "approve": "#{id} approved. Readers see it now.",
+    "reject": "Draft for #{id} rejected.",
+    "withdraw": "#{id} is off readers' screens and back in the drafts."
+  },
+  "errors": {
+    "forbidden": "You can't review translations into this language.",
+    "not_found": "That question wasn't found.",
+    "empty": "Write the translation first.",
+    "too_long": "Keep translations under 250 characters.",
+    "same_language": "That question is already in this language.",
+    "already_approved": "This translation is approved. Send it back to drafts before you change it.",
+    "nothing_to_review": "There's no draft to review for that question."
+  },
+  "previous": "Previous",
+  "next": "Next",
+  "machine": {
+    "on": "Machine drafts are on. Run them with npm run translate:drafts; each waits here for a person.",
+    "off": "Machine drafts are off. They need a self-hosted translator at TRANSLATE_URL."
+  },
+  "asking": {
+    "too_short": "That's too short to be a question.",
+    "too_long": "Keep questions under 200 characters.",
+    "not_a_question": "That doesn't look like a question.",
+    "not_yes_no": "Questions need a true-or-false answer. Ask it so it can be answered yes or no."
+  }
+}

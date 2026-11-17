@@ -5,6 +5,7 @@ import { checkQuestion } from "@/lib/checks";
 import { QuestionCard } from "@/components/QuestionCard";
 import { present } from "@/lib/access";
 import { getAccount } from "@/lib/auth";
+import { localizeQuestions } from "@/lib/i18n/questions";
 import { normalize, search, tidy } from "@/lib/questions";
 import { tallies } from "@/lib/stats";
 import { myVotes } from "@/lib/votes";
@@ -18,7 +19,10 @@ export default async function SearchPage({ searchParams }: Props) {
   const view = "compact"; // a short list of matches to scan
   const matches = text ? await search(text) : [];
   const ids = matches.map((m) => m.id);
-  const [tally, mine] = await Promise.all([tallies(ids), account ? myVotes(account.id, ids) : new Map()]);
+  // W3: `shown` is each match in the reader's language (approved translation, else canonical).
+  const [tally, mine, shown] = await Promise.all([
+    tallies(ids), account ? myVotes(account.id, ids) : new Map(), localizeQuestions(matches),
+  ]);
 
   // There is no "new question" button anywhere. Asking is only offered here, after a search
   // that didn't turn up the same question.
@@ -38,7 +42,7 @@ export default async function SearchPage({ searchParams }: Props) {
 
         {text && <h1 className="list-title">{matches.length ? t("matches") : t("noMatches")}</h1>}
         <div className={`feed feed-${view}`}>
-          {matches.map((m) => (
+          {shown.map((m) => (
             <QuestionCard
               key={m.id}
               question={m}

@@ -1,4 +1,5 @@
 import { query } from "./db";
+import { localizeQuestions } from "./i18n/questions";
 import type { Source } from "./votes";
 
 // One row of a feed page: the question and its counters, straight from the questions table.
@@ -6,6 +7,9 @@ export type FeedRow = {
   id: number; text: string; status: string; category: string;
   t: number; f: number; u: number; shuffle: number; closeness: number | null;
   slot: Source;
+  // W3 (languages): the language `text` is in, after localizeQuestions has swapped in the
+  // reader's approved translation. Cards set it as the `lang` attribute.
+  lang: string;
 };
 
 export const PAGE_SIZE = 12;
@@ -35,12 +39,15 @@ export function decodeCursor(raw: string | null | undefined): Cursor | null {
   }
 }
 
-const COLUMNS = "q.id, q.text, q.status, q.category, q.true_count as t, q.false_count as f, q.unsure_count as u, q.shuffle, q.closeness";
+const COLUMNS = "q.id, q.text, q.lang, q.status, q.category, q.true_count as t, q.false_count as f, q.unsure_count as u, q.shuffle, q.closeness";
 
 export type FeedPage = { rows: FeedRow[]; next: string | null };
 
 // Signed-out feed: most-voted questions first, then newest. Keyset-paged on (total_count, id).
-export async function topPage(cursor: Cursor | null, category: string | null, limit = PAGE_SIZE): Promise<FeedPage> {
+// `locale` (W3): the reader's language; defaults to this request's.
+export async function topPage(
+  cursor: Cursor | null, category: string | null, limit = PAGE_SIZE, locale?: string,
+): Promise<FeedPage> {
   const after = cursor?.top;
   if (after === "end") return { rows: [], next: null };
   const rows = await query<Omit<FeedRow, "slot">>(
@@ -54,7 +61,7 @@ export async function topPage(cursor: Cursor | null, category: string | null, li
   );
   const last = rows[rows.length - 1];
   return {
-    rows: rows.map((r) => ({ ...r, slot: "feed:top" as const })),
+    rows: await localizeQuestions(rows.map((r) => ({ ...r, slot: "feed:top" as const })), locale), // W3
     next: rows.length === limit && last ? encodeCursor({ top: [last.t + last.f + last.u, last.id] }) : null,
   };
 }
@@ -68,7 +75,7 @@ export async function topPage(cursor: Cursor | null, category: string | null, li
 //              over facts. Votes that arrive this way are the least self-selected sample
 //              the site has.
 export async function feedPage(
-  accountId: number, cursor: Cursor | null, category: string | null, limit = PAGE_SIZE,
+  accountId: number, cursor: Cursor | null, category: string | null, limit = PAGE_SIZE, locale?: string,
 ): Promise<FeedPage> {
   const open = `
     q.status = 'active'
@@ -150,5 +157,6 @@ export async function feedPage(
     n: n === "end" || newest.length < want.newest ? "end" : lastNewest.id,
   };
   const exhausted = nextCursor.o!.end && nextCursor.x!.end && nextCursor.c === "end" && nextCursor.n === "end";
-  return { rows, next: rows.length > 0 && !exhausted ? encodeCursor(nextCursor) : null };
+  // W3: swap in the reader's approved translations, one query for the page.
+  return { rows: await localizeQuestions(rows, locale), next: rows.length > 0 && !exhausted ? encodeCursor(nextCursor) : null };
 }

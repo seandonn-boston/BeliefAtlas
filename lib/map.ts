@@ -1,5 +1,6 @@
 import { CATEGORIES } from "./categories";
 import { query } from "./db";
+import { localizeQuestions } from "./i18n/questions";
 import { MIN_GROUP_SIZE } from "./limits";
 
 // A person's belief map: everything they've answered, grouped by subject, and where they sit
@@ -11,6 +12,7 @@ export type Answer = "true" | "false" | "unsure";
 export type MapEntry = {
   questionId: number;
   text: string;
+  lang: string;   // W3: the language `text` is in (the reader's, when an approved translation exists)
   category: string;
   value: Answer;
   firstValue: Answer | null;
@@ -45,7 +47,7 @@ export type BeliefMap = {
 };
 
 type Row = {
-  question_id: number; text: string; category: string; value: Answer; first_value: Answer | null;
+  question_id: number; text: string; lang: string; category: string; value: Answer; first_value: Answer | null;
   change_count: number; first_cast_at: Date; true_count: number; false_count: number; unsure_count: number;
 };
 
@@ -63,9 +65,12 @@ export function placeOf(value: Answer, counts: Record<Answer, number>) {
 
 const labelOf = (slug: string) => CATEGORIES.find((c) => c.slug === slug)?.label ?? "General";
 
-export async function beliefMap(accountId: number, opts: { subject?: string; limit?: number } = {}): Promise<BeliefMap> {
+// `opts.locale` (W3): the reader's language for the entries' text; defaults to this request's.
+export async function beliefMap(
+  accountId: number, opts: { subject?: string; limit?: number; locale?: string } = {},
+): Promise<BeliefMap> {
   const rows = await query<Row>(
-    `select v.question_id, q.text, q.category, v.value, v.first_value, v.change_count, v.first_cast_at,
+    `select v.question_id, q.text, q.lang, q.category, v.value, v.first_value, v.change_count, v.first_cast_at,
             q.true_count, q.false_count, q.unsure_count
        from votes v join questions q on q.id = v.question_id
       where v.account_id = $1 and q.status <> 'removed'
@@ -99,11 +104,14 @@ export async function beliefMap(accountId: number, opts: { subject?: string; lim
     bySubject.set(r.category, s);
     if ((!opts.subject || opts.subject === r.category) && map.entries.length < limit) {
       map.entries.push({
-        questionId: r.question_id, text: r.text, category: r.category, value: r.value, firstValue: r.first_value,
+        questionId: r.question_id, text: r.text, lang: r.lang, category: r.category, value: r.value, firstValue: r.first_value,
         changes: r.change_count, answeredAt: r.first_cast_at, ...place,
       });
     }
   }
+  // W3: only the entries shown are put into the reader's language (one query).
+  const shown = await localizeQuestions(map.entries.map((e) => ({ id: e.questionId, text: e.text, lang: e.lang })), opts.locale);
+  map.entries = map.entries.map((e, i) => ({ ...e, text: shown[i].text, lang: shown[i].lang }));
   map.subjects = [...bySubject.values()].sort((a, b) => b.answered - a.answered || a.label.localeCompare(b.label));
   return map;
 }

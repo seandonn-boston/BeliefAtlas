@@ -1,0 +1,15 @@
+/* The translation review queue. Builds on the moderation queue's styles in globals.css. */
+.tr-nav { height: auto; border-bottom: 0; margin: 4px 0; }
+.tr-nav .cats-in { padding: 0; }
+.tr-form { gap: 10px; margin: 0; }
+.tr-form textarea {
+  font: inherit; font-weight: 400; color: var(--ink);
+  width: 100%; min-height: 64px; padding: 10px 12px; resize: vertical;
+  background: var(--raise); border: 1px solid var(--control-line); border-radius: 6px;
+}
+.tr-form textarea[readonly] { color: var(--dim); }
+.tr-form .note { margin: 0; }
+.tr-status { font-weight: 600; }
+.tr-status.draft { color: var(--warn-ink); }
+.tr-status.approved { color: var(--ink); }
+.tr-pages { display: flex; justify-content: space-between; padding: 20px 0 40px; }

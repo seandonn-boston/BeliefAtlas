@@ -15,6 +15,7 @@ import { deviceId } from "@/lib/device";
 import { CHALLENGE_FIELD } from "@/lib/human-check";
 import { resendCode, startSignup, verifySignup } from "@/lib/signup";
 import { toCard, type CardItem } from "@/lib/cards";
+import { localizeQuestions } from "@/lib/i18n/questions";
 import { deleteAccount } from "@/lib/account";
 import { billingPortal, cancelForDeletion, startCheckout } from "@/lib/billing";
 import { CATEGORIES } from "@/lib/categories";
@@ -235,7 +236,8 @@ async function cardFor(questionId: number, account: { id: number; tier: "free" |
   );
   if (!rows[0]) return { ok: false, error: "That question wasn't found." };
   const mine = await myVotes(account.id, [questionId]);
-  return { ok: true, card: toCard({ ...rows[0], slot }, account, mine.get(questionId) ?? null) };
+  const [row] = await localizeQuestions(rows); // W3: the card stays in the reader's language after a vote
+  return { ok: true, card: toCard({ ...row, slot }, account, mine.get(questionId) ?? null) };
 }
 
 type InlineInput = { questionId: number; source: string };

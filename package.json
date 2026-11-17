@@ -14,6 +14,9 @@
     "db:seed:demo": "tsx --env-file-if-exists=.env.local db/seed.ts",
     "ai:answers": "tsx --env-file-if-exists=.env.local db/ai-answers.ts",
     "admin:role": "tsx --env-file-if-exists=.env.local db/set-role.ts",
+    "translate:drafts": "tsx --env-file-if-exists=.env.local db/translate-drafts.ts",
+    "translate:grant": "tsx --env-file-if-exists=.env.local db/translator.ts",
+    "embeddings:index": "tsx --env-file-if-exists=.env.local db/embed-questions.ts",
     "db:migrate:deploy": "tsx db/migrate.ts",
     "vercel-build": "npm run db:migrate:deploy && tsx db/preview-seed.ts && next build"
   },

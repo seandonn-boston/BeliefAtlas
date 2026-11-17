@@ -10,6 +10,7 @@ import { getAccount } from "@/lib/auth";
 import { trendChart, visibilityChart } from "@/lib/charts";
 import { query } from "@/lib/db";
 import { REPORT_REASONS } from "@/lib/moderation";
+import { localizeQuestion } from "@/lib/i18n/questions";
 import { getQuestion, mergedInto } from "@/lib/questions";
 import { questionStats, type QuestionStats } from "@/lib/stats";
 import { hasRevealed, myVotes } from "@/lib/votes";
@@ -30,7 +31,8 @@ export default async function QuestionPage({ params, searchParams }: Props) {
     notFound();
   }
 
-  const [account, t] = await Promise.all([getAccount(), getTranslations("question")]);
+  // W3: the question's text in the reader's language when an approved translation exists.
+  const [account, t, local] = await Promise.all([getAccount(), getTranslations("question"), localizeQuestion(question)]);
   const [stats, mine, revealed] = await Promise.all([
     questionStats(questionId),
     account ? myVotes(account.id, [questionId]) : new Map(),
@@ -58,7 +60,7 @@ export default async function QuestionPage({ params, searchParams }: Props) {
         {reported && <p className="notice" role="status">{t("reported")}</p>}
         <div className="feed feed-detail">
           <QuestionCard
-            question={question}
+            question={local}
             shown={shown}
             myVote={myVote}
             signedIn={Boolean(account)}
