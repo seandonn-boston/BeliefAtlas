@@ -124,8 +124,12 @@ type VoteState = {
 async function lockAndRead(client: PoolClient, accountId: number, questionId: number, withFirst: boolean): Promise<VoteState> {
   const locked = await client.query("select 1 from accounts where id = $1 for update", [accountId]);
   if (!locked.rowCount) throw new Error(`account ${accountId} not found`);
-  const res = await client.query<VoteState>(
-    `select q.status, v.value, v.is_private,
+  // Named, so each connection plans this once and reuses the plan. Planning it fresh (four
+  // look-ups in the monthly-partitioned vote_events) cost about 4.6 ms of database CPU per
+  // vote, more than everything else in a vote together, and capped the engine near 700 a second.
+  const res = await client.query<VoteState>({
+    name: "vote-state",
+    text: `select q.status, v.value, v.is_private,
             (select count(*)::int from vote_events e
               where e.account_id = $1 and ${TODAY_RANGE} and e.action = 'cast') as casts_today,
             exists (select 1 from vote_events e
@@ -151,8 +155,8 @@ async function lockAndRead(client: PoolClient, accountId: number, questionId: nu
        left join questions q on q.id = $2
        left join votes v on v.account_id = a.id and v.question_id = $2
       where a.id = $1`,
-    [accountId, questionId, withFirst],
-  );
+    values: [accountId, questionId, withFirst],
+  });
   return res.rows[0];
 }
 
