@@ -1,0 +1,60 @@
+name: Neon load test
+
+# The vote load test (scripts/load/votes.ts) against a hosted Neon database instead of a local
+# one: 1,000 vote calls a second for 10 seconds, the same 12 data checks, then every trace of the
+# test removed and the removal proved.
+#
+# Runs only on a push to the working branch whose commit message contains [neon-load-test],
+# so ordinary pushes never touch Neon. It needs one repository secret,
+# NEON_LOADTEST_DATABASE_URL: the Development (or Preview) branch's connection string from
+# Neon. Never Production's: the guard step refuses a database marked as production or holding
+# any real account, and the load test refuses a production database on its own as well.
+#
+# Free tier only: one short run on GitHub's runners and a few minutes of Neon compute.
+
+on:
+  push:
+    branches: [claude/project-thread-6afbfo]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neon-load-test
+  cancel-in-progress: false
+
+jobs:
+  neon-load-test:
+    if: contains(github.event.head_commit.message, '[neon-load-test]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.NEON_LOADTEST_DATABASE_URL }}
+      PHONE_PEPPER: load-test-only-pepper
+    steps:
+      - name: Is the secret there?
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error title=No database::Add the repository secret NEON_LOADTEST_DATABASE_URL (Neon Development branch) first."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Guard before migrating
+        run: npx tsx scripts/load/remote.ts guard
+      - name: Migrate
+        run: npm run db:migrate:deploy
+      - name: Guard after migrating
+        run: npx tsx scripts/load/remote.ts guard
+
+      - name: Load test, 1,000 calls a second for 10 seconds
+        run: npx tsx scripts/load/votes.ts --rate=1000 --seconds=10
+
+      - name: Remove all load-test data and prove it's gone
+        if: always()
+        run: npx tsx scripts/load/remote.ts clean
