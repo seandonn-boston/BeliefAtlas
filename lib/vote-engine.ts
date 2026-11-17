@@ -3,7 +3,8 @@ import { query, transaction } from "./db";
 import type { Account } from "./auth";
 import { cleanPlacement, cleanSurface, type Surface } from "./front-door";
 import { hit, RULES, tooMany } from "./rate-limit";
-import { castVote, skip, type Source, type VoteValue } from "./votes";
+import { invalidateSplits } from "./stats";
+import { castVote, cleanLang, skip, type Source, type VoteValue } from "./votes";
 
 // The one vote engine. Every surface (the website, share links, embeds, QR codes, and the
 // Slack, Discord, text and email adapters that come next) calls vote() and gets back an
@@ -29,6 +30,7 @@ export type VoteInput = {
   idempotencyKey?: string | null;   // a platform's interaction id, or a per-tap key from our pages
   isPrivate?: boolean;
   source?: Source;
+  lang?: string | null;             // the language the question was shown in, e.g. "en" or "pt-BR"
 };
 
 export type VoteOutcome =
@@ -51,16 +53,27 @@ async function apply(account: Account, input: VoteInput): Promise<VoteOutcome> {
     surfaceContext: input.surfaceContext ?? null,
     shownAt: input.shownAt ?? null,
     tappedAt: input.tappedAt ?? new Date(),
+    lang: cleanLang(input.lang),
   };
   const source = input.source ?? "direct";
   if (input.value === "skip") {
-    await skip(account, questionId, source, meta);
+    if (!(await skip(account, questionId, source, meta))) {
+      // Not recorded: either it's already answered (a skip changes nothing) or it's closed.
+      const [q] = await query<{ status: string }>("select status from questions where id = $1", [questionId]);
+      if (!q || q.status === "archived" || q.status === "removed") {
+        return { outcome: "closed", questionId, message: "This question is closed to new votes." };
+      }
+    }
     return { outcome: "skipped", questionId, handle: account.username };
   }
   const value = input.value;
 
   const result = await castVote(account, questionId, value, input.isPrivate ?? false, source, meta);
-  if (result.ok) return { outcome: result.outcome ?? "cast", questionId, value, handle: account.username };
+  if (result.ok) {
+    // This instance shows the new split straight away; others catch up within the cache's TTL.
+    if (result.outcome !== "same") invalidateSplits([questionId]);
+    return { outcome: result.outcome ?? "cast", questionId, value, handle: account.username };
+  }
   switch (result.code) {
     case "limit_reached":
       return { outcome: "limit_reached", questionId, message: result.error, holdToken: "" };
@@ -76,8 +89,8 @@ async function apply(account: Account, input: VoteInput): Promise<VoteOutcome> {
 export async function holdVote(input: VoteInput, reason: "needs_signup" | "limit_reached"): Promise<string> {
   const token = randomBytes(24).toString("base64url");
   await query(
-    `insert into pending_votes (token_hash, question_id, value, surface, placement, surface_context, shown_at, tapped_at, reason)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+    `insert into pending_votes (token_hash, question_id, value, surface, placement, surface_context, shown_at, tapped_at, reason, lang)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
     [
       hashToken(token),
       input.questionId,
@@ -88,6 +101,7 @@ export async function holdVote(input: VoteInput, reason: "needs_signup" | "limit
       input.shownAt ?? null,
       input.tappedAt ?? new Date(),
       reason,
+      cleanLang(input.lang),
     ],
   );
   if (Math.random() < 0.02) {
@@ -102,13 +116,14 @@ export async function vote(input: VoteInput): Promise<VoteOutcome> {
   if (!Number.isInteger(questionId) || questionId <= 0 || !CHOICES.includes(input.value)) {
     return { outcome: "invalid", questionId, message: "That vote wasn't valid." };
   }
-  const [question] = await query<{ status: string }>("select status from questions where id = $1", [questionId]);
-  if (!question || question.status === "removed") {
-    return { outcome: "invalid", questionId, message: "That question wasn't found." };
-  }
+  const notFound: VoteOutcome = { outcome: "invalid", questionId, message: "That question wasn't found." };
+  const status = async () =>
+    (await query<{ status: string }>("select status from questions where id = $1", [questionId]))[0]?.status ?? null;
 
   if (!input.account) {
-    if (question.status !== "active") return { outcome: "closed", questionId, message: "This question is closed to new votes." };
+    const s = await status();
+    if (!s || s === "removed") return notFound;
+    if (s !== "active") return { outcome: "closed", questionId, message: "This question is closed to new votes." };
     return { outcome: "needs_signup", questionId, holdToken: await holdVote(input, "needs_signup") };
   }
   const account = input.account;
@@ -128,7 +143,14 @@ export async function vote(input: VoteInput): Promise<VoteOutcome> {
   const limited = await hit([RULES.votesPerAccount, String(account.id)]);
   if (limited) return { outcome: "slow_down", questionId, message: tooMany(limited) };
 
+  // The question's status is checked inside the vote's own transaction (lib/votes.ts): archived
+  // and removed questions take no answers, changes or skips. Only a refusal needs to know which,
+  // because a missing or removed question reads as not found rather than closed.
   let outcome = await apply(account, input);
+  if (outcome.outcome === "closed") {
+    const s = await status();
+    if (!s || s === "removed") outcome = notFound;
+  }
   if (outcome.outcome === "limit_reached") {
     outcome = { ...outcome, holdToken: await holdVote(input, "limit_reached") };
   }
@@ -148,9 +170,9 @@ export async function claimHeldVote(token: string, account: Account): Promise<Vo
   const held = await transaction(async (client) => {
     const res = await client.query<{
       question_id: number; value: Choice; surface: string; placement: string | null;
-      surface_context: Record<string, unknown> | null; shown_at: Date | null; tapped_at: Date;
+      surface_context: Record<string, unknown> | null; shown_at: Date | null; tapped_at: Date; lang: string | null;
     }>(
-      `select question_id, value, surface, placement, surface_context, shown_at, tapped_at
+      `select question_id, value, surface, placement, surface_context, shown_at, tapped_at, lang
          from pending_votes
         where token_hash = $1 and claimed_at is null and expires_at > now()
         for update skip locked`,
@@ -172,6 +194,7 @@ export async function claimHeldVote(token: string, account: Account): Promise<Vo
     surfaceContext: held.surface_context,
     shownAt: held.shown_at,
     tappedAt: held.tapped_at,
+    lang: held.lang,
   });
   if (outcome.outcome === "limit_reached") {
     // Still over today's limit: put it back so an upgrade can count it.
