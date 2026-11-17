@@ -284,6 +284,16 @@ input[type="checkbox"] { accent-color: var(--ink); width: 16px; height: 16px; ma
 .ask-text { margin: 6px 0 14px; font-size: 1.7rem; font-weight: 800; font-stretch: 66%; line-height: 1.08; text-wrap: balance; }
 .ask form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .ask-note { font-size: 0.84rem; color: var(--dim); }
+.fix-mark { background: none; color: inherit; text-decoration: underline wavy var(--false); text-underline-offset: 6px; text-decoration-thickness: 2px; }
+.fix-mark sup { font-size: 0.45em; font-weight: 700; margin-left: 1px; color: var(--false); }
+.fix-list { margin: 0 0 14px; padding-left: 1.4em; display: grid; gap: 6px; font-size: 0.95rem; }
+.fix-list .fix-must { color: var(--ink); }
+.fix-list .fix-may { color: var(--dim); }
+.fix-tag { color: var(--dim); }
+.did-you-mean { margin: 4px 0 6px; padding: 14px 16px; border: 1px solid var(--control-line); border-radius: 8px; }
+.dym-label { margin: 0; font-size: 0.9rem; color: var(--dim); }
+.dym-text { margin: 4px 0 12px; }
+.dym-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .form { display: grid; gap: 16px; margin-bottom: 18px; }
 .form label { display: grid; gap: 6px; font-size: 0.9rem; font-weight: 600; }

@@ -8,9 +8,10 @@ type Props = {
   q?: string;
   view?: View;     // pass with `back` on pages that list questions to show the layout switcher
   back?: string;
+  focus?: boolean; // put the cursor in the search box, e.g. after "Edit" on a suggested question
 };
 
-export async function Header({ q = "", view, back }: Props) {
+export async function Header({ q = "", view, back, focus = false }: Props) {
   const account = await getAccount();
   return (
     <header className="header">
@@ -37,7 +38,7 @@ export async function Header({ q = "", view, back }: Props) {
         </div>
         <form action="/search" className="search" role="search">
           <input name="q" defaultValue={q} placeholder="Search for a question, or ask one"
-            aria-label="Search questions" maxLength={200} required />
+            aria-label="Search questions" maxLength={200} required autoFocus={focus} />
           <button className="btn">Search</button>
         </form>
       </div>

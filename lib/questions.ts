@@ -2,6 +2,7 @@ import { query } from "./db";
 import { LIMITS, TODAY_UTC } from "./limits";
 import type { Account } from "./auth";
 import { screenQuestion } from "./moderation";
+import { checkQuestion } from "./checks";
 
 export type Question = { id: number; text: string; status: string; category: string; created_at: Date };
 export type Match = Question & { similarity: number };
@@ -71,6 +72,9 @@ export type AskResult =
   | { ok: false; error: string; existingId?: number };
 
 export async function ask(account: Account, raw: string): Promise<AskResult> {
+  // The same checks the search page shows with their fixes; here they only refuse.
+  const blocking = checkQuestion(raw).results.find((r) => r.blocking);
+  if (blocking) return { ok: false, error: blocking.reason };
   const problem = booleanProblem(raw);
   if (problem) return { ok: false, error: problem };
 
