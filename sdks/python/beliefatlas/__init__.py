@@ -14,13 +14,14 @@ from .client import (
     answer_url,
     describe_outcome,
 )
-from .render import render_card_html
+from .render import UNOFFICIAL_NOTICE, render_card_html
 
 __all__ = [
     "API_VERSION",
     "CHOICES",
     "BeliefAtlas",
     "BeliefAtlasError",
+    "UNOFFICIAL_NOTICE",
     "Described",
     "answer_url",
     "describe_outcome",

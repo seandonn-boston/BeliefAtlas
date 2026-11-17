@@ -6,7 +6,7 @@ import os
 import unittest
 from pathlib import Path
 
-from beliefatlas import BeliefAtlas, BeliefAtlasError, answer_url, describe_outcome, render_card_html
+from beliefatlas import UNOFFICIAL_NOTICE, BeliefAtlas, BeliefAtlasError, answer_url, describe_outcome, render_card_html
 
 CONTRACT = json.loads((Path(__file__).resolve().parents[2] / "contract" / "v1.json").read_text())
 BASE = "https://beliefatlas.example.test"
@@ -45,7 +45,7 @@ class ReadingTests(unittest.TestCase):
         })
         cm = BeliefAtlas(BASE, placement="pl-abcdefghjk23", transport=stub)
         self.assertEqual(cm.placement()["placement"]["kind"], "site")
-        self.assertEqual(set(cm.split(123)), {"questionId", "hasVotes", "percentages"})
+        self.assertEqual(set(cm.split(123)), {"questionId", "hasVotes", "percentages", "notice"})
 
     def test_errors_raise_with_status_and_code(self):
         cm = BeliefAtlas(BASE, transport=Stub({}))
@@ -107,6 +107,12 @@ class DrawingTests(unittest.TestCase):
         self.assertIn("Is &lt;b&gt;&quot;this&quot;&lt;/b&gt; &amp; that true?", html)
         self.assertEqual(html.count('class="beliefatlas-choice '), 4)
         self.assertEqual(answer_url(card, "skip"), CONTRACT["card"]["choices"][3]["answerUrl"])
+
+    def test_render_always_shows_the_unofficial_notice(self):
+        html = render_card_html(CONTRACT["card"])
+        self.assertIn(f'<p class="beliefatlas-notice">{CONTRACT["card"]["notice"]}</p>', html)
+        self.assertIn(UNOFFICIAL_NOTICE, render_card_html(dict(CONTRACT["card"], notice="")))
+        self.assertIn(UNOFFICIAL_NOTICE, render_card_html({k: v for k, v in CONTRACT["card"].items() if k != "notice"}))
 
     def test_closed_card(self):
         card = dict(CONTRACT["card"], status="archived", choices=[dict(c, answerUrl=None) for c in CONTRACT["card"]["choices"]])

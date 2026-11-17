@@ -115,9 +115,9 @@ class BeliefAtlas:
             "lang": lang or self.lang, "origin": self.origin,
         }))
 
-    def split(self, question_id: int) -> dict:
-        """Percentages only."""
-        return self._request("GET", self._api(f"/questions/{int(question_id)}/split"))
+    def split(self, question_id: int, *, lang: Optional[str] = None) -> dict:
+        """Percentages only, with the unofficial notice."""
+        return self._request("GET", self._api(f"/questions/{int(question_id)}/split", {"lang": lang or self.lang}))
 
     # ---------- server relay (switched off on BeliefAtlas's side) ----------
 

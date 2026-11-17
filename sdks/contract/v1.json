@@ -1,5 +1,5 @@
 {
-  "_comment": "The BeliefAtlas headless front door contract, v1. Example responses every SDK is tested against (belief-map/headless-front-door.md). Test data only: example.test addresses, made-up ids.",
+  "_comment": "The BeliefAtlas headless front door contract, v1. Example responses every SDK is tested against (belief-map/headless-front-door.md). Test data only: example.test addresses, made-up ids. Every card, split and results response carries `notice`, which must always be shown with it.",
   "card": {
     "version": 1,
     "id": 123,
@@ -9,47 +9,157 @@
     "status": "active",
     "approved": false,
     "choices": [
-      { "value": "true", "label": "True", "counts": true, "answerUrl": "https://beliefatlas.example.test/v/123?via=headless&at=pl-abcdefghjk23&pick=true&ret=https%3A%2F%2Fshop.example.test" },
-      { "value": "false", "label": "False", "counts": true, "answerUrl": "https://beliefatlas.example.test/v/123?via=headless&at=pl-abcdefghjk23&pick=false&ret=https%3A%2F%2Fshop.example.test" },
-      { "value": "unsure", "label": "Don't know", "counts": true, "answerUrl": "https://beliefatlas.example.test/v/123?via=headless&at=pl-abcdefghjk23&pick=unsure&ret=https%3A%2F%2Fshop.example.test" },
-      { "value": "skip", "label": "Skip", "counts": false, "answerUrl": "https://beliefatlas.example.test/v/123?via=headless&at=pl-abcdefghjk23&pick=skip&ret=https%3A%2F%2Fshop.example.test" }
+      {
+        "value": "true",
+        "label": "True",
+        "counts": true,
+        "answerUrl": "https://beliefatlas.example.test/v/123?via=headless&at=pl-abcdefghjk23&pick=true&ret=https%3A%2F%2Fshop.example.test"
+      },
+      {
+        "value": "false",
+        "label": "False",
+        "counts": true,
+        "answerUrl": "https://beliefatlas.example.test/v/123?via=headless&at=pl-abcdefghjk23&pick=false&ret=https%3A%2F%2Fshop.example.test"
+      },
+      {
+        "value": "unsure",
+        "label": "Don't know",
+        "counts": true,
+        "answerUrl": "https://beliefatlas.example.test/v/123?via=headless&at=pl-abcdefghjk23&pick=unsure&ret=https%3A%2F%2Fshop.example.test"
+      },
+      {
+        "value": "skip",
+        "label": "Skip",
+        "counts": false,
+        "answerUrl": "https://beliefatlas.example.test/v/123?via=headless&at=pl-abcdefghjk23&pick=skip&ret=https%3A%2F%2Fshop.example.test"
+      }
     ],
     "shown": "123.1763419200000.AbCdEfGhIjKlMnOpQrStUv",
     "links": {
       "question": "https://beliefatlas.example.test/v/123",
       "results": "https://beliefatlas.example.test/api/headless/v1/questions/123/split"
-    }
+    },
+    "notice": "Unofficial. Opinions of BeliefAtlas users, not official statistics, polls or law."
   },
   "placement": {
     "version": 1,
-    "placement": { "id": "pl-abcdefghjk23", "kind": "site", "label": "Article footer", "org": { "slug": "example-shop", "name": "Example Shop" } },
+    "placement": {
+      "id": "pl-abcdefghjk23",
+      "kind": "site",
+      "label": "Article footer",
+      "org": {
+        "slug": "example-shop",
+        "name": "Example Shop"
+      }
+    },
     "questions": []
   },
-  "split": { "questionId": 123, "hasVotes": true, "percentages": { "true": 61.2, "false": 30.1, "unsure": 8.7 } },
+  "split": {
+    "questionId": 123,
+    "hasVotes": true,
+    "percentages": {
+      "true": 61.2,
+      "false": 30.1,
+      "unsure": 8.7
+    },
+    "notice": "Unofficial. Opinions of BeliefAtlas users, not official statistics, polls or law."
+  },
   "results": {
-    "placement": { "id": "pl-abcdefghjk23", "label": "Article footer", "kind": "site" },
+    "placement": {
+      "id": "pl-abcdefghjk23",
+      "label": "Article footer",
+      "kind": "site"
+    },
     "minGroupSize": 50,
     "questions": [
-      { "questionId": 123, "enough": true, "total": 212, "percentages": { "true": 61.3, "false": 30.2, "unsure": 8.5 } },
-      { "questionId": 124, "enough": false, "total": null, "percentages": null }
-    ]
+      {
+        "questionId": 123,
+        "enough": true,
+        "total": 212,
+        "percentages": {
+          "true": 61.3,
+          "false": 30.2,
+          "unsure": 8.5
+        }
+      },
+      {
+        "questionId": 124,
+        "enough": false,
+        "total": null,
+        "percentages": null
+      }
+    ],
+    "notice": "Unofficial. Opinions of BeliefAtlas users, not official statistics, polls or law."
   },
   "relayOutcomes": {
-    "cast": { "outcome": "cast", "questionId": 123, "value": "true" },
-    "same": { "outcome": "same", "questionId": 123, "value": "true" },
-    "changed": { "outcome": "changed", "questionId": 123, "value": "false" },
-    "skipped": { "outcome": "skipped", "questionId": 123 },
-    "needs_link": { "outcome": "needs_link", "questionId": 123, "linkUrl": "https://beliefatlas.example.test/v/123?via=headless&at=pl-abcdefghjk23&pick=true" },
-    "needs_consent": { "outcome": "needs_consent", "questionId": 123, "linkUrl": "https://beliefatlas.example.test/v/123?via=headless&at=pl-abcdefghjk23&pick=true" },
-    "limit_reached": { "outcome": "limit_reached", "questionId": 123, "message": "That's your 100 for today." },
-    "change_used": { "outcome": "change_used", "questionId": 123, "message": "You can change this again tomorrow." },
-    "closed": { "outcome": "closed", "questionId": 123, "message": "This question is closed to new votes." },
-    "slow_down": { "outcome": "slow_down", "questionId": 123, "message": "Too many attempts. Try again in 1 minutes." },
-    "invalid": { "outcome": "invalid", "questionId": 123, "message": "That vote wasn't valid." },
-    "forbidden": { "outcome": "forbidden", "questionId": 123, "message": "That placement isn't yours." }
+    "cast": {
+      "outcome": "cast",
+      "questionId": 123,
+      "value": "true"
+    },
+    "same": {
+      "outcome": "same",
+      "questionId": 123,
+      "value": "true"
+    },
+    "changed": {
+      "outcome": "changed",
+      "questionId": 123,
+      "value": "false"
+    },
+    "skipped": {
+      "outcome": "skipped",
+      "questionId": 123
+    },
+    "needs_link": {
+      "outcome": "needs_link",
+      "questionId": 123,
+      "linkUrl": "https://beliefatlas.example.test/v/123?via=headless&at=pl-abcdefghjk23&pick=true"
+    },
+    "needs_consent": {
+      "outcome": "needs_consent",
+      "questionId": 123,
+      "linkUrl": "https://beliefatlas.example.test/v/123?via=headless&at=pl-abcdefghjk23&pick=true"
+    },
+    "limit_reached": {
+      "outcome": "limit_reached",
+      "questionId": 123,
+      "message": "That's your 100 for today."
+    },
+    "change_used": {
+      "outcome": "change_used",
+      "questionId": 123,
+      "message": "You can change this again tomorrow."
+    },
+    "closed": {
+      "outcome": "closed",
+      "questionId": 123,
+      "message": "This question is closed to new votes."
+    },
+    "slow_down": {
+      "outcome": "slow_down",
+      "questionId": 123,
+      "message": "Too many attempts. Try again in 1 minutes."
+    },
+    "invalid": {
+      "outcome": "invalid",
+      "questionId": 123,
+      "message": "That vote wasn't valid."
+    },
+    "forbidden": {
+      "outcome": "forbidden",
+      "questionId": 123,
+      "message": "That placement isn't yours."
+    }
   },
   "messages": {
-    "counted": { "type": "beliefatlas:counted", "questionId": 123 },
-    "skipped": { "type": "beliefatlas:skipped", "questionId": 123 }
+    "counted": {
+      "type": "beliefatlas:counted",
+      "questionId": 123
+    },
+    "skipped": {
+      "type": "beliefatlas:skipped",
+      "questionId": 123
+    }
   }
 }

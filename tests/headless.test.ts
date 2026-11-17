@@ -11,7 +11,9 @@ import { linkIdentity, vote } from "../lib/vote-engine";
 import { questionCard } from "../lib/headless/cards";
 import { testOrgKeys } from "../lib/headless/config";
 import { placementSurfaceContext, returnOrigin } from "../lib/headless/handoff";
-import { createOrg, createPlacement, getPlacement, placementResults } from "../lib/headless/placements";
+import { UNOFFICIAL_NOTICE } from "../lib/headless/notice";
+import { blockedOrgCountry } from "../lib/headless/org-eligibility";
+import { createOrg, createPlacement, getPlacement, OrgNotAllowed, placementResults } from "../lib/headless/placements";
 import { cleanUserId, orgForCredential, relayVote } from "../lib/headless/relay";
 import contract from "../sdks/contract/v1.json";
 import { GET as indexGET } from "../app/api/headless/v1/route";
@@ -72,9 +74,9 @@ let other: string;     // another org's placement
 
 before(async () => {
   admin = await makeAccount();
-  orgId = await createOrg({ slug: `${tag}-shop`, name: "Test Shop", createdBy: admin.id, origin: "test", status: "active" });
-  otherOrgId = await createOrg({ slug: `${tag}-other`, name: "Other", createdBy: admin.id, origin: "test", status: "active" });
-  const pendingOrg = await createOrg({ slug: `${tag}-pend`, name: "Pending", createdBy: admin.id, origin: "test" });
+  orgId = await createOrg({ slug: `${tag}-shop`, name: "Test Shop", createdBy: admin.id, origin: "test", status: "active", country: "US", sanctionsClearedAt: new Date() });
+  otherOrgId = await createOrg({ slug: `${tag}-other`, name: "Other", createdBy: admin.id, origin: "test", status: "active", country: "US", sanctionsClearedAt: new Date() });
+  const pendingOrg = await createOrg({ slug: `${tag}-pend`, name: "Pending", createdBy: admin.id, origin: "test", country: "US", sanctionsClearedAt: new Date() });
   q1 = await makeQuestion();
   q2 = await makeQuestion();
   qArchived = await makeQuestion("archived");
@@ -192,6 +194,42 @@ test("a placement that isn't serving is 404: org pending, or no child-directed a
     assert.equal((await placementGET(req(`/api/headless/v1/placements/${id}`), ctx(id))).status, 404, id);
   }
   assert.equal((await questionGET(req(`/api/headless/v1/questions/${q1}?placement=${pending}`), ctx(q1))).status, 404);
+});
+
+test("orgs in Russia, Belarus, China or a sanctioned place can't be created", async () => {
+  for (const country of ["RU", "BY", "CN", "IR", "KP", "CU"]) {
+    assert.equal(blockedOrgCountry(country), true, country);
+    await assert.rejects(
+      createOrg({ slug: `${tag}-x${country.toLowerCase()}`, name: "No", createdBy: admin.id, origin: "test", country }),
+      OrgNotAllowed, country,
+    );
+  }
+  assert.equal(blockedOrgCountry(null), true);
+  assert.equal(blockedOrgCountry("us"), true);
+  assert.equal(blockedOrgCountry("US"), false);
+});
+
+test("an org that hasn't cleared sanctions screening never serves, even when active", async () => {
+  const unscreened = await createOrg({ slug: `${tag}-unscr`, name: "Unscreened", createdBy: admin.id, origin: "test", status: "active", country: "US" });
+  const id = await createPlacement({ orgId: unscreened, label: "x", kind: "site", questionIds: [q1], notChildDirected: true });
+  assert.equal((await getPlacement(id))?.serving, false);
+  assert.equal((await placementGET(req(`/api/headless/v1/placements/${id}`), ctx(id))).status, 404);
+  await query("update organizations set sanctions_cleared_at = now() where id = $1", [unscreened]);
+  assert.equal((await getPlacement(id))?.serving, true);
+  // A country later found to be blocked switches it off again (a direct edit; the app refuses it).
+  await query("update organizations set country = 'BY' where id = $1", [unscreened]);
+  assert.equal((await getPlacement(id))?.serving, false);
+});
+
+test("every card, split and placement card carries the unofficial notice, in the reader's language", async () => {
+  const en = await questionCard(q1);
+  assert.equal(en?.notice, UNOFFICIAL_NOTICE.en);
+  const es = await questionCard(q1, { locale: "es" });
+  assert.ok(es?.notice.startsWith("No oficial"));
+  const split = await (await splitGET(req(`/api/headless/v1/questions/${q1}/split?lang=es`), ctx(q1))).json();
+  assert.ok(split.notice.startsWith("No oficial"));
+  const placement = await (await placementGET(req(`/api/headless/v1/placements/${site}`), ctx(site))).json();
+  for (const card of placement.questions) assert.equal(card.notice, UNOFFICIAL_NOTICE.en);
 });
 
 test("test orgs never serve in production", async () => {
@@ -339,9 +377,9 @@ test("results are aggregate, hidden below the minimum, and leave out seed and (i
   await query("delete from accounts where username = $1", [`${tag}_seed`]).catch(() => undefined);
 });
 
-test("the split endpoint gives percentages only", async () => {
+test("the split endpoint gives percentages and the notice, nothing else", async () => {
   const body = await (await splitGET(req(`/api/headless/v1/questions/${q1}/split`), ctx(q1))).json();
-  assert.deepEqual(Object.keys(body).sort(), ["hasVotes", "percentages", "questionId"]);
+  assert.deepEqual(Object.keys(body).sort(), ["hasVotes", "notice", "percentages", "questionId"]);
 });
 
 test("the index says what's on", async () => {

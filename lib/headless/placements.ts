@@ -2,6 +2,7 @@ import { query, transaction } from "../db";
 import { isProductionEnv, type Origin } from "../provenance";
 import { pct } from "../stats";
 import type { Surface } from "../front-door";
+import { blockedOrgCountry, orgEligible } from "./org-eligibility";
 
 // Placements: the spots where an organization shows BeliefAtlas questions (a checkout screen, an
 // article footer, an app's settings page). Created and edited in the BeliefAtlas app by the org's
@@ -21,7 +22,8 @@ export type Placement = {
   allowedOrigins: string[];
   questionIds: number[];
   // Whether it may serve at all: org active, placement not switched off, the org has said it is
-  // not child-directed, and (in production) a real org.
+  // not child-directed, the org is outside blocked countries and cleared sanctions screening, and
+  // (in production) a real org.
   serving: boolean;
 };
 
@@ -38,13 +40,14 @@ type Row = {
   id: string; org_id: string; slug: string; name: string; label: string; kind: PlacementKind;
   allowed_origins: string[]; question_ids: number[]; not_child_directed: boolean;
   disabled_at: Date | null; status: string; origin: Origin;
+  country: string | null; sanctions_cleared_at: Date | null;
 };
 
 export async function getPlacement(id: string, env: Record<string, string | undefined> = process.env): Promise<Placement | null> {
   if (!isPlacementId(id)) return null;
   const [row] = await query<Row>(
     `select p.id, p.org_id, o.slug, o.name, p.label, p.kind, p.allowed_origins, p.question_ids,
-            p.not_child_directed, p.disabled_at, o.status, o.origin
+            p.not_child_directed, p.disabled_at, o.status, o.origin, o.country, o.sanctions_cleared_at
        from org_placements p join organizations o on o.id = p.org_id
       where p.id = $1`,
     [id],
@@ -60,7 +63,8 @@ export async function getPlacement(id: string, env: Record<string, string | unde
     kind: row.kind,
     allowedOrigins: row.allowed_origins,
     questionIds: row.question_ids,
-    serving: row.status === "active" && !row.disabled_at && row.not_child_directed && originOk,
+    serving: row.status === "active" && !row.disabled_at && row.not_child_directed && originOk
+      && orgEligible({ country: row.country, sanctionsClearedAt: row.sanctions_cleared_at }),
   };
 }
 
@@ -139,11 +143,20 @@ export async function placementResults(
 
 // ---------- Making orgs and placements (tests and, later, the org dashboard) ----------
 
-export async function createOrg(input: { slug: string; name: string; createdBy: number; origin?: Origin; status?: "pending" | "active" }): Promise<number> {
+export class OrgNotAllowed extends Error {}
+
+// An org based in a blocked country can't be created at all. Approval (status active) also needs
+// cleared screening; without it the org can exist but never serves.
+export async function createOrg(input: {
+  slug: string; name: string; createdBy: number; country: string; origin?: Origin; status?: "pending" | "active";
+  sanctionsClearedAt?: Date | null;
+}): Promise<number> {
+  if (blockedOrgCountry(input.country)) throw new OrgNotAllowed("BeliefAtlas can't take organizations based in this country.");
   return transaction(async (client) => {
     const { rows } = await client.query<{ id: string }>(
-      "insert into organizations (slug, name, created_by, origin, status) values ($1, $2, $3, $4, $5) returning id",
-      [input.slug, input.name, input.createdBy, input.origin ?? "real", input.status ?? "pending"],
+      `insert into organizations (slug, name, created_by, origin, status, country, sanctions_cleared_at)
+       values ($1, $2, $3, $4, $5, $6, $7) returning id`,
+      [input.slug, input.name, input.createdBy, input.origin ?? "real", input.status ?? "pending", input.country, input.sanctionsClearedAt ?? null],
     );
     const id = Number(rows[0].id);
     await client.query("insert into org_members (org_id, account_id, role) values ($1, $2, 'admin')", [id, input.createdBy]);

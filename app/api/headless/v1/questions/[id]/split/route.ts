@@ -1,4 +1,6 @@
 import { errorBody, json, offResponse, preflight, PUBLIC_CORS, readLimit } from "@/lib/headless/http";
+import { cardLocale } from "@/lib/headless/cards";
+import { unofficialNotice } from "@/lib/headless/notice";
 import { getQuestion } from "@/lib/questions";
 import { percentages, tallies } from "@/lib/stats";
 
@@ -15,7 +17,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const question = await getQuestion(questionId);
   if (!question) return json(errorBody("not_found", "Question not found."), 404, PUBLIC_CORS);
   const tally = (await tallies([questionId])).get(questionId)!;
-  return json({ questionId, hasVotes: tally.total > 0, percentages: percentages(tally) }, 200, PUBLIC_CORS);
+  const notice = await unofficialNotice(cardLocale(new URL(request.url).searchParams.get("lang")));
+  return json({ questionId, hasVotes: tally.total > 0, percentages: percentages(tally), notice }, 200, PUBLIC_CORS);
 }
 
 export const OPTIONS = () => preflight();

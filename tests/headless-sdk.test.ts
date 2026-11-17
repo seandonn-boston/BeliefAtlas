@@ -8,7 +8,7 @@ import { currentText, recordConsent } from "../lib/consent";
 import { linkIdentity } from "../lib/vote-engine";
 import { createOrg, createPlacement } from "../lib/headless/placements";
 import {
-  answer, BeliefAtlas, BeliefAtlasError, describeOutcome, renderCardHtml, type QuestionCard,
+  answer, BeliefAtlas, BeliefAtlasError, describeOutcome, renderCardHtml, UNOFFICIAL_NOTICE, type QuestionCard,
 } from "../sdks/javascript/src/index";
 import contract from "../sdks/contract/v1.json";
 import { GET as questionGET } from "../app/api/headless/v1/questions/[id]/route";
@@ -47,7 +47,7 @@ before(async () => {
     "insert into accounts (username, phone_hash, password_hash, consented_at, origin) values ($1, $1, 'x', now(), 'test') returning id",
     [`${tag}_admin`],
   );
-  const orgId = await createOrg({ slug: `${tag}-org`, name: "SDK Test Org", createdBy: admin.id, origin: "test", status: "active" });
+  const orgId = await createOrg({ slug: `${tag}-org`, name: "SDK Test Org", createdBy: admin.id, origin: "test", status: "active", country: "US", sanctionsClearedAt: new Date() });
   const [row] = await query<{ id: number }>(
     "insert into questions (text, normalized) values ($1, lower($1)) returning id",
     [`Headless sdk ${tag} claim is true`],
@@ -144,6 +144,9 @@ test("renderCardHtml() escapes the text and links every choice to the hosted pag
   assert.ok(html.includes("Is &lt;b&gt;&quot;this&quot;&lt;/b&gt; &amp; that true?"));
   assert.equal((html.match(/class="beliefatlas-choice /g) ?? []).length, 4);
   assert.ok(!html.includes("<script"));
+  assert.ok(html.includes(`<p class="beliefatlas-notice">${contract.card.notice}</p>`));
+  // A response without a notice still gets one.
+  assert.ok(renderCardHtml({ ...card, notice: "" }).includes(UNOFFICIAL_NOTICE));
   const closed = renderCardHtml({ ...card, status: "archived", choices: card.choices.map((c) => ({ ...c, answerUrl: null })) });
   assert.ok(closed.includes("closed to new answers"));
 });

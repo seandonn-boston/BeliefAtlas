@@ -5,6 +5,9 @@
 -- no bank details. Placement ids are public, like a publishable key: they identify a spot where
 -- an org shows questions; they authorize nothing beyond reading public question cards.
 --
+-- No org from a sanctioned place, Russia, Belarus or China, and none that hasn't cleared sanctions
+-- screening (lib/headless/org-eligibility.ts).
+--
 -- Orgs never ask questions through the API (Sean's rule: questions are asked on the BeliefAtlas
 -- website or app). Placements only point at questions that already exist.
 
@@ -16,6 +19,12 @@ create table organizations (
   status      text not null default 'pending' check (status in ('pending', 'active', 'suspended')),
   -- Same origins as accounts (lib/provenance.ts): test orgs exist only for tests and previews.
   origin      text not null default 'real' check (origin in ('real', 'test', 'seed')),
+  -- Where the org is based (ISO 3166-1 alpha-2). Orgs in sanctioned places, Russia, Belarus or China may
+  -- not be orgs at all (Sean, 17 Nov); an org with no country never serves.
+  country     text check (country ~ '^[A-Z]{2}$'),
+  -- Set by the sanctions screening (US, UN, EU and UK lists) when the org is clear. Null means
+  -- not yet screened, or a match: either way it never serves.
+  sanctions_cleared_at timestamptz,
   created_by  integer references accounts(id) on delete set null,
   created_at  timestamptz not null default now()
 );

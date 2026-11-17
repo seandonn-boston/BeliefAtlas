@@ -22,7 +22,7 @@ async function load(origin: string | null) {
     "insert into accounts (username, phone_hash, password_hash, consented_at, origin) values ($1, $1, 'x', now(), 'test') returning id",
     [ADMIN],
   );
-  const orgId = await createOrg({ slug: SLUG, name: "Headless Test Org", createdBy: admin.id, origin: "test", status: "active" });
+  const orgId = await createOrg({ slug: SLUG, name: "Headless Test Org", createdBy: admin.id, origin: "test", status: "active", country: "US", sanctionsClearedAt: new Date() });
   const questions = await query<{ id: number }>("select id from questions where status = 'active' order by id limit 3");
   const placement = await createPlacement({
     orgId, label: "Test placement", kind: "site", allowedOrigins: origin ? [origin] : [],

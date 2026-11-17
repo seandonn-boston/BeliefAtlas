@@ -1,5 +1,7 @@
 import { getAccount } from "@/lib/auth";
 import { errorBody, json, offResponse } from "@/lib/headless/http";
+import { cardLocale } from "@/lib/headless/cards";
+import { unofficialNotice } from "@/lib/headless/notice";
 import { getPlacement, isOrgMember, placementResults } from "@/lib/headless/placements";
 import { hit, RULES, tooMany } from "@/lib/rate-limit";
 import { minGroupSize } from "@/lib/regions";
@@ -11,7 +13,7 @@ import { minGroupSize } from "@/lib/regions";
 // seed votes never count, test votes don't count in production, and nothing is person-level
 // (decision 2 in belief-map/headless-front-door.md). No CORS: read it in the BeliefAtlas app or
 // from a same-site page.
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const off = offResponse();
   if (off) return off;
   const account = await getAccount();
@@ -29,5 +31,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     placement: { id: placement.id, label: placement.label, kind: placement.kind },
     minGroupSize: min,
     questions: await placementResults(placement, min),
+    // Exports carry the notice too (Sean's rule), so a copied chart still says it's unofficial.
+    notice: await unofficialNotice(cardLocale(new URL(request.url).searchParams.get("lang"))),
   });
 }

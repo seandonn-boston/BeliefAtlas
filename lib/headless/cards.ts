@@ -7,6 +7,7 @@ import { mergedInto } from "../questions";
 import { CHOICES, type Choice } from "../vote-engine";
 import { topPage } from "../feed";
 import { API_BASE, API_VERSION } from "./config";
+import { unofficialNotice } from "./notice";
 import { originAllowed, surfaceFor, type Placement } from "./placements";
 
 // The question card, v1: the one shape every SDK draws (belief-map/headless-front-door.md
@@ -28,6 +29,8 @@ export type QuestionCard = {
   choices: CardChoice[];
   shown: string | null;
   links: { question: string; results: string };
+  // Always shown with the card (Sean's rule): BeliefAtlas is unofficial.
+  notice: string;
 };
 
 export type CardOptions = {
@@ -76,7 +79,7 @@ async function row(questionId: number): Promise<Row | null> {
   return r ?? null;
 }
 
-function build(r: Row, labels: Record<Choice, string>, local: { text: string; lang: string; translated: boolean }, opts: CardOptions): QuestionCard {
+function build(r: Row, labels: Record<Choice, string>, local: { text: string; lang: string; translated: boolean }, notice: string, opts: CardOptions): QuestionCard {
   const active = r.status === "active";
   const placement = opts.placement ?? null;
   const surface = placement ? surfaceFor(placement.kind) : "headless";
@@ -97,6 +100,7 @@ function build(r: Row, labels: Record<Choice, string>, local: { text: string; la
     })),
     shown: active ? shownToken(r.id, opts.now) : null,
     links: { question: `${baseUrl()}/v/${r.id}`, results: `${baseUrl()}${API_BASE}/questions/${r.id}/split` },
+    notice,
   };
 }
 
@@ -114,8 +118,10 @@ export async function questionCard(questionId: number, opts: CardOptions = {}): 
     mergedFrom = questionId;
   }
   const locale = cardLocale(opts.locale);
-  const [labels, local] = await Promise.all([choiceLabels(locale), localizeQuestion({ id: r.id, text: r.text, lang: r.lang }, locale)]);
-  const card = build(r, labels, local, opts);
+  const [labels, local, notice] = await Promise.all([
+    choiceLabels(locale), localizeQuestion({ id: r.id, text: r.text, lang: r.lang }, locale), unofficialNotice(locale),
+  ]);
+  const card = build(r, labels, local, notice, opts);
   return mergedFrom ? { ...card, mergedFrom } : card;
 }
 

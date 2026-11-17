@@ -35,7 +35,12 @@ export interface QuestionCard {
   choices: CardChoice[];
   shown: string | null;
   links: { question: string; results: string };
+  /** Always shown with the card: BeliefAtlas is unofficial. renderCardHtml draws it. */
+  notice: string;
 }
+
+/** Drawn when a response lacks a notice; never leave it out of what you show. */
+export const UNOFFICIAL_NOTICE = "Unofficial. Opinions of BeliefAtlas users, not official statistics, polls or law.";
 
 export interface PlacementResponse {
   version: number;
@@ -47,12 +52,14 @@ export interface Split {
   questionId: number;
   hasVotes: boolean;
   percentages: { true: number; false: number; unsure: number };
+  notice: string;
 }
 
 export interface PlacementResults {
   placement: { id: string; label: string; kind: string };
   minGroupSize: number;
   questions: { questionId: number; enough: boolean; total: number | null; percentages: Split["percentages"] | null }[];
+  notice: string;
 }
 
 export type RelayOutcome =
@@ -144,8 +151,8 @@ export class BeliefAtlas {
   }
 
   /** Percentages only. Show it after a vote counted, so first answers stay blind. */
-  split(id: number): Promise<Split> {
-    return this.request(this.api(`/questions/${encodeURIComponent(String(id))}/split`));
+  split(id: number, opts: { lang?: string } = {}): Promise<Split> {
+    return this.request(this.api(`/questions/${encodeURIComponent(String(id))}/split`, { lang: opts.lang ?? this.opts.lang }));
   }
 
   /**
@@ -238,7 +245,9 @@ export function renderCardHtml(card: QuestionCard, opts: { headingLevel?: 2 | 3 
   const body = card.status === "active" && choices
     ? `<ul class="beliefatlas-choices">${choices}</ul>`
     : `<p class="beliefatlas-closed">This question is closed to new answers.</p>`;
-  return `<section class="beliefatlas-card" data-question="${card.id}"><${h} class="beliefatlas-text" lang="${escapeHtml(card.lang)}">${escapeHtml(card.text)}</${h}>${body}</section>`;
+  // The notice is always drawn, in the card's own markup, so it can't be dropped by accident.
+  const notice = `<p class="beliefatlas-notice">${escapeHtml(card.notice?.trim() || UNOFFICIAL_NOTICE)}</p>`;
+  return `<section class="beliefatlas-card" data-question="${card.id}"><${h} class="beliefatlas-text" lang="${escapeHtml(card.lang)}">${escapeHtml(card.text)}</${h}>${body}${notice}</section>`;
 }
 
 export type Described = { tone: "done" | "info" | "action" | "error"; text: string; linkUrl?: string };

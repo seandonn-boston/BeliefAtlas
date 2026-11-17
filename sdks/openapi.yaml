@@ -12,6 +12,12 @@ info:
     relay (`POST /votes`) is switched off and has no real credentials yet.
 
     The API never creates or edits questions: organizations ask in the BeliefAtlas app.
+
+    Every card, split and results response carries `notice` ("Unofficial. Opinions of BeliefAtlas
+    users, not official statistics, polls or law."). Show it with the card, always.
+
+    Organizations based in sanctioned places, Russia, Belarus or China can't use the front door,
+    and every organization is screened against the US, UN, EU and UK sanctions lists first.
 servers:
   - url: "{base}/api/headless/v1"
     variables:
@@ -44,7 +50,9 @@ paths:
   /questions/{id}/split:
     get:
       summary: Percentages only, for after an answer counted
-      parameters: [{ $ref: "#/components/parameters/QuestionId" }]
+      parameters:
+        - $ref: "#/components/parameters/QuestionId"
+        - { name: lang, in: query, schema: { type: string } }
       responses:
         "200":
           description: The split
@@ -84,7 +92,16 @@ paths:
       parameters:
         - { name: placementId, in: path, required: true, schema: { $ref: "#/components/schemas/PlacementId" } }
       responses:
-        "200": { description: Results }
+        "200":
+          description: Results, with the unofficial notice
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [placement, minGroupSize, questions, notice]
+                properties:
+                  minGroupSize: { type: integer }
+                  notice: { $ref: "#/components/schemas/Notice" }
         "401": { description: Not signed in }
         "404": { $ref: "#/components/responses/NotFound" }
   /votes:
@@ -137,7 +154,7 @@ components:
       properties: { error: { type: string }, message: { type: string } }
     QuestionCard:
       type: object
-      required: [version, id, text, lang, translated, status, approved, choices, shown, links]
+      required: [version, id, text, lang, translated, status, approved, choices, shown, links, notice]
       properties:
         version: { type: integer, const: 1 }
         id: { type: integer }
@@ -160,9 +177,15 @@ components:
         links:
           type: object
           properties: { question: { type: string, format: uri }, results: { type: string, format: uri } }
+        notice: { $ref: "#/components/schemas/Notice" }
+    Notice:
+      type: string
+      description: Always shown with the card, split or results. Says BeliefAtlas is unofficial.
     Split:
       type: object
+      required: [questionId, hasVotes, percentages, notice]
       properties:
+        notice: { $ref: "#/components/schemas/Notice" }
         questionId: { type: integer }
         hasVotes: { type: boolean }
         percentages:
