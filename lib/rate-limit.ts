@@ -12,12 +12,12 @@ export const RULES = {
   smsPerIp:        { name: "sms-ip",       limit: 10,  windowSeconds: 3600 },
   signupPerIp:     { name: "signup-ip",    limit: 10,  windowSeconds: 3600 },
   signupPerIpDay:  { name: "signup-ip-d",  limit: 30,  windowSeconds: 24 * 3600 },
-  signupPerDevice: { name: "signup-dev",   limit: 3,   windowSeconds: 24 * 3600 },
+  // Anti-abuse ceilings only: a household sharing one computer or one connection, each person
+  // with their own account, never comes near them.
+  signupPerDevice: { name: "signup-dev",   limit: 10,  windowSeconds: 24 * 3600 },
   loginPerName:    { name: "login-name",   limit: 8,   windowSeconds: 15 * 60 },
   loginPerIp:      { name: "login-ip",     limit: 40,  windowSeconds: 15 * 60 },
   votesPerAccount: { name: "vote-acct",    limit: 60,  windowSeconds: 60 },
-  votesPerAccountHour: { name: "vote-acct-h", limit: 1000, windowSeconds: 3600 },
-  votesPerIp:      { name: "vote-ip",      limit: 300, windowSeconds: 60 },
   asksPerAccount:  { name: "ask-acct",     limit: 5,   windowSeconds: 60 },
   reportsPerAccount: { name: "report-acct", limit: 20, windowSeconds: 3600 },
   feedPerIp:       { name: "feed-ip",      limit: 120, windowSeconds: 60 },

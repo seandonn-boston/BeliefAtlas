@@ -5,6 +5,7 @@ import { signupAction } from "@/app/actions";
 import { ErrorBanner, Header } from "@/components/Header";
 import { AGE_GATE_COOKIE } from "@/lib/age";
 import { humanChallenge, TURNSTILE_SCRIPT } from "@/lib/human-check";
+import { smsMode } from "@/lib/sms";
 
 type Props = { searchParams: Promise<{ error?: string; next?: string }> };
 
@@ -12,6 +13,20 @@ export default async function SignupPage({ searchParams }: Props) {
   const { error, next = "/" } = await searchParams;
   const gated = Boolean((await cookies()).get(AGE_GATE_COOKIE));
   const challenge = humanChallenge();
+
+  // In production, signups stay closed until both the bot check and phone codes are set up.
+  if (challenge.name === "off" || smsMode === "off") {
+    return (
+      <>
+        <Header />
+        <main className="wrap wrap-narrow">
+          <h1 className="page-title">Signups aren&apos;t open yet</h1>
+          <p>We&apos;re finishing the checks that keep Belief Map to real people. Check back soon.</p>
+          <p className="q-join">Already have an account? <Link href={`/login?next=${encodeURIComponent(next)}`}>Sign in</Link>.</p>
+        </main>
+      </>
+    );
+  }
 
   if (gated) {
     return (

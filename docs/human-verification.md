@@ -30,7 +30,7 @@ on Android. Neither is proof of age on its own; both make the honest path one ta
 | Phone code by SMS (Twilio Verify) | All | One person making many accounts; scripts without a real phone | About $0.05 per signup plus SMS fees | Built earlier, kept |
 | Phone line-type lookup (Twilio Lookup) | All | Bot farms using rented VoIP and virtual numbers | About $0.008 per lookup | **Built**, off until switched on |
 | Invisible challenge (Cloudflare Turnstile) | Web | Headless browsers and scripts hitting the signup form | Free | **Built** |
-| Rate limits per IP, per browser, per account | All | Bulk signups and scripted voting | Free | **Built** (added to the existing ones) |
+| Rate limits | All | Bulk signups and scripted voting | Free | **Built** (added to the existing ones) |
 | Declared Age Range | iOS app | Minors, using the age Apple already holds | Free | **Planned** for the iOS app |
 | Play Age Signals | Android app | Minors, using the age Google already holds | Free | **Planned** for the Android app |
 | App Attest / Play Integrity | Native apps | Requests from emulators, modified apps and scripts | Free (Play Integrity has a daily quota) | **Planned** with the native apps |
@@ -85,8 +85,10 @@ birthdays now.
 
 - `lib/human-check.ts` defines a `HumanChallenge` interface with three implementations:
   Cloudflare Turnstile (when `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` are set), a
-  development bypass (no keys, not production) and a closed one (no keys in production, which
-  refuses signups, the same rule as phone verification).
+  development bypass (no keys, not production) and a closed one (no keys in production).
+  Decided 17 Nov: production stays closed until the keys are added. The signup page then shows
+  "Signups aren't open yet" instead of the form, and the server refuses any signup that is
+  posted anyway. The same holds while Twilio Verify isn't set up.
 - The widget runs in "interaction-only" mode, so most people never see it.
 - Tokens are checked server-side with the caller's IP and must carry the `signup` action.
   If Cloudflare can't be reached the signup fails closed, because failing open would let bots
@@ -94,14 +96,19 @@ birthdays now.
 
 ### Rate limits
 
-Already in place: signups 10 an hour per IP, texted codes per IP and per phone, votes 60 a
-minute per account, plus login, ask and report limits. Added:
+Rule (Sean, 17 Nov): people who share a computer or a connection, like a family, each get
+their own account with the full limits of their tier. So vote and question limits count per
+account only, never per IP address or browser. On the free tier that is 100 new votes and 10
+new questions a day, and any vote can be changed once a day, with no cap on how many votes are
+changed. The existing 60-votes-a-minute limit per account stays, as a check on scripts.
 
-- Signups: 30 a day per IP, and 3 a day per browser. The browser is counted with a random id
-  in a first-party cookie (`bm_device`); it identifies the browser, not the person.
-- Votes: 1,000 an hour per account (the paid tier has no daily cap) and 300 a minute per IP,
-  to catch many accounts voting together from one place. The per-IP number is set high
-  because campuses and mobile carriers put many people behind one address.
+Per-IP and per-browser limits exist only on starting a signup, as anti-abuse ceilings a
+household won't reach:
+
+- 10 signups an hour and 30 a day per IP address (the hourly one existed already).
+- 10 signups a day per browser, counted with a random id in a first-party cookie
+  (`bm_device`) that identifies the browser, not the person.
+- Texted codes stay limited per phone number and per IP, as before.
 
 ## Planned for the native apps
 
@@ -135,8 +142,8 @@ The web can't call any of these; they need the iOS and Android apps.
 
 ## What needs a decision or an account
 
-- **Cloudflare (free):** create a Turnstile widget and add the two keys, or signups stay
-  closed in production.
+- **Cloudflare (free):** decided to keep production signups closed until the two Turnstile
+  keys are added.
 - **Twilio Lookup (paid per lookup):** switch on with `PHONE_LINE_CHECK=twilio` once Twilio is
   set up. Recommended before launch.
 - **Whether unknown line types pass:** default is yes.

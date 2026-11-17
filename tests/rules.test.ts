@@ -367,16 +367,17 @@ test("signup: under 18 is refused before anything is sent or stored", async () =
   assert.equal(!missing.ok && missing.underage, false);
 });
 
-test("signup: one browser can start at most three signups a day", async () => {
+test("signup: a shared browser fits a household, but not a bot farm", async () => {
   const results = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 11; i++) {
     results.push(await startSignup({
-      username: `${tag}_d${i}`.slice(0, 20), phone: `339${String(Date.now() + i).slice(-7)}`, password: "correct horse",
+      username: `${tag}_d${i}`.slice(0, 20), phone: `339${String(Date.now() + i * 1000).slice(-7)}`, password: "correct horse",
       dob: "1985-02-28", consent: true, next: "/", ip: `ip4-${tag}-${i}`, device: `dev4-${tag}`, challengeToken: "",
     }));
   }
-  assert.deepEqual(results.map((r) => r.ok), [true, true, true, false]);
-  assert.match(!results[3].ok ? results[3].error : "", /Too many attempts/);
+  // Ten people can each start an account from one browser in a day; the eleventh is refused.
+  assert.deepEqual(results.map((r) => r.ok), [...Array(10).fill(true), false]);
+  assert.match(!results[10].ok ? results[10].error : "", /Too many attempts/);
   await query("delete from pending_signups where username like $1", [`${tag}\\_d%`]);
 });
 

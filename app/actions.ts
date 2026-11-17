@@ -134,14 +134,10 @@ export async function askAction(form: FormData) {
   redirect(withError(backPath(form), result.error));
 }
 
-// Per account to stop one account voting by script, per IP to stop many accounts doing it
-// together from one place.
+// Vote limits are per account only, never per IP address or browser, so people who share a
+// computer or a connection each get the full allowance of their own tier.
 async function voteLimit(accountId: number) {
-  return hit(
-    [RULES.votesPerAccount, String(accountId)],
-    [RULES.votesPerAccountHour, String(accountId)],
-    [RULES.votesPerIp, await clientIp()],
-  );
+  return hit([RULES.votesPerAccount, String(accountId)]);
 }
 
 export async function voteAction(form: FormData) {
