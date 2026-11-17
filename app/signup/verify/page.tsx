@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { resendCodeAction, verifySignupAction } from "@/app/actions";
 import { ErrorBanner, Header } from "@/components/Header";
 import { pendingSummary } from "@/lib/signup";
+import { PREVIEW_SMS_CODE, previewTestMode } from "@/lib/preview";
 import { smsMode } from "@/lib/sms";
 
 type Props = { searchParams: Promise<{ t?: string; error?: string; sent?: string }> };
@@ -24,7 +25,11 @@ export default async function VerifyPage({ searchParams }: Props) {
             Code sent to the number ending {summary.phoneEnding}
             <input name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9 ]{4,12}" required autoFocus />
             {sent && <span className="field-note">A new code is on its way.</span>}
-            {smsMode === "dev" && <span className="field-note">Development mode: the code is in the server log.</span>}
+            {smsMode === "dev" && (
+              <span className="field-note">
+                {previewTestMode ? `Preview: no text is sent. The code is ${PREVIEW_SMS_CODE}.` : "Development mode: the code is in the server log."}
+              </span>
+            )}
           </label>
           <button className="btn solid">Create account</button>
         </form>

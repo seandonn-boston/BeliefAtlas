@@ -2,6 +2,16 @@
 
 About half an hour, most of it creating accounts. Do it in this order.
 
+## Just a preview first
+
+To try a branch on a real URL before launch, without Twilio or Stripe:
+
+1. Import the repo in Vercel and create the Neon database (steps 1.1 and 1.2 below).
+2. Add `PHONE_PEPPER` (any long random string) and `PREVIEW_TEST_MODE` = `1`, both for the **Preview** environment only.
+3. Every pushed branch then gets its own preview URL. Its build loads the questions and demo votes; signup takes the code `000000` (shown on the page) and membership switches without payment.
+
+Preview test mode only works where Vercel sets `VERCEL_ENV=preview`, so it can't switch on in production.
+
 ## 1. Vercel and the database
 
 1. In Vercel, **Add New → Project** and import `seandonn-boston/yes-or-no`. Leave the build settings alone; `vercel.json` sets the build command, which runs database migrations before every build.

@@ -1,16 +1,18 @@
 import { createHash, randomInt } from "crypto";
+import { PREVIEW_SMS_CODE, previewTestMode } from "./preview";
 
 // Phone codes are sent and checked by Twilio Verify, which holds the code itself.
 // Without Twilio credentials, outside production, a development mode makes its own code and
 // prints it to the server log, so signup works on a laptop. SMS_DEV_CODE fixes that code for
-// automated tests. In production without Twilio, signup is closed rather than unverified.
+// automated tests. In production without Twilio, signup is closed rather than unverified,
+// except in preview test mode (lib/preview.ts), where the code is fixed and shown on the page.
 
 const SID = process.env.TWILIO_ACCOUNT_SID;
 const TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const SERVICE = process.env.TWILIO_VERIFY_SERVICE_SID;
 
 export const smsMode: "twilio" | "dev" | "off" =
-  SID && TOKEN && SERVICE ? "twilio" : process.env.NODE_ENV === "production" ? "off" : "dev";
+  SID && TOKEN && SERVICE ? "twilio" : process.env.NODE_ENV !== "production" || previewTestMode ? "dev" : "off";
 
 const hashCode = (code: string) => createHash("sha256").update(code).digest("hex");
 
@@ -33,7 +35,7 @@ export type SendResult = { ok: true; devCodeHash?: string } | { ok: false; error
 export async function sendCode(e164: string): Promise<SendResult> {
   if (smsMode === "off") return { ok: false, error: "Phone verification isn't set up on this server yet." };
   if (smsMode === "dev") {
-    const code = process.env.SMS_DEV_CODE || String(randomInt(0, 1_000_000)).padStart(6, "0");
+    const code = previewTestMode ? PREVIEW_SMS_CODE : process.env.SMS_DEV_CODE || String(randomInt(0, 1_000_000)).padStart(6, "0");
     console.log(`[sms dev mode] code for ${e164.slice(0, -4).replace(/\d/g, "•")}${e164.slice(-4)}: ${code}`);
     return { ok: true, devCodeHash: hashCode(code) };
   }

@@ -15,7 +15,7 @@
     "ai:answers": "tsx --env-file-if-exists=.env.local db/ai-answers.ts",
     "admin:role": "tsx --env-file-if-exists=.env.local db/set-role.ts",
     "db:migrate:deploy": "tsx db/migrate.ts",
-    "vercel-build": "npm run db:migrate:deploy && next build"
+    "vercel-build": "npm run db:migrate:deploy && tsx db/preview-seed.ts && next build"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",

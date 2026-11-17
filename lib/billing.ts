@@ -1,18 +1,19 @@
 import Stripe from "stripe";
 import { query } from "./db";
+import { previewTestMode } from "./preview";
 
 // Membership is a Stripe subscription. Stripe is the source of truth: every webhook re-reads
 // the subscription from Stripe and sets the account's tier from its status.
 //
 // Without STRIPE_SECRET_KEY, outside production, a development mode switches the tier
 // directly so the paid experience can be tried locally. In production without Stripe,
-// joining is unavailable.
+// joining is unavailable, except in preview test mode (lib/preview.ts).
 
 const KEY = process.env.STRIPE_SECRET_KEY;
 const PRICE = process.env.STRIPE_PRICE_ID;
 
 export const billingMode: "stripe" | "dev" | "off" =
-  KEY && PRICE ? "stripe" : process.env.NODE_ENV === "production" ? "off" : "dev";
+  KEY && PRICE ? "stripe" : process.env.NODE_ENV !== "production" || previewTestMode ? "dev" : "off";
 
 let client: Stripe | null = null;
 const stripe = () => (client ??= new Stripe(KEY!));

@@ -3,6 +3,7 @@
 // real people's. Safe to run more than once; it does nothing if seed accounts already exist.
 import { createHash } from "crypto";
 import { Pool } from "pg";
+import { previewTestMode } from "../lib/preview";
 
 type Seed = { text: string; pTrue: number; pUnsure: number; churn: number; privateShift?: number };
 
@@ -47,7 +48,7 @@ const normalize = (t: string) =>
   t.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
 
 async function main() {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" && !previewTestMode) {
     throw new Error("db/seed.ts creates fake accounts and votes and must never run against a production database.");
   }
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
