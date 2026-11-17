@@ -12,6 +12,39 @@ To try a branch on a real URL before launch, without Twilio or Stripe:
 
 Preview test mode only works where Vercel sets `VERCEL_ENV=preview`, so it can't switch on in production.
 
+## Environments and data
+
+Test data must never mix with real data. Three branches, three kinds of deployment, and a database of their own for each:
+
+| Branch | Vercel environment | Database |
+|---|---|---|
+| `main` | Production | Production's own Neon project (or its main branch) |
+| `staging` | Preview | Its own Neon branch or project |
+| `develop` | Preview | Its own Neon branch or project |
+
+Never share a database between environments. In Vercel, give `DATABASE_URL` a separate value for Production and for each preview branch (**Settings → Environment Variables**, scoped by environment and, for previews, by branch), or use Neon's branch-per-preview integration. Set `PREVIEW_TEST_MODE=1` for **Preview** only; it needs Vercel's `VERCEL_ENV=preview` as well, so it can't switch on in production even if set there.
+
+**Where every row came from.** Every account, vote and vote event has an `origin`:
+
+- `real`: a person who signed up on the live site. The only data ever sold or served to API keys.
+- `test`: made to try the site out: preview test-mode signups, the demo votes (`npm run db:seed:demo`), load tests and screenshots. Never allowed in production.
+- `seed`: fictional launch accounts and votes, there so the site doesn't look empty to the first people who join. Removed completely before any data sale.
+
+A vote always has its account's origin; the database sets it and refuses anything else, and an account's origin can't change while it has votes.
+
+**Test data can't reach production.** The first production deploy marks its database as production (`db/migrate.ts`; the mark is never removed). From then on the database itself refuses test accounts, and the demo and load-test loaders and the preview seed refuse to run, even from a laptop whose `.env.local` points at production. They also refuse whenever `VERCEL_ENV=production`, or `NODE_ENV=production` outside a Vercel preview. Each deploy and each server start logs an error if a production database holds any test data, or if a preview is connected to the production database. `npm run seed:status` shows what is there; `npm run test-data:remove` removes test data (add `-- --dry-run` to see first).
+
+**Seed data.** The file format (JSON or CSV) is described at the top of `lib/seed-data.ts`. Loading is all-or-nothing and safe to repeat:
+
+```bash
+npm run seed:status                                  # how much seed data is left
+SEED_ALLOW=1 npm run seed:load -- launch-seed.json   # production needs SEED_ALLOW=1 for that run
+npm run seed:remove -- --dry-run                     # what removal would delete
+npm run seed:remove                                  # delete every seed account, vote, event and skip
+```
+
+Removal checks every touched question's counters against the votes table before it commits, and rebuilds the daily rollups. **While any seed data remains, API-key requests to `/api/questions/:id/stats` answer 503 ("seed data still present; data sales open after it is removed") and sale exports refuse to run.** Public stats are unaffected. Data sales and keyed API access open only once `npm run seed:status` shows none.
+
 ## 1. Vercel and the database
 
 1. In Vercel, **Add New → Project** and import `seandonn-boston/yes-or-no`. Leave the build settings alone; `vercel.json` sets the build command, which runs database migrations before every build.
@@ -39,7 +72,7 @@ From your laptop, with the production `DATABASE_URL` in `.env.local`:
 npm run db:seed:questions
 ```
 
-Never run `npm run db:seed:demo` against production; it creates fake accounts and refuses to run when `NODE_ENV=production`.
+Never run `npm run db:seed:demo` against production; it creates fake test accounts and refuses to run in production or against a database marked as production (see [Environments and data](#environments-and-data)).
 
 ## 4. Phone verification (Twilio)
 

@@ -1,9 +1,12 @@
 import { createHmac } from "crypto";
 import { query } from "../db";
+import { assertNoSeedData } from "../provenance";
 import { SALE_ELIGIBLE_ACCOUNTS } from "../regions";
 
 // The one way to read person-level answers for a sale. Nothing is sold yet: this exists so the
-// first export is built on the right rules rather than written from scratch. It includes only:
+// first export is built on the right rules rather than written from scratch. It refuses to run
+// at all while any seed data is left (lib/provenance.ts assertNoSeedData), and includes only:
+//   * real people's answers (origin 'real' on the account and on the vote), never test or seed;
 //   * accounts that pass SALE_ELIGIBLE_ACCOUNTS (agreed to answering, opted in to sale without
 //     GPC, in a region open to sale, not deleted);
 //   * public answers (an answer marked private is never sold);
@@ -31,6 +34,7 @@ export const SALE_EXPORT_SQL = `
     from votes v
     join questions q on q.id = v.question_id
    where v.account_id in (${SALE_ELIGIBLE_ACCOUNTS})
+     and v.origin = 'real'
      and not v.is_private
      and q.status = 'active'
      and q.archived_at is null
@@ -41,6 +45,7 @@ export const SALE_EXPORT_SQL = `
 
 export async function saleExportRows(opts: SaleExportOptions): Promise<SaleRow[]> {
   if (!opts.salt || opts.salt.length < 16) throw new Error("A sale export needs its own random salt of 16+ characters.");
+  await assertNoSeedData();
   const rows = await query<{
     account_id: number; question_id: number; value: SaleRow["value"]; first_value: SaleRow["firstValue"];
     first_cast_at: Date; updated_at: Date;

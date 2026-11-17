@@ -71,8 +71,8 @@ export async function exportData(accountId: number) {
 //     their children.
 export async function deleteAccount(accountId: number): Promise<void> {
   await transaction(async (client) => {
-    const { rows } = await client.query<{ consented_at: Date; last_active_at: Date }>(
-      "select consented_at, last_active_at from accounts where id = $1 and deleted_at is null for update",
+    const { rows } = await client.query<{ consented_at: Date; last_active_at: Date; origin: string }>(
+      "select consented_at, last_active_at, origin from accounts where id = $1 and deleted_at is null for update",
       [accountId],
     );
     if (!rows[0]) return;
@@ -85,10 +85,12 @@ export async function deleteAccount(accountId: number): Promise<void> {
     await client.query("delete from votes where account_id = $1", [accountId]);
 
     const stand = randomBytes(12).toString("hex");
+    // The stand-in keeps the account's origin (real, test or seed), so the history it carries
+    // keeps it too; the database refuses to move events between origins.
     const { rows: [standIn] } = await client.query<{ id: number }>(
-      `insert into accounts (username, phone_hash, password_hash, consented_at, last_active_at, deleted_at)
-       values ($1, $2, '!', $3, $4, now()) returning id`,
-      [`deleted_${stand}`, `deleted:${stand}`, rows[0].consented_at, rows[0].last_active_at],
+      `insert into accounts (username, phone_hash, password_hash, consented_at, last_active_at, deleted_at, origin)
+       values ($1, $2, '!', $3, $4, now(), $5) returning id`,
+      [`deleted_${stand}`, `deleted:${stand}`, rows[0].consented_at, rows[0].last_active_at, rows[0].origin],
     );
     await client.query("update vote_events set account_id = $2 where account_id = $1", [accountId, standIn.id]);
     await client.query("update reports set account_id = $2 where account_id = $1", [accountId, standIn.id]);

@@ -1,9 +1,13 @@
-// DEVELOPMENT ONLY. Fake accounts casting fake votes, so the charts and stats have something
-// to draw while building. It refuses to run in production: a live site's votes must all be
-// real people's. Safe to run more than once; it does nothing if seed accounts already exist.
+// DEVELOPMENT AND PREVIEWS ONLY. Fake accounts casting fake votes, so the charts and stats have
+// something to draw while building. Every account it makes is test data (origin 'test',
+// lib/provenance.ts). It refuses to run in a production environment or against a database
+// marked as production, and the database itself refuses test accounts there: a live site's
+// votes must all be real people's. (Fictional launch votes for production are seed data,
+// loaded with npm run seed:load, not this.) Safe to run more than once; it does nothing if
+// demo accounts already exist.
 import { createHash } from "crypto";
 import { Pool } from "pg";
-import { previewTestMode } from "../lib/preview";
+import { assertTestDataAllowedHere } from "../lib/provenance";
 
 type Seed = { text: string; pTrue: number; pUnsure: number; churn: number; privateShift?: number };
 
@@ -48,13 +52,19 @@ const normalize = (t: string) =>
   t.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
 
 async function main() {
-  if (process.env.NODE_ENV === "production" && !previewTestMode) {
-    throw new Error("db/seed.ts creates fake accounts and votes and must never run against a production database.");
-  }
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const existing = await pool.query("select 1 from accounts where username like 'seed\\_%' limit 1");
+  try {
+    await assertTestDataAllowedHere("db/seed.ts (the demo data loader)", pool);
+  } catch (err) {
+    await pool.end();
+    throw err;
+  }
+  // Demo accounts were called seed_0001... before origins existed; they are test data too.
+  const existing = await pool.query(
+    "select 1 from accounts where origin = 'test' and (username like 'demo\\_%' or username like 'seed\\_%') limit 1",
+  );
   if (existing.rowCount) {
-    console.log("seed data already present");
+    console.log("demo data already present");
     return pool.end();
   }
 
@@ -64,11 +74,11 @@ async function main() {
 
     const accountIds: number[] = [];
     for (let i = 1; i <= ACCOUNTS; i++) {
-      const name = `seed_${String(i).padStart(4, "0")}`;
+      const name = `demo_${String(i).padStart(4, "0")}`;
       const res = await client.query<{ id: number }>(
-        `insert into accounts (username, phone_hash, password_hash, consented_at, created_at)
-         values ($1, $2, 'seed-account-no-login', now() - interval '20 days', now() - interval '20 days') returning id`,
-        [name, createHash("sha256").update(`seed:${name}`).digest("hex")],
+        `insert into accounts (username, phone_hash, password_hash, consented_at, created_at, origin)
+         values ($1, $2, 'demo-account-no-login', now() - interval '20 days', now() - interval '20 days', 'test') returning id`,
+        [name, createHash("sha256").update(`demo:${name}`).digest("hex")],
       );
       accountIds.push(res.rows[0].id);
     }
@@ -123,7 +133,7 @@ async function main() {
     );
 
     await client.query("commit");
-    console.log(`seeded ${ACCOUNTS} accounts and ${QUESTIONS.length} questions`);
+    console.log(`demo data: ${ACCOUNTS} test accounts voting on ${QUESTIONS.length} questions`);
   } catch (err) {
     await client.query("rollback");
     throw err;

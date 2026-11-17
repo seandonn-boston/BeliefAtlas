@@ -39,6 +39,7 @@ export async function scanForManipulation(opts: Partial<typeof MANIPULATION> = {
        select e.question_id, e.account_id, e.value, e.created_at
          from vote_events e join accounts a on a.id = e.account_id
         where e.action = 'cast' and e.value is not null
+          and a.origin = 'real'   -- seed and test accounts arrive in bursts by design
           and e.created_at > now() - make_interval(hours => $1)
           and a.created_at > e.created_at - make_interval(days => $2)
      ), windows as (

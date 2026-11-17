@@ -8,13 +8,20 @@ import { logger, requestIdFrom } from "./lib/log";
 // describes how a free or self-hosted tracker could be added later behind a flag that is
 // off by default. Nothing here sends data to a third party.
 
-export function register() {
+export async function register() {
   logger.info("server starting", {
     runtime: process.env.NEXT_RUNTIME ?? "nodejs",
     env: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
     region: process.env.VERCEL_REGION,
     commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12),
   });
+  // Data provenance (lib/provenance.ts): logs loudly, at error level, if a production database
+  // holds test data or a preview is connected to the production database. Node.js only (it
+  // reads the database), not during the build, and never holds up start-up or throws.
+  if (process.env.NEXT_RUNTIME === "nodejs" && process.env.DATABASE_URL && process.env.NEXT_PHASE !== "phase-production-build") {
+    const { checkDatabaseProvenance } = await import("./lib/provenance");
+    checkDatabaseProvenance().catch((error) => logger.warn("provenance check could not run", { error }));
+  }
 }
 
 // Called by Next for errors in server components, route handlers, server actions and proxy.
