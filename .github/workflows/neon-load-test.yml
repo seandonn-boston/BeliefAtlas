@@ -4,7 +4,8 @@ name: Neon load test
 # one: 1,000 vote calls a second for 10 seconds, the same 12 data checks, then every trace of the
 # test removed and the removal proved.
 #
-# Runs only on a push to the working branch whose commit message contains [neon-load-test],
+# Runs only on a push to the working branch whose commit message contains the marker
+# "[neon-load-test]" (with the brackets),
 # so ordinary pushes never touch Neon. It needs one repository secret,
 # NEON_LOADTEST_DATABASE_URL: the Development (or Preview) branch's connection string from
 # Neon. Never Production's: the guard step refuses a database marked as production or holding
@@ -46,6 +47,7 @@ jobs:
       - run: npm ci
 
       - name: Guard before migrating
+        id: guard
         run: npx tsx scripts/load/remote.ts guard
       - name: Migrate
         run: npm run db:migrate:deploy
@@ -55,6 +57,7 @@ jobs:
       - name: Load test, 1,000 calls a second for 10 seconds
         run: npx tsx scripts/load/votes.ts --rate=1000 --seconds=10
 
+      # Runs even when the load test fails halfway, but only once the guard has passed.
       - name: Remove all load-test data and prove it's gone
-        if: always()
+        if: always() && steps.guard.outcome == 'success'
         run: npx tsx scripts/load/remote.ts clean
