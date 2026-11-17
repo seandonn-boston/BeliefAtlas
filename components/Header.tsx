@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { logoutAction } from "@/app/actions";
 import { getAccount } from "@/lib/auth";
+import { reviewLanguages } from "@/lib/i18n/review";
 import type { View } from "@/lib/view";
 import { ViewSwitcher } from "./ViewSwitcher";
 
@@ -14,6 +15,8 @@ type Props = {
 
 export async function Header({ q = "", view, back, focus = false }: Props) {
   const [account, t] = await Promise.all([getAccount(), getTranslations("header")]);
+  // Moderators, admins and anyone granted a language can review translations.
+  const translates = account ? (await reviewLanguages(account)).length > 0 : false;
   return (
     <header className="header">
       <div className="header-in">
@@ -26,6 +29,7 @@ export async function Header({ q = "", view, back, focus = false }: Props) {
             {account ? (
               <form action={logoutAction} className="who">
                 {account.role !== "user" && <Link href="/mod">{t("review")}</Link>}
+                {translates && <Link href="/translate">{t("translate")}</Link>}
                 <Link href="/me">{t("map")}</Link>
                 <Link href="/settings" className="who-name">{account.username}</Link>
                 <button className="link">{t("signOut")}</button>

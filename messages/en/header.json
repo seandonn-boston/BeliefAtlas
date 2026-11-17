@@ -9,5 +9,10 @@
   "searchLabel": "Search questions",
   "search": "Search",
   "layout": "Layout",
-  "views": { "compact": "Compact list", "tiles": "Tiles", "swipe": "One at a time" }
+  "views": {
+    "compact": "Compact list",
+    "tiles": "Tiles",
+    "swipe": "One at a time"
+  },
+  "translate": "Translate"
 }

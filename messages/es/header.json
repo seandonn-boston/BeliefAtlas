@@ -9,5 +9,10 @@
   "searchLabel": "Buscar preguntas",
   "search": "Buscar",
   "layout": "Diseño",
-  "views": { "compact": "Lista compacta", "tiles": "Mosaico", "swipe": "Una a la vez" }
+  "views": {
+    "compact": "Lista compacta",
+    "tiles": "Mosaico",
+    "swipe": "Una a la vez"
+  },
+  "translate": "Traducir"
 }
