@@ -7,6 +7,7 @@ import { toCard } from "@/lib/cards";
 import { CATEGORIES, isCategory } from "@/lib/categories";
 import { query } from "@/lib/db";
 import { feedPage, topPage } from "@/lib/feed";
+import { localizeQuestions } from "@/lib/i18n/questions";
 import { getView } from "@/lib/view";
 import { myVotes } from "@/lib/votes";
 
@@ -26,11 +27,12 @@ export default async function Home({ searchParams }: Props) {
   const votedId = Number(voted);
   if (account && Number.isInteger(votedId) && votedId > 0) {
     const mine = await myVotes(account.id, [votedId]);
-    const [row] = await query<{ id: number; text: string; status: string; category: string; t: number; f: number; u: number }>(
+    // W3: localizeQuestions keeps the card in the reader's language.
+    const [row] = await localizeQuestions(await query<{ id: number; text: string; status: string; category: string; t: number; f: number; u: number }>(
       `select id, text, status, category, true_count as t, false_count as f, unsure_count as u
          from questions where id = $1 and status <> 'removed'`,
       [votedId],
-    );
+    ));
     if (row && mine.has(votedId)) items.unshift({ ...toCard(row, account, mine.get(votedId)), fresh: true });
   }
 

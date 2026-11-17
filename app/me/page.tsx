@@ -80,7 +80,7 @@ export default async function MapPage({ searchParams }: Props) {
             <ul className="map-entries">
               {map.entries.map((e) => (
                 <li key={e.questionId}>
-                  <Link href={`/q/${e.questionId}`} className="map-q">{e.text}</Link>
+                  <Link href={`/q/${e.questionId}`} className="map-q" lang={e.lang /* W3 */}>{e.text}</Link>
                   <p className="map-place">
                     <span className={`map-chip ${e.value}`}>{WORD(e.value)}</span>
                     {e.sameAsYou === null

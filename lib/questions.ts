@@ -3,9 +3,11 @@ import { LIMITS, TODAY_UTC } from "./limits";
 import type { Account } from "./auth";
 import { screenQuestion } from "./moderation";
 import { checkQuestion } from "./checks";
+import { meaningMatches } from "./embeddings"; // W3: meaning-based search, off unless EMBEDDINGS_URL is set
 
 export type Question = { id: number; text: string; status: string; category: string; created_at: Date };
-export type Match = Question & { similarity: number };
+// W3: `lang` is the language of `text` for this hit (it may be an approved translation).
+export type Match = Question & { similarity: number; lang: string };
 
 // Lowercase, strip punctuation, collapse whitespace. Two questions with the same normalized
 // form are the same question.
@@ -45,18 +47,49 @@ export function booleanProblem(text: string): string | null {
   return null;
 }
 
+// ---- W3 (languages) owns search() below; the ask path above and below is another workstream's.
+// Search matches canonical texts and approved translations alike and always returns the
+// canonical question id, so a Spanish search finds an English question with a Spanish
+// translation, and asking in Spanish finds it as a duplicate. Each hit carries `text` and `lang`
+// of what matched (pages pass hits through localizeQuestions to show the reader's language).
+// When EMBEDDINGS_URL points at a self-hosted embeddings service, meaning-based matches are
+// merged in too; without it this is trigram matching alone.
 export async function search(text: string, limit = 10): Promise<Match[]> {
   const norm = normalize(text);
   if (!norm) return [];
-  return query<Match>(
-    `select id, text, status, category, created_at, similarity(normalized, $1)::float as similarity
-       from questions
-      where status in ('active', 'archived')
-        and (normalized % $1 or normalized like '%' || $2 || '%')
-      order by similarity desc, created_at
-      limit $3`,
-    [norm, norm.replace(/[%_\\]/g, ""), limit],
-  );
+  const [trigram, meaning] = await Promise.all([
+    query<Match>(
+      `select id, text, lang, status, category, created_at, similarity from (
+         select distinct on (id) id, text, lang, status, category, created_at, similarity from (
+           select q.id, q.text, q.lang, q.status, q.category, q.created_at,
+                  similarity(q.normalized, $1)::float as similarity
+             from questions q
+            where q.status in ('active', 'archived')
+              and (q.normalized % $1 or q.normalized like '%' || $2 || '%')
+           union all
+           select q.id, t.text, t.lang, q.status, q.category, q.created_at,
+                  similarity(t.normalized, $1)::float
+             from question_translations t join questions q on q.id = t.question_id
+            where t.status = 'approved' and q.status in ('active', 'archived')
+              and (t.normalized % $1 or t.normalized like '%' || $2 || '%')
+         ) hits
+         order by id, similarity desc
+       ) best
+       order by similarity desc, created_at
+       limit $3`,
+      [norm, norm.replace(/[%_\\]/g, ""), limit],
+    ),
+    meaningMatches(text, limit),
+  ]);
+  if (meaning.length === 0) return trigram;
+  const best = new Map<number, Match>();
+  for (const m of [...trigram, ...meaning]) {
+    const have = best.get(m.id);
+    if (!have || m.similarity > have.similarity) best.set(m.id, m);
+  }
+  return [...best.values()]
+    .sort((a, b) => b.similarity - a.similarity || +new Date(a.created_at) - +new Date(b.created_at))
+    .slice(0, limit);
 }
 
 export async function getQuestion(id: number): Promise<Question | null> {

@@ -1,0 +1,56 @@
+{
+  "title": "Traducciones",
+  "intro": "Cada pregunta conserva un mismo número en todos los idiomas, así que las respuestas en cualquier idioma cuentan en la misma pregunta. Los lectores solo ven una traducción después de que una persona la apruebe.",
+  "languages": "Idioma de destino",
+  "tabs": { "todo": "Sin traducción", "approved": "Aprobadas" },
+  "draftsWaiting": "{n, plural, =0 {Ningún borrador pendiente} one {# borrador pendiente} other {# borradores pendientes}}",
+  "empty": {
+    "todo": "Todas las preguntas activas tienen una traducción aprobada a este idioma.",
+    "approved": "Todavía no hay nada aprobado en este idioma."
+  },
+  "meta": "#{id} · preguntada en {language} · {n, plural, one {# respuesta} other {# respuestas}}",
+  "status": {
+    "none": "Sin traducir",
+    "draft": "Borrador",
+    "rejected": "Rechazada",
+    "approved": "Aprobada"
+  },
+  "machineDraft": "Borrador automático, aún sin revisar por una persona",
+  "draftedBy": "Borrador de {name}",
+  "reviewedBy": "Revisada por {name}",
+  "field": "Traducción al {language}",
+  "actions": {
+    "save": "Guardar borrador",
+    "approve": "Aprobar",
+    "reject": "Rechazar",
+    "withdraw": "Devolver a borradores"
+  },
+  "approveNote": "Aprobar publica el texto del recuadro tal como está ahora.",
+  "done": {
+    "save": "Borrador guardado para la #{id}.",
+    "approve": "#{id} aprobada. Los lectores ya la ven.",
+    "reject": "Borrador de la #{id} rechazado.",
+    "withdraw": "La #{id} ya no se muestra a los lectores y vuelve a los borradores."
+  },
+  "errors": {
+    "forbidden": "No puedes revisar traducciones a este idioma.",
+    "not_found": "No se encontró esa pregunta.",
+    "empty": "Escribe primero la traducción.",
+    "too_long": "Las traducciones deben tener menos de 250 caracteres.",
+    "same_language": "Esa pregunta ya está en este idioma.",
+    "already_approved": "Esta traducción está aprobada. Devuélvela a borradores antes de cambiarla.",
+    "nothing_to_review": "No hay ningún borrador que revisar para esa pregunta."
+  },
+  "previous": "Anterior",
+  "next": "Siguiente",
+  "machine": {
+    "on": "Los borradores automáticos están activados. Se generan con npm run translate:drafts y cada uno espera aquí a una persona.",
+    "off": "Los borradores automáticos están desactivados. Necesitan un traductor propio en TRANSLATE_URL."
+  },
+  "asking": {
+    "too_short": "Es demasiado corta para ser una pregunta.",
+    "too_long": "Las preguntas deben tener menos de 200 caracteres.",
+    "not_a_question": "Eso no parece una pregunta.",
+    "not_yes_no": "Las preguntas deben poder responderse con verdadero o falso. Formúlala para que se conteste con sí o no."
+  }
+}

@@ -11,6 +11,7 @@ import { getAccount } from "@/lib/auth";
 import {
   baseUrl, brandName, cleanPlacement, cleanSurface, confirmationLinks, HOLD_COOKIE, shownToken, voteUrl,
 } from "@/lib/front-door";
+import { localizeQuestion } from "@/lib/i18n/questions";
 import { getQuestion, mergedInto } from "@/lib/questions";
 import { tallies } from "@/lib/stats";
 import { CHOICES, peekHeldVote, type Choice } from "@/lib/vote-engine";
@@ -67,7 +68,11 @@ export default async function VotePage({ params, searchParams }: Props) {
   const at = cleanPlacement(query.at);
   const pick = CHOICES.includes(query.pick as Choice) ? (query.pick as Choice) : null;
   const done = query.done ?? null;
-  const [account, t, c] = await Promise.all([getAccount(), getTranslations("vote"), getTranslations("common.choices")]);
+  // W3: `local` is the question in the reader's language when an approved translation exists.
+  // The page title and share previews (generateMetadata) stay canonical.
+  const [account, t, c, local] = await Promise.all([
+    getAccount(), getTranslations("vote"), getTranslations("common.choices"), localizeQuestion(question),
+  ]);
   const [mine, tally] = await Promise.all([
     account ? myVotes(account.id, [questionId]) : new Map(),
     tallies([questionId]),
@@ -98,7 +103,7 @@ export default async function VotePage({ params, searchParams }: Props) {
       )}
 
       <article className="fd-card">
-        <h1 className="fd-q">{question.text}</h1>
+        <h1 className="fd-q" lang={local.lang}>{local.text}</h1>
 
         {counted ? (
           <div className="fd-done" role="status">
@@ -158,7 +163,7 @@ export default async function VotePage({ params, searchParams }: Props) {
           {myVote && <Link href={links.changeUrl}>{t("change")}</Link>}
           {account && <Link href={links.accountUrl}>{t("account")}</Link>}
           {!account && <span>{t("joinHint")}</span>}
-          <ShareButton url={links.shareUrl} text={question.text} className="btn small" />
+          <ShareButton url={links.shareUrl} text={local.text} className="btn small" />
         </div>
       </article>
     </main>

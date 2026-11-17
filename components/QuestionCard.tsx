@@ -7,7 +7,7 @@ import type { MyVote, Source } from "@/lib/votes";
 import { Split } from "./Split";
 
 type Props = {
-  question: { id: number; text: string; status: string };
+  question: { id: number; text: string; status: string; lang?: string }; // lang: W3, the language `text` is in
   shown: Shown;
   myVote?: MyVote | null;
   signedIn: boolean;
@@ -38,7 +38,7 @@ export function QuestionCard({
 
   return (
     <article className={`q${myVote ? " is-voted" : ""}`}>
-      <h2 className="q-text">
+      <h2 className="q-text" lang={question.lang}>
         {linkTitle ? <Link href={`/q/${question.id}`}>{question.text}</Link> : question.text}
       </h2>
 
