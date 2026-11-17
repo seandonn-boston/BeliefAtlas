@@ -5,8 +5,11 @@ import { createHmac, timingSafeEqual } from "crypto";
 
 // The public address that share links, embeds and preview images point at. A placeholder
 // until the domain is chosen.
-export function baseUrl(): string {
-  const raw = process.env.PUBLIC_BASE_URL || "http://localhost:3000";
+// On a Vercel preview with no address set, the preview's own branch address is used, so its
+// links and embeds work while it is being tried; that address changes nothing in production.
+export function baseUrl(env: NodeJS.ProcessEnv = process.env): string {
+  const preview = env.VERCEL_ENV === "preview" ? env.VERCEL_BRANCH_URL || env.VERCEL_URL : undefined;
+  const raw = env.PUBLIC_BASE_URL || (preview ? `https://${preview}` : "http://localhost:3000");
   return raw.replace(/\/+$/, "");
 }
 
