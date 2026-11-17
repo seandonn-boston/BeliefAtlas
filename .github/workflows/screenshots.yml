@@ -1,0 +1,58 @@
+name: Screenshots
+
+# Builds the app with demo data and photographs every main screen at desktop and phone
+# width, so a change to the look can be reviewed. The pictures are kept as a run artifact.
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**"]
+    paths: ["app/**", "components/**", "lib/**", "scripts/screenshots.mjs", ".github/workflows/screenshots.yml"]
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: beliefmap
+          POSTGRES_PASSWORD: beliefmap
+          POSTGRES_DB: beliefmap
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U beliefmap"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://beliefmap:beliefmap@localhost:5432/beliefmap
+      PHONE_PEPPER: screenshots-only-pepper
+      MIN_GROUP_SIZE: "5"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:migrate:deploy
+      - run: npm run db:seed:questions
+      - run: npm run db:seed:demo
+      - run: npm run build
+      - name: Start the app
+        run: |
+          npm run start -- -p 3000 > next.log 2>&1 &
+          npx --yes wait-on@8.0.3 --timeout 60000 http://localhost:3000/api/health
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - run: node scripts/screenshots.mjs screenshots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: |
+            screenshots/
+            next.log
+          retention-days: 14
