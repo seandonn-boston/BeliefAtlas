@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { query } from "@/lib/db";
-import { endSession, getAccount, startSession, verifyPassword } from "@/lib/auth";
+import { endSession, getAccount, hashPhone, normalizePhone, startSession, verifyPassword } from "@/lib/auth";
 import { hit, RULES, tooMany } from "@/lib/rate-limit";
 import { clientIp } from "@/lib/request";
 import { AGE_GATE_COOKIE, AGE_GATE_HOURS } from "@/lib/age";
@@ -73,7 +73,7 @@ export async function signupAction(form: FormData) {
     phone: str(form, "phone"),
     password: String(form.get("password") ?? ""),
     dob: str(form, "dob"),
-    consent: form.get("consent") === "on",
+    terms: str(form, "terms"),
     next,
     ip: await clientIp(),
     device: await deviceId(),
@@ -301,10 +301,20 @@ export async function deleteAccountAction(form: FormData) {
   const account = await requireAccount(form);
   const fail = (message: string) => redirect(withError("/settings", message));
   if (str(form, "confirm").toLowerCase() !== account.username) fail("Type your username to confirm.");
-  const [row] = await query<{ password_hash: string }>("select password_hash from accounts where id = $1", [account.id]);
+  const [row] = await query<{ password_hash: string; phone_hash: string }>(
+    "select password_hash, phone_hash from accounts where id = $1",
+    [account.id],
+  );
   const limited = await hit([RULES.loginPerName, account.username]);
   if (limited) fail(tooMany(limited));
-  if (!row || !verifyPassword(String(form.get("password") ?? ""), row.password_hash)) fail("That password isn't right.");
+  if (!row) fail("That account wasn't found.");
+  // Accounts without a password confirm with the phone number they signed up with.
+  if (row.password_hash) {
+    if (!verifyPassword(String(form.get("password") ?? ""), row.password_hash)) fail("That password isn't right.");
+  } else {
+    const digits = normalizePhone(str(form, "phone"));
+    if (!digits || hashPhone(digits) !== row.phone_hash) fail("That isn't the phone number on this account.");
+  }
   const cancelled = await cancelForDeletion(account.id);
   if (!cancelled.ok) fail(cancelled.error);
   await deleteAccount(account.id);

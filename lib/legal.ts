@@ -4,3 +4,7 @@ export const LEGAL_DRAFT = true;
 export const LEGAL_UPDATED = "13 November 2026";
 export const CONTACT_EMAIL = process.env.CONTACT_EMAIL ?? "[contact email]";
 export const OPERATOR = process.env.OPERATOR_NAME ?? "the operator of Belief Map";
+
+// The version of the terms and privacy policy a new account agrees to. Recorded with the
+// account at signup; bump it whenever either page changes in substance.
+export const TERMS_VERSION = process.env.TERMS_VERSION ?? LEGAL_UPDATED;

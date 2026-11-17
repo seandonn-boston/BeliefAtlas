@@ -2,20 +2,21 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { billingPortalAction, deleteAccountAction } from "@/app/actions";
+import { addPasswordAction, changeUsernameAction } from "@/app/settings/actions";
 import { ErrorBanner, Header } from "@/components/Header";
 import { getAccount } from "@/lib/auth";
 import { query } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Settings · Belief Map" };
 
-type Props = { searchParams: Promise<{ error?: string }> };
+type Props = { searchParams: Promise<{ error?: string; saved?: string }> };
 
 export default async function SettingsPage({ searchParams }: Props) {
   const account = await getAccount();
   if (!account) redirect("/login?next=%2Fsettings");
-  const { error } = await searchParams;
-  const [info] = await query<{ created_at: Date; phone_verified_at: Date | null; votes: number; subscription_status: string | null; stripe_customer_id: string | null }>(
-    `select created_at, phone_verified_at, subscription_status, stripe_customer_id,
+  const { error, saved } = await searchParams;
+  const [info] = await query<{ created_at: Date; phone_verified_at: Date | null; votes: number; subscription_status: string | null; stripe_customer_id: string | null; has_password: boolean }>(
+    `select created_at, phone_verified_at, subscription_status, stripe_customer_id, password_hash <> '' as has_password,
             (select count(*)::int from votes where account_id = a.id) as votes
        from accounts a where id = $1`,
     [account.id],
@@ -28,8 +29,10 @@ export default async function SettingsPage({ searchParams }: Props) {
       <main className="wrap wrap-narrow">
         <h1 className="page-title">Settings</h1>
         <ErrorBanner message={error} />
+        {saved && <p className="notice" role="status">Saved.</p>}
         <dl>
           <div className="settings-row"><dt>Username</dt><dd>{account.username}</dd></div>
+          <div className="settings-row"><dt>Sign-in</dt><dd>{info.has_password ? "Texted code or password" : "Texted code"}</dd></div>
           <div className="settings-row"><dt>Phone</dt><dd>{info.phone_verified_at ? "Confirmed" : "Not confirmed"}</dd></div>
           <div className="settings-row"><dt>Joined</dt><dd>{date(info.created_at)}</dd></div>
           <div className="settings-row"><dt>Current votes</dt><dd>{info.votes.toLocaleString("en-US")}</dd></div>
@@ -44,6 +47,17 @@ export default async function SettingsPage({ searchParams }: Props) {
             <input type="hidden" name="back" value="/settings" />
             <span>Card details, invoices and cancelling are handled by Stripe.</span>
             <button className="link">Manage billing</button>
+          </form>
+        )}
+
+        <form action={changeUsernameAction} className="aside-form">
+          <label>Change username <input name="username" defaultValue={account.username} minLength={3} maxLength={20} required /></label>
+          <button className="link">Save</button>
+        </form>
+        {!info.has_password && (
+          <form action={addPasswordAction} className="aside-form">
+            <label>Add a password (optional) <input name="password" type="password" autoComplete="new-password" minLength={8} required /></label>
+            <button className="link">Add</button>
           </form>
         )}
 
@@ -65,7 +79,11 @@ export default async function SettingsPage({ searchParams }: Props) {
           </p>
           <form action={deleteAccountAction} className="form">
             <label>Type your username to confirm<input name="confirm" autoComplete="off" required /></label>
-            <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
+            {info.has_password ? (
+              <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
+            ) : (
+              <label>Your phone number<input name="phone" type="tel" autoComplete="tel" required /></label>
+            )}
             <button className="btn danger-solid">Delete my account</button>
           </form>
         </section>

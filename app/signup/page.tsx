@@ -5,6 +5,7 @@ import { signupAction } from "@/app/actions";
 import { ErrorBanner, Header } from "@/components/Header";
 import { AGE_GATE_COOKIE } from "@/lib/age";
 import { humanChallenge, TURNSTILE_SCRIPT } from "@/lib/human-check";
+import { TERMS_VERSION } from "@/lib/legal";
 import { smsMode } from "@/lib/sms";
 
 type Props = { searchParams: Promise<{ error?: string; next?: string }> };
@@ -48,7 +49,6 @@ export default async function SignupPage({ searchParams }: Props) {
         <ErrorBanner message={error} />
         <form action={signupAction} className="form">
           <input type="hidden" name="back" value={next} />
-          <label>Username<input name="username" autoComplete="username" required minLength={3} maxLength={20} /></label>
           <label>
             Date of birth
             {/* autocomplete="bday" lets phones and browsers fill this from the person's own contact card. */}
@@ -63,20 +63,35 @@ export default async function SignupPage({ searchParams }: Props) {
               One account per number; it is stored only as a one-way hash and never shared.
             </span>
           </label>
-          <label>Password<input name="password" type="password" autoComplete="new-password" required minLength={8} /></label>
-          <label className="check">
-            <input type="checkbox" name="consent" required />
-            <span>
-              I agree to the <Link href="/terms">terms</Link> and <Link href="/privacy">privacy policy</Link>, including
-              that my votes are recorded and used, without my name, in published results and data.
-            </span>
-          </label>
+          <details>
+            <summary>Pick a username or password (optional)</summary>
+            <div className="form">
+              <label>
+                Username
+                <input name="username" autoComplete="username" minLength={3} maxLength={20} />
+                <span className="field-note">Leave it blank and we&apos;ll make one. You can change it any time in settings.</span>
+              </label>
+              <label>
+                Password
+                <input name="password" type="password" autoComplete="new-password" minLength={8} />
+                <span className="field-note">Without one, you sign in with a code texted to your phone.</span>
+              </label>
+            </div>
+          </details>
+          <input type="hidden" name="terms" value={TERMS_VERSION} />
           {challenge.siteKey && (
             <>
               <Script src={TURNSTILE_SCRIPT} strategy="afterInteractive" />
               <div className="cf-turnstile" data-sitekey={challenge.siteKey} data-action="signup" data-theme="dark" data-appearance="interaction-only" />
             </>
           )}
+          {/* Agreement sits at the button: tapping it is the agreement, and the terms version shown
+              here is stored with the account. */}
+          <p className="field-note">
+            By tapping Text me a code, you agree to the <Link href="/terms">terms</Link> and{" "}
+            <Link href="/privacy">privacy policy</Link>, including that your votes, when and where you gave them, and
+            any later changes are recorded and used, without your name, in published results and data.
+          </p>
           <button className="btn solid">Text me a code</button>
         </form>
         <p className="q-join">Already have one? <Link href={`/login?next=${encodeURIComponent(next)}`}>Sign in</Link>.</p>
