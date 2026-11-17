@@ -5,7 +5,7 @@ import { LegalPage } from "@/components/Legal";
 import { CONTACT_EMAIL, OPERATOR } from "@/lib/legal";
 import { MIN_GROUP_SIZE } from "@/lib/limits";
 
-export const metadata: Metadata = { title: "Privacy policy · Belief Map" };
+export const metadata: Metadata = { title: "Privacy policy · BeliefAtlas" };
 
 export default function PrivacyPage() {
   return (
@@ -13,7 +13,7 @@ export default function PrivacyPage() {
       <Header />
       <LegalPage title="Privacy policy">
         <p>
-          Belief Map records how people answer true-or-false questions and publishes what the crowd believes. This page
+          BeliefAtlas records how people answer true-or-false questions and publishes what the crowd believes. This page
           explains what we keep about you, why, and what you can do about it. It is run by {OPERATOR}.
         </p>
 
@@ -106,7 +106,7 @@ export default function PrivacyPage() {
 
         <h2>Age</h2>
         <p>
-          Belief Map is for adults. You must be 18 or older to create an account, and we ask for your date of birth to
+          BeliefAtlas is for adults. You must be 18 or older to create an account, and we ask for your date of birth to
           check.
         </p>
 

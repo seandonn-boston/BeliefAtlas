@@ -4,7 +4,7 @@ import { query } from "./db";
 // "quiet_harbor42", which the person can change later in Settings → Security.
 
 export const USERNAME_RULE = "Usernames are 3 to 20 letters, numbers or underscores.";
-const RESERVED = /^(deleted|admin|moderator|support|beliefmap)/;
+const RESERVED = /^(deleted|admin|moderator|support|beliefmap|beliefatlas)/;
 // How often a username can change, so names can't be cycled to dodge reports.
 export const RENAME_EVERY_HOURS = 24;
 

@@ -7,7 +7,7 @@ import { ErrorBanner, Header } from "@/components/Header";
 import { getAccount } from "@/lib/auth";
 import { query } from "@/lib/db";
 
-export const metadata: Metadata = { title: "Settings · Belief Map" };
+export const metadata: Metadata = { title: "Settings · BeliefAtlas" };
 
 type Props = { searchParams: Promise<{ error?: string }> };
 

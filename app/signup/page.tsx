@@ -21,7 +21,7 @@ export default async function SignupPage({ searchParams }: Props) {
         <Header />
         <main className="wrap wrap-narrow">
           <h1 className="page-title">Signups aren&apos;t open yet</h1>
-          <p>We&apos;re finishing the checks that keep Belief Map to real people. Check back soon.</p>
+          <p>We&apos;re finishing the checks that keep BeliefAtlas to real people. Check back soon.</p>
           <p className="q-join">Already have an account? <Link href={`/login?next=${encodeURIComponent(next)}`}>Sign in</Link>.</p>
         </main>
       </>

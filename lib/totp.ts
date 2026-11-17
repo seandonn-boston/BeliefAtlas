@@ -70,7 +70,7 @@ export function matchCode(secretBase32: string, code: string, now: number, lastS
   return null;
 }
 
-export function otpauthUri(secretBase32: string, label: string, issuer = "Belief Map"): string {
+export function otpauthUri(secretBase32: string, label: string, issuer = "BeliefAtlas"): string {
   const params = new URLSearchParams({ secret: secretBase32, issuer, algorithm: "SHA1", digits: String(DIGITS), period: String(STEP_SECONDS) });
   return `otpauth://totp/${encodeURIComponent(`${issuer}:${label}`)}?${params}`;
 }

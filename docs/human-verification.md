@@ -1,6 +1,6 @@
 # Human and age verification
 
-Belief Map only works if every account is one adult human. This doc sets out the layers that
+BeliefAtlas only works if every account is one adult human. This doc sets out the layers that
 get us there on the web now and in native iOS and Android apps later, what each layer stops,
 what it costs, and what we keep.
 

@@ -2,7 +2,7 @@
 // ai_answers. These are NOT votes: they live in their own table, are shown with an
 // "AI answered" label, and never enter a tally, percentage or statistic about people.
 //
-//   ANTHROPIC_API_KEY=... npm run ai:answers            answer every question not yet answered
+//   AI_ENABLED=true ANTHROPIC_API_KEY=... npm run ai:answers            answer every question not yet answered
 //   AI_LIMIT=200 npm run ai:answers                     stop after 200 questions
 //   AI_MODEL=claude-haiku-5-5 npm run ai:answers        choose the model (this is the default)
 //
@@ -48,7 +48,9 @@ async function ask(rows: Row[]): Promise<Map<number, "true" | "false" | "unsure"
 }
 
 async function main() {
-  if (!process.env.ANTHROPIC_API_KEY) throw new Error("Set ANTHROPIC_API_KEY to run this.");
+  if (process.env.AI_ENABLED !== "true" || !process.env.ANTHROPIC_API_KEY) {
+    throw new Error("Paid API: set AI_ENABLED=true and ANTHROPIC_API_KEY to run this.");
+  }
   let done = 0;
   for (;;) {
     const size = LIMIT ? Math.min(BATCH, LIMIT - done) : BATCH;

@@ -14,7 +14,7 @@ import { identityVerifier } from "@/lib/identity-verification";
 import { pendingTotp, recoveryCodesLeft } from "@/lib/mfa";
 import { listPasskeys } from "@/lib/passkeys";
 
-export const metadata: Metadata = { title: "Security · Belief Map" };
+export const metadata: Metadata = { title: "Security · BeliefAtlas" };
 
 type Props = { searchParams: Promise<{ error?: string; saved?: string; setup?: string; welcome?: string; next?: string }> };
 

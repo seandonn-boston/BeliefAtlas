@@ -16,7 +16,7 @@ export async function Header({ q = "", view, back }: Props) {
     <header className="header">
       <div className="header-in">
         <div className="topline">
-          <Link href="/" className="brand" aria-label="Belief Map, home">
+          <Link href="/" className="brand" aria-label="BeliefAtlas, home">
             Belief<span>Map</span>
           </Link>
           <nav>

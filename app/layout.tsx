@@ -4,7 +4,7 @@ import "./globals.css";
 import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Belief Map",
+  title: "BeliefAtlas",
   description: "What people believe, how firmly, and how it changes.",
 };
 

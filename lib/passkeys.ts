@@ -11,7 +11,7 @@ import { query } from "./db";
 // `userVerification: "required"` means the device must check it is the owner (biometric or
 // device PIN), not just that someone is holding it.
 
-const RP_NAME = "Belief Map";
+const RP_NAME = "BeliefAtlas";
 const CEREMONY_MINUTES = 5;
 const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
 

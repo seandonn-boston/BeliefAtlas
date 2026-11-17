@@ -5,7 +5,7 @@ import { ErrorBanner, Header } from "@/components/Header";
 import { getAccount } from "@/lib/auth";
 import { billingMode } from "@/lib/billing";
 
-export const metadata: Metadata = { title: "Membership · Belief Map" };
+export const metadata: Metadata = { title: "Membership · BeliefAtlas" };
 
 type Props = { searchParams: Promise<{ error?: string; welcome?: string }> };
 

@@ -4,7 +4,7 @@ import { Header } from "@/components/Header";
 import { LegalPage } from "@/components/Legal";
 import { CONTACT_EMAIL, OPERATOR } from "@/lib/legal";
 
-export const metadata: Metadata = { title: "Terms · Belief Map" };
+export const metadata: Metadata = { title: "Terms · BeliefAtlas" };
 
 export default function TermsPage() {
   return (
@@ -12,7 +12,7 @@ export default function TermsPage() {
       <Header />
       <LegalPage title="Terms of use">
         <p>
-          These terms cover your use of Belief Map, run by {OPERATOR}. By creating an account you agree to them and to the{" "}
+          These terms cover your use of BeliefAtlas, run by {OPERATOR}. By creating an account you agree to them and to the{" "}
           <Link href="/privacy">privacy policy</Link>.
         </p>
 
@@ -31,7 +31,7 @@ export default function TermsPage() {
             may discount votes that look coordinated, and close accounts that cast them.
           </li>
           <li>
-            Results show what people who use Belief Map say they believe. They are not a scientific poll of any population
+            Results show what people who use BeliefAtlas say they believe. They are not a scientific poll of any population
             and not a statement of what is true.
           </li>
         </ul>
@@ -58,7 +58,7 @@ export default function TermsPage() {
 
         <h2>Data and the API</h2>
         <p>
-          The results on Belief Map, including through our API, are ours. You may share links and quote individual results
+          The results on BeliefAtlas, including through our API, are ours. You may share links and quote individual results
           with credit. Copying results in bulk, by scraping or otherwise, needs an API agreement.
         </p>
 
@@ -70,7 +70,7 @@ export default function TermsPage() {
 
         <h2>No warranty</h2>
         <p>
-          Belief Map is provided as it is. To the extent the law allows, we are not liable for decisions anyone makes based
+          BeliefAtlas is provided as it is. To the extent the law allows, we are not liable for decisions anyone makes based
           on its results.
         </p>
 

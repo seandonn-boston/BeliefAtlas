@@ -9,7 +9,8 @@ import type { Match } from "./questions";
 //
 // The screen refuses questions that carry personal details, holds for a moderator anything
 // that may name a private person, finds repeats worded differently, and picks a subject.
-// With ANTHROPIC_API_KEY set a small model makes those calls; without it, rules do.
+// With AI_ENABLED=true and ANTHROPIC_API_KEY set a small model makes those calls; without both,
+// rules do. The model is a paid API, so it stays off until AI_ENABLED is set on purpose.
 
 export type Screen = {
   reject?: string;              // refuse, with this message
@@ -63,7 +64,7 @@ type Verdict = {
 };
 
 async function model(text: string, matches: Match[]): Promise<Verdict | null> {
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = process.env.AI_ENABLED === "true" ? process.env.ANTHROPIC_API_KEY : undefined;
   if (!key) return null;
   const prompt = `A user wants to post this yes-or-no question to a public voting site:
 "${text}"

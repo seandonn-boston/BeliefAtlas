@@ -11,17 +11,17 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: beliefmap
-          POSTGRES_PASSWORD: beliefmap
-          POSTGRES_DB: beliefmap
+          POSTGRES_USER: beliefatlas
+          POSTGRES_PASSWORD: beliefatlas
+          POSTGRES_DB: beliefatlas
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U beliefmap"
+          --health-cmd "pg_isready -U beliefatlas"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgres://beliefmap:beliefmap@localhost:5432/beliefmap
+      DATABASE_URL: postgres://beliefatlas:beliefatlas@localhost:5432/beliefatlas
       PHONE_PEPPER: ci-only-pepper
       MIN_GROUP_SIZE: "5"
       API_KEYS: ci-api-key

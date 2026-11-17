@@ -100,8 +100,7 @@ export function questionIdFromUrl(raw: string): number | null {
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-// The product name on share previews, embeds and the vote page. BeliefAtlas is the chosen name;
-// the rest of the site still says "Belief Map" until it is renamed.
+// The product name on share previews, embeds and the vote page.
 export const brandName = () => process.env.BRAND_NAME || "BeliefAtlas";
 
 // The cookie that holds a tap made before signing in (or past the daily limit), so only the
