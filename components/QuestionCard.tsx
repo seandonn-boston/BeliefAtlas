@@ -58,7 +58,7 @@ export function QuestionCard({
             {answer("false", "False", "answer")}
           </div>
           <div className="vote-side">
-            {answer("unsure", "Unsure", "quiet")}
+            {answer("unsure", "Don&apos;t know", "quiet")}
             {myVote ? (
               <button formAction={deleteVoteAction} data-act="delete" disabled={busy} className="btn quiet">Delete</button>
             ) : (

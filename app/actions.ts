@@ -1,6 +1,7 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { isTheme, THEME_COOKIE } from "@/lib/theme";
 import { redirect } from "next/navigation";
 import { query } from "@/lib/db";
 import { endSession, getAccount, startSession } from "@/lib/auth";
@@ -182,6 +183,20 @@ export async function revealAction(form: FormData) {
 }
 
 // Remember how this browser likes its question lists laid out.
+export async function setThemeAction(form: FormData) {
+  const theme = str(form, "theme");
+  if (isTheme(theme)) {
+    (await cookies()).set(THEME_COOKIE, theme, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+  }
+  // The switch sits in the footer of every page, so it returns to the page it was pressed on.
+  let back = "/";
+  try {
+    const ref = new URL((await headers()).get("referer") ?? "");
+    back = ref.pathname + ref.search;
+  } catch {}
+  redirect(withoutError(back.startsWith("/") && !back.startsWith("//") ? back : "/"));
+}
+
 export async function setViewAction(form: FormData) {
   const view = str(form, "view") as View;
   if (VIEWS.includes(view)) {

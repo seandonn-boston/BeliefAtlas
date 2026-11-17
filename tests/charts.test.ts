@@ -27,7 +27,8 @@ test("trend chart draws three named lines, an even-split guide and day labels", 
 
   const svg = renderSvg(spec);
   assert.match(svg, /^<svg/);
-  for (const name of ["True", "False", "Unsure"]) assert.ok(svg.includes(`>${name}<`), `${name} is labelled`);
+  for (const name of ["True", "False"]) assert.ok(svg.includes(`>${name}<`), `${name} is labelled`);
+  assert.match(svg, />Don(&#39;|&apos;|')t know</, "Don't know is labelled");
   assert.ok(svg.includes("Nov 1"), "category labels are drawn");
   assert.ok(svg.includes("100%"), "the value axis carries its suffix");
   assert.ok(svg.includes("stroke-dasharray"), "the reference line and the unsure series are dashed");

@@ -17,7 +17,7 @@ export async function Header({ q = "", view, back }: Props) {
       <div className="header-in">
         <div className="topline">
           <Link href="/" className="brand" aria-label="BeliefAtlas, home">
-            Belief<span>Map</span>
+            Belief<span>Atlas</span>
           </Link>
           <nav>
             {view && back && <ViewSwitcher current={view} back={back} />}

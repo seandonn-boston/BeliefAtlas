@@ -27,7 +27,7 @@ export function Split({ shown, reveal = false }: { shown: Shown; reveal?: boolea
         {segments.map((k) => <span key={k} className={`seg ${k}`} style={{ flexGrow: split[k] }} />)}
       </div>
       <p className="split-foot">
-        <span><i className="swatch unsure" />Unsure {split.unsure}%{sides && <em>{n(sides.unsure)}</em>}</span>
+        <span><i className="swatch unsure" />Don&apos;t know {split.unsure}%{sides && <em>{n(sides.unsure)}</em>}</span>
         {totalLabel && <span>{totalLabel}</span>}
       </p>
     </div>

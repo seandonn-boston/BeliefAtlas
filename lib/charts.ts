@@ -44,7 +44,7 @@ export function trendChart(history: QuestionStats["history"]): ChartSpec {
     series: [
       { name: "True", color: COLORS.true, values: values((h) => h.pctTrue) },
       { name: "False", color: COLORS.false, values: values((h) => h.pctFalse) },
-      { name: "Unsure", color: COLORS.unsure, values: values((h) => h.pctUnsure), dashed: true },
+      { name: "Don't know", color: COLORS.unsure, values: values((h) => h.pctUnsure), dashed: true },
     ],
   };
 }
@@ -59,7 +59,7 @@ export function visibilityChart(pub: NonNullable<GroupStat>, priv: NonNullable<G
     series: [
       { name: "True", color: COLORS.true, values: [pub.pctTrue, priv.pctTrue] },
       { name: "False", color: COLORS.false, values: [pub.pctFalse, priv.pctFalse] },
-      { name: "Unsure", color: COLORS.unsure, values: [pub.pctUnsure, priv.pctUnsure] },
+      { name: "Don't know", color: COLORS.unsure, values: [pub.pctUnsure, priv.pctUnsure] },
     ],
   };
 }

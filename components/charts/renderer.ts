@@ -10,15 +10,40 @@ import type { ChartSpec } from "@/lib/charts";
 
 echarts.use([LineChart, BarChart, GridComponent, LegendComponent, MarkLineComponent, TooltipComponent, SVGRenderer]);
 
-// House style for every chart: true black, hairline grid, thin marks, text in ink rather
-// than series colours.
-const INK = "#eef1f6";
-const DIM = "#99a1ae";
-const LINE = "#23262c";
-const GRID = "#16181c";
-const GUIDE = "#3a3f47";
+// House style for every chart: the page colour, hairline grid, thin marks, text in ink rather
+// than series colours. The palette comes from the theme's CSS tokens (app/globals.css), so a
+// chart matches OLED or Digital Paper; these are the OLED values, used when no page is present.
+export type Palette = { page: string; raise: string; ink: string; dim: string; line: string; grid: string; guide: string };
+export const OLED_PALETTE: Palette = {
+  page: "#000000", raise: "#0b0c0e", ink: "#eef1f6", dim: "#99a1ae", line: "#23262c", grid: "#16181c", guide: "#3a3f47",
+};
 
-export function toOption(spec: ChartSpec, fontFamily: string): echarts.EChartsCoreOption {
+function paletteFrom(el: HTMLElement): Palette {
+  const css = getComputedStyle(el);
+  const token = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
+  return {
+    page: token("--black", OLED_PALETTE.page),
+    raise: token("--raise", OLED_PALETTE.raise),
+    ink: token("--ink", OLED_PALETTE.ink),
+    dim: token("--dim", OLED_PALETTE.dim),
+    line: token("--line", OLED_PALETTE.line),
+    grid: token("--line-soft", OLED_PALETTE.grid),
+    guide: token("--hover-line", OLED_PALETTE.guide),
+  };
+}
+
+// Series colours arrive in the spec as the OLED answer colours; on another theme they map to
+// that theme's answer tokens.
+function seriesColor(color: string, el: HTMLElement | null): string {
+  if (!el) return color;
+  const css = getComputedStyle(el);
+  const byOled: Record<string, string> = { "#2196e8": "--true", "#dd6f17": "--false", "#6b7480": "--unsure" };
+  const name = byOled[color.toLowerCase()];
+  return (name && css.getPropertyValue(name).trim()) || color;
+}
+
+export function toOption(spec: ChartSpec, fontFamily: string, p: Palette = OLED_PALETTE, el: HTMLElement | null = null): echarts.EChartsCoreOption {
+  const { ink: INK, dim: DIM, line: LINE, grid: GRID, guide: GUIDE } = p;
   const { axis } = spec;
   const fmt = (v: unknown) => (v === null || v === undefined || v === "-" ? "–" : `${v}${axis.suffix}`);
 
@@ -50,11 +75,11 @@ export function toOption(spec: ChartSpec, fontFamily: string): echarts.EChartsCo
       itemHeight: 12,
       itemGap: 18,
       textStyle: { color: INK, fontSize: 13, fontWeight: 500 },
-      inactiveColor: "#565c66",
+      inactiveColor: GUIDE,
     },
     tooltip: {
       trigger: "axis",
-      backgroundColor: "#0b0c0e",
+      backgroundColor: p.raise,
       borderColor: GUIDE,
       borderWidth: 1,
       textStyle: { color: INK, fontSize: 13 },
@@ -73,7 +98,7 @@ export function toOption(spec: ChartSpec, fontFamily: string): echarts.EChartsCo
         type: "line",
         name: s.name,
         data: s.values,
-        color: s.color,
+        color: seriesColor(s.color, el),
         connectNulls: true,
         showSymbol: false,
         lineStyle: { width: 2, type: s.dashed ? [4, 3] : "solid" },
@@ -106,10 +131,10 @@ export function toOption(spec: ChartSpec, fontFamily: string): echarts.EChartsCo
       type: "bar",
       name: s.name,
       data: s.values,
-      color: s.color,
+      color: seriesColor(s.color, el),
       stack: "total",
       barWidth: 22,
-      itemStyle: { borderColor: "#000000", borderWidth: 2 },   // a 2px gap of surface between fills
+      itemStyle: { borderColor: p.page, borderWidth: 2 },   // a 2px gap of surface between fills
       emphasis: { focus: "series" },
     })),
   };
@@ -118,7 +143,7 @@ export function toOption(spec: ChartSpec, fontFamily: string): echarts.EChartsCo
 // Draw `spec` into `el`, keep it sized to its box, and return a function that removes it.
 export function renderChart(el: HTMLElement, spec: ChartSpec): () => void {
   const chart = echarts.init(el, undefined, { renderer: "svg" });
-  chart.setOption(toOption(spec, getComputedStyle(el).fontFamily));
+  chart.setOption(toOption(spec, getComputedStyle(el).fontFamily, paletteFrom(el), el));
   const observer = new ResizeObserver(() => chart.resize());
   observer.observe(el);
   return () => {

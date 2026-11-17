@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeSwitch } from "./ThemeSwitch";
 
 export function Footer() {
   return (
@@ -6,6 +7,7 @@ export function Footer() {
       <Link href="/membership">Membership</Link>
       <Link href="/terms">Terms</Link>
       <Link href="/privacy">Privacy</Link>
+      <ThemeSwitch />
     </footer>
   );
 }
