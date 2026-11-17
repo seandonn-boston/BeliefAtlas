@@ -2,6 +2,7 @@ import { createHmac } from "crypto";
 import { query } from "../db";
 import { assertNoSeedData } from "../provenance";
 import { SALE_ELIGIBLE_ACCOUNTS } from "../regions";
+import { UNOFFICIAL_NOTICE } from "../legal";
 
 // The one way to read person-level answers for a sale. Nothing is sold yet: this exists so the
 // first export is built on the right rules rather than written from scratch. It refuses to run
@@ -42,6 +43,13 @@ export const SALE_EXPORT_SQL = `
      and ($1::int[] is null or v.question_id = any($1::int[]))
    order by v.question_id, v.account_id
    limit $2`;
+
+// What a buyer receives: the rows, with the unofficial notice on the file itself, so it travels
+// with the data wherever the file goes.
+export async function saleExportFile(opts: SaleExportOptions) {
+  const rows = await saleExportRows(opts);
+  return { notice: UNOFFICIAL_NOTICE, generatedAt: new Date().toISOString(), rows };
+}
 
 export async function saleExportRows(opts: SaleExportOptions): Promise<SaleRow[]> {
   if (!opts.salt || opts.salt.length < 16) throw new Error("A sale export needs its own random salt of 16+ characters.");

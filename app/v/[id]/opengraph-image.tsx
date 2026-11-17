@@ -40,7 +40,10 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           background: "#000000", color: INK, padding: "56px 72px",
         }}
       >
-        <div style={{ display: "flex", fontSize: 34, fontWeight: 700, color: DIM }}>{brandName()}</div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 34, fontWeight: 700, color: DIM }}>
+          <span>{brandName()}</span>
+          <span style={{ fontSize: 28, border: `2px solid ${DIM}`, borderRadius: 10, padding: "2px 14px" }}>Unofficial</span>
+        </div>
         <div style={{ display: "flex", fontSize, fontWeight: 700, lineHeight: 1.1, letterSpacing: -1 }}>{text}</div>
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           {pill("True", "#2196e8")}

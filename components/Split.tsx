@@ -6,6 +6,7 @@ import type { Shown } from "@/lib/access";
 export function Split({ shown, reveal = false }: { shown: Shown; reveal?: boolean }) {
   const t = useTranslations("question");
   const c = useTranslations("common.choices");
+  const u = useTranslations("common.unofficial");
   const format = useFormatter();
   const { split, sides, count } = shown;
   if (!split) return null;
@@ -30,6 +31,7 @@ export function Split({ shown, reveal = false }: { shown: Shown; reveal?: boolea
       </div>
       <p className="split-foot">
         <span><i className="swatch unsure" />{c("unsure")} {split.unsure}%{sides && <em>{n(sides.unsure)}</em>}</span>
+        <span className="split-unofficial">{u("label")}</span>
         {count && <span>{t("count", { kind: count.kind, n: count.kind === "exact" ? count.n : 0, e: count.kind === "exact" ? "" : count.e })}</span>}
       </p>
     </div>

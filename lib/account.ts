@@ -2,6 +2,7 @@ import { randomBytes } from "crypto";
 import { query, transaction } from "./db";
 import { consentHistory } from "./consent/ledger";
 import { getDemographics, listChildren } from "./demographics";
+import { UNOFFICIAL_NOTICE } from "./legal";
 
 // ---------- Export ----------
 
@@ -47,6 +48,7 @@ export async function exportData(accountId: number) {
   ]);
   return {
     exportedAt: new Date().toISOString(),
+    notice: UNOFFICIAL_NOTICE,
     note: "Your phone number is not included because the site never stores it, only a one-way hash of it.",
     account,
     currentVotes: votes,

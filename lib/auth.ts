@@ -12,7 +12,9 @@ export type Account = { id: number; username: string; tier: Tier; verified: bool
 
 export function normalizePhone(raw: string): string | null {
   let digits = raw.replace(/\D/g, "");
-  if (digits.length === 10) digits = "1" + digits; // assume US/Canada when no country code is given
+  // Assume US/Canada when ten digits come with no country code. A number written with a leading
+  // "+" already has its country code: +53 5 123 4567 is Cuba, not a US number.
+  if (digits.length === 10 && !raw.trim().startsWith("+")) digits = "1" + digits;
   return digits.length >= 8 && digits.length <= 15 ? digits : null;
 }
 

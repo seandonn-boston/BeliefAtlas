@@ -6,6 +6,7 @@ import { assertNoSeedData, SeedDataPresent } from "@/lib/provenance";
 import { getQuestion } from "@/lib/questions";
 import { questionStats } from "@/lib/stats";
 import { myVotes } from "@/lib/votes";
+import { UNOFFICIAL_NOTICE } from "@/lib/legal";
 
 // GET /api/questions/:id/stats
 //
@@ -69,6 +70,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const estimated = countAccess(account, voted) === "estimate" ? estimate(stats.tally.total) : undefined;
 
   return Response.json({
+    notice: UNOFFICIAL_NOTICE,
     question: { id: question.id, text: question.text, status: question.status, askedAt: question.created_at },
     access: level,
     stats: shapeStats(stats, level, estimated),

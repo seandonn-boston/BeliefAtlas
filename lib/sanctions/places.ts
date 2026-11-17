@@ -69,6 +69,9 @@ export const BLOCKED_PHONE_PREFIXES: readonly { prefix: string; country: string 
   { prefix: "+79", country: "RU" },
 ];
 
+// What signup and sign-in say to a number from a blocked country.
+export const PHONE_NOT_AVAILABLE = "BeliefAtlas isn't available for phone numbers from this country.";
+
 const norm = (s: string | null | undefined) => (s ?? "").trim().toUpperCase();
 
 // Whether a visitor at this country (and region, where known) is blocked. Unknown location is
