@@ -27,12 +27,10 @@ async function makeAccount(tier: "free" | "paid" = "free"): Promise<Account> {
   return { id: row.id, username: name, tier, verified: false, role: "user" };
 }
 
-// Other test files page through the whole catalog at the same time and count it (rules.test.ts,
-// "feeds page through the catalog"), so the set of active questions must not change while they
-// run. These fixtures are therefore made in one statement when this file starts, never change
-// status, and are left in place at the end: the next run removes them as it starts, before any
-// other file has reached its paging test. Each has a large, even true/false split and a distinct
-// total, so a test vote (or its removal with the test account) never moves it in either feed.
+// Fixture questions, made in one statement when this file starts. Each has a large, even
+// true/false split and a distinct total, so a test vote never moves it in either feed. Test
+// files run one at a time, so they are removed again when this file ends (and, in case a run was
+// cut short, before it starts): their made-up counters must never linger in a database.
 const fixtures: number[] = [];
 const closed: Record<"archived" | "removed", number[]> = { archived: [], removed: [] };
 const makeQuestion = (): number => {
@@ -81,6 +79,7 @@ before(async () => {
 
 after(async () => {
   await query("delete from accounts where username like $1", [`${tag}\\_%`]);
+  await query("delete from questions where normalized like 'w4 fixture %'");
   await query("delete from regions where code = $1", [OPEN]);
   await pool.end();
 });
