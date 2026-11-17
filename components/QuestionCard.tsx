@@ -4,10 +4,12 @@ import { useTranslations } from "next-intl";
 import { deleteVoteAction, skipAction, voteAction } from "@/app/actions";
 import type { Shown } from "@/lib/access";
 import type { MyVote, Source } from "@/lib/votes";
+import { ApprovedMark } from "./ApprovedMark";
 import { Split } from "./Split";
 
 type Props = {
-  question: { id: number; text: string; status: string; lang?: string }; // lang: W3, the language `text` is in
+  // lang: W3, the language `text` is in. approved: M1, the "moderator approved" mark.
+  question: { id: number; text: string; status: string; lang?: string; approved?: boolean };
   shown: Shown;
   myVote?: MyVote | null;
   signedIn: boolean;
@@ -40,6 +42,7 @@ export function QuestionCard({
     <article className={`q${myVote ? " is-voted" : ""}`}>
       <h2 className="q-text" lang={question.lang}>
         {linkTitle ? <Link href={`/q/${question.id}`}>{question.text}</Link> : question.text}
+        {question.approved && <ApprovedMark label={t("approved.label")} hint={t("approved.hint")} />}
       </h2>
 
       {shown.split ? (

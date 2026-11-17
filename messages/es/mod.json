@@ -4,12 +4,14 @@
   "sections": {
     "questions": "Preguntas",
     "appeals": "Apelaciones",
-    "signals": "Señales de manipulación"
+    "signals": "Señales de manipulación",
+    "duplicates": "Posibles repetidas"
   },
   "empty": {
     "questions": "No hay nada pendiente. Aquí aparecen las preguntas retenidas y denunciadas.",
     "appeals": "No hay apelaciones abiertas.",
-    "signals": "No hay señales abiertas."
+    "signals": "No hay señales abiertas.",
+    "duplicates": "No hay posibles repetidas. Aquí aparecen los pares detectados al preguntar, denunciados como repetidos o emparejados por un moderador."
   },
   "done": {
     "question": "Pregunta #{id} actualizada.",
@@ -17,7 +19,9 @@
     "signal": "Señal #{id} revisada.",
     "banned": "{n, plural, =0 {No se suspendió a nadie.} one {# cuenta suspendida para siempre por manipular votos.} other {# cuentas suspendidas para siempre por manipular votos.}}",
     "scan": "Revisión terminada: {n, plural, =0 {ninguna señal nueva} one {# señal nueva} other {# señales nuevas}}.",
-    "ai": "Revisión de IA añadida a la pregunta #{id}."
+    "ai": "Revisión de IA añadida a la pregunta #{id}.",
+    "duplicate": "Par #{id} resuelto.",
+    "suggested": "Pregunta #{id} enviada a la cola de repetidas."
   },
   "item": {
     "held": "Retenida",
@@ -27,7 +31,8 @@
     "byUser": "hecha por un usuario",
     "catalog": "catálogo",
     "reasonCount": "{n} × {reason}",
-    "aiReview": "Revisión de IA: se responde con verdadero o falso {answerable, select, true {sí} other {no}}; nombra a una persona particular {private_person, select, true {sí} other {no}}; acoso u odio {harassing_or_hateful, select, true {sí} other {no}}."
+    "aiReview": "Revisión de IA: se responde con verdadero o falso {answerable, select, true {sí} other {no}}; nombra a una persona particular {private_person, select, true {sí} other {no}}; acoso u odio {harassing_or_hateful, select, true {sí} other {no}}.",
+    "approvedBefore": "aprobada antes"
   },
   "reasons": {
     "duplicate": "Repite otra pregunta",
@@ -54,7 +59,11 @@
     "mergeRule": "Los votos se combinan con la regla “{rule}”: {explain}",
     "subject": "Tema",
     "changeSubject": "Cambiar tema",
-    "aiReview": "Revisión a fondo con IA"
+    "aiReview": "Revisión a fondo con IA",
+    "suggestDuplicate": "Proponer como repetida",
+    "suggestDuplicateNote": "Envía las dos preguntas a la cola de repetidas, donde se deciden lado a lado. Ninguna se oculta.",
+    "rule": "Norma que se aplica",
+    "ruleFromHarm": "Según el daño indicado arriba"
   },
   "harm": {
     "hateful": "De odio (añade una falta)",
@@ -115,7 +124,10 @@
     "decided": "Esa apelación ya se resolvió.",
     "reviewed": "Esa señal ya se revisó.",
     "off": "La revisión con IA está desactivada.",
-    "unavailable": "La revisión con IA no respondió. Inténtalo más tarde."
+    "unavailable": "La revisión con IA no respondió. Inténtalo más tarde.",
+    "pair_decided": "Ese par ya se resolvió.",
+    "keep_not_in_pair": "Elige cuál de las dos preguntas se queda.",
+    "not_a_pair": "No se pueden emparejar: revisa el número y que ninguna se haya quitado."
   },
   "denial": {
     "where": "Dónde: “{where}”.",
@@ -123,5 +135,32 @@
     "remove": "Arreglo sugerido: quítalo.",
     "suggestion": "Prueba: “{suggestion}”",
     "demerit": "Esto añadió una falta a tu cuenta. Las preguntas dañinas repetidas traen una suspensión temporal para preguntar."
+  },
+  "rulebook": {
+    "dup_same_polarity": "Mismo tema, misma polaridad: se combinan",
+    "dup_inverted_polarity": "Mismo tema, solo cambia la polaridad: se combinan con las respuestas invertidas",
+    "dup_different_subject": "Temas distintos, aunque sean dos caras de la misma moneda: se mantienen aparte",
+    "keep_reviewed": "Revisada por un moderador y mantenida",
+    "deny_not_yes_no": "No se puede responder con verdadero o falso",
+    "deny_private_person": "Trata de una persona particular",
+    "deny_hateful": "Odio",
+    "deny_harassing": "Acoso",
+    "deny_spam": "Spam o publicidad",
+    "deny_other": "Otro motivo, explicado en la retirada"
+  },
+  "duplicates": {
+    "meta": "Par #{id} · {source, select, ask {detectado al preguntar} report {denunciado como repetido} moderator {emparejado por un moderador} other {propuesto}} · {times, plural, one {propuesto una vez} other {propuesto # veces}}",
+    "similarity": "Redacción parecida en un {pct}%",
+    "side": "#{id} · {status, select, active {publicada} review {retenida} archived {archivada} other {otro}} · {votes, plural, one {# voto} other {# votos}} · {byUser, select, yes {de un usuario} other {catálogo}}",
+    "keep": "¿Cuál se queda? La otra se fusiona en ella.",
+    "keepThis": "Se queda esta",
+    "guidanceTitle": "¿Cuentan los datos dos historias distintas?",
+    "guidanceInverted": "Mismo tema, solo cambia la polaridad («los demócratas ganaron las elecciones de mitad de mandato de 2026» y «los demócratas no perdieron las elecciones de mitad de mandato de 2026»): fusionar invertida. El Falso de la pregunta fusionada cuenta aquí como Verdadero, y su Verdadero como Falso.",
+    "guidanceSame": "Mismo tema, misma polaridad: fusionar.",
+    "guidanceApart": "Temas distintos se mantienen aparte, aunque sean dos caras de la misma moneda («¿ganaron los demócratas?» y «¿perdieron los republicanos?»): ponen en duda sustantivos distintos. Elige «No son repetidas» y el par no se vuelve a proponer.",
+    "guidanceAfter": "Las dos siguen recibiendo respuestas hasta que decidas. A quien se le mueva la respuesta se le avisa de que la pregunta se reformuló y puede revisarla.",
+    "dismiss": "No son repetidas",
+    "merge": "Fusionar",
+    "mergeInverted": "Fusionar invertida"
   }
 }

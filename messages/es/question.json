@@ -22,7 +22,7 @@
     "legend": "¿Qué tiene de malo?",
     "note": "Algo que un moderador deba saber",
     "optional": "(opcional)",
-    "notePlaceholder": "Si es repetida, el número de la pregunta original",
+    "notePlaceholder": "Cualquier cosa que ayude a un moderador a decidir",
     "send": "Enviar denuncia",
     "reasons": {
       "duplicate": "Repite otra pregunta",
@@ -31,7 +31,9 @@
       "hateful": "Es de odio o acoso",
       "spam": "Es spam o publicidad",
       "other": "Otra cosa"
-    }
+    },
+    "duplicateOf": "¿Qué pregunta repite?",
+    "duplicateOfNote": "(si es repetida: su número o enlace)"
   },
   "details": {
     "firmly": "Con qué firmeza lo cree la gente",
@@ -56,5 +58,15 @@
     "visibilityLabel": "Votos públicos: {pt} % verdadero, {pf} % falso. Votos privados: {qt} % verdadero, {qf} % falso.",
     "visibilityNote": "El {pt} % de los votos públicos dice verdadero, frente al {qt} % de los privados ({pn} públicos, {qn} privados). La diferencia es lo que la gente dice con su nombre y sin él.",
     "tooFewVisibility": "Todavía hay muy pocos votos públicos o privados para comparar."
+  },
+  "approved": {
+    "label": "Aprobada por un moderador",
+    "hint": "Aprobada por un moderador: un moderador revisó esta pregunta tras varias denuncias y la mantuvo. Aún puedes denunciarla."
+  },
+  "rephrased": {
+    "body": "Esta pregunta se ha reformulado. Respondiste «{old}» con {original, select, true {Verdadero} false {Falso} other {No sé}}, que aquí cuenta como {counted, select, true {Verdadero} false {Falso} other {No sé}}. ¿Quieres revisar tu respuesta?",
+    "free": "Cambiarla ahora no gasta el cambio de hoy.",
+    "keep": "Mantener mi respuesta",
+    "change": "Cambiarla"
   }
 }

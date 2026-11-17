@@ -372,3 +372,24 @@ dl > .settings-row:last-child { border-bottom: 0; }
 .map-chip.false { background: var(--false); }
 .map-chip.unsure { background: var(--unsure); color: var(--on-unsure); }
 @media (max-width: 420px) { .map-stats dd { font-size: 1.5rem; } }
+
+/* M1: the "moderator approved" mark, and the heads-up after a merge */
+.approved-mark { position: relative; display: inline-flex; vertical-align: 0.1em; margin-left: 0.3em; font-size: 0.55em; color: var(--dim); cursor: help; border-radius: 3px; }
+.approved-mark:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.approved-tip {
+  position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); z-index: 5;
+  width: max-content; max-width: 16rem; padding: 6px 9px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--raise); color: var(--ink); font-size: 0.8rem; font-weight: 400; font-stretch: 100%; line-height: 1.3;
+  text-align: left; visibility: hidden; opacity: 0; pointer-events: none;
+}
+.approved-mark:hover .approved-tip, .approved-mark:focus .approved-tip { visibility: visible; opacity: 1; }
+.merge-notice p { margin: 0 0 8px; }
+.merge-notice .mod-actions { margin: 0; }
+.dup-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 0; padding: 0; border: 0; }
+.dup-pair legend { grid-column: 1 / -1; padding: 0; margin-bottom: 6px; }
+.dup-side { padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; }
+.dup-side .q-text { font-size: 1.1rem; margin: 4px 0 8px; }
+.dup-guidance { padding: 10px 12px; border-left: 3px solid var(--line); font-size: 0.92rem; }
+.dup-guidance p, .dup-guidance ul { margin: 0 0 6px; }
+.dup-guidance ul { padding-left: 1.2em; }
+@media (max-width: 560px) { .dup-pair { grid-template-columns: 1fr; } }

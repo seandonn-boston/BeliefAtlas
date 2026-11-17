@@ -1,12 +1,13 @@
 import { query } from "./db";
 import { LIMITS, TODAY_UTC } from "./limits";
 import type { Account } from "./auth";
-import { activeBan, addDemerit, classify, sweep, type Ban, type HarmKind } from "./moderation";
+import { activeBan, addDemerit, classify, suspectsAtAsk, sweep, type Ban, type HarmKind } from "./moderation";
 import { checkQuestion, type CheckResult } from "./checks";
 import { tidyIn, yesNoProblemIn } from "./i18n/asking";
 import { meaningMatches } from "./embeddings"; // W3: meaning-based search, off unless EMBEDDINGS_URL is set
 
-export type Question = { id: number; text: string; status: string; category: string; created_at: Date };
+// `approved` (M1): a moderator reviewed it and kept it (the "moderator approved" mark).
+export type Question = { id: number; text: string; status: string; category: string; created_at: Date; approved?: boolean };
 // W3: `lang` is the language of `text` for this hit (it may be an approved translation).
 export type Match = Question & { similarity: number; lang: string };
 
@@ -95,7 +96,7 @@ export async function search(text: string, limit = 10): Promise<Match[]> {
 
 export async function getQuestion(id: number): Promise<Question | null> {
   const rows = await query<Question>(
-    "select id, text, status, category, created_at from questions where id = $1 and status <> 'removed'",
+    "select id, text, status, category, created_at, approved_at is not null as approved from questions where id = $1 and status <> 'removed'",
     [id],
   );
   return rows[0] ?? null;
@@ -195,6 +196,9 @@ export async function ask(account: Account, raw: string, lang = "en"): Promise<A
     [text, normalize(text), account.id, swept.category, hold ? "review" : "active", hold, lang],
   );
   if (!rows[0]) return { ok: false, error: "That question has already been asked." };
+  // M1: a close match that isn't the same text goes to the moderators' duplicates queue. The
+  // question is posted and takes answers as usual.
+  await suspectsAtAsk(rows[0].id, matches);
   return { ok: true, id: rows[0].id, held: Boolean(hold) };
 }
 

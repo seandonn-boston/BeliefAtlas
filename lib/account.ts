@@ -13,15 +13,26 @@ export async function exportData(accountId: number) {
        from accounts where id = $1`,
     [accountId],
   );
-  const [votes, history, asked, reports, consent, demographics, children] = await Promise.all([
+  // M1: answers on removed (denied or merged-away) questions count nowhere and are kept only for
+  // the moderation ledger, so they are left out of the answers and history and listed apart.
+  const [votes, history, removedAnswers, asked, reports, consent, demographics, children] = await Promise.all([
     query(
       `select q.id as question_id, q.text as question, v.value, v.is_private, v.first_cast_at, v.updated_at
-         from votes v join questions q on q.id = v.question_id where v.account_id = $1 order by v.first_cast_at`,
+         from votes v join questions q on q.id = v.question_id where v.account_id = $1 and q.status <> 'removed'
+        order by v.first_cast_at`,
       [accountId],
     ),
     query(
-      `select e.question_id, q.text as question, e.action, e.value, e.is_private, e.source, e.blind, e.created_at
-         from vote_events e join questions q on q.id = e.question_id where e.account_id = $1 order by e.created_at, e.id`,
+      `select e.question_id, q.text as question, e.action, e.value, e.is_private, e.source, e.blind, e.created_at,
+              e.original_value
+         from vote_events e join questions q on q.id = e.question_id where e.account_id = $1 and q.status <> 'removed'
+        order by e.created_at, e.id`,
+      [accountId],
+    ),
+    query(
+      `select q.id as question_id, q.text as question, v.value, v.first_cast_at, v.updated_at
+         from votes v join questions q on q.id = v.question_id where v.account_id = $1 and q.status = 'removed'
+        order by v.first_cast_at`,
       [accountId],
     ),
     query("select id, text, status, created_at from questions where asked_by = $1 order by created_at", [accountId]),
@@ -39,7 +50,12 @@ export async function exportData(accountId: number) {
     note: "Your phone number is not included because the site never stores it, only a one-way hash of it.",
     account,
     currentVotes: votes,
+    // `original_value` is set where a moderator merged a reworded question into this one: the
+    // answer as you gave it there (an inverted merge counts True as False and the other way round).
     voteHistory: history,
+    // Answers on questions that were removed. They count nowhere and are kept only as a record of
+    // moderation decisions; they are listed so this download holds everything about you.
+    answersOnRemovedQuestions: removedAnswers,
     questionsAsked: asked,
     reportsFiled: reports,
     // Every consent choice ever recorded, oldest first, with the text version shown, the

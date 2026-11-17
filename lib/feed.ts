@@ -6,6 +6,7 @@ import type { Source } from "./votes";
 export type FeedRow = {
   id: number; text: string; status: string; category: string;
   t: number; f: number; u: number; shuffle: number; closeness: number | null;
+  approved: boolean;   // M1: the "moderator approved" mark
   slot: Source;
   // W3 (languages): the language `text` is in, after localizeQuestions has swapped in the
   // reader's approved translation. Cards set it as the `lang` attribute.
@@ -39,7 +40,7 @@ export function decodeCursor(raw: string | null | undefined): Cursor | null {
   }
 }
 
-const COLUMNS = "q.id, q.text, q.lang, q.status, q.category, q.true_count as t, q.false_count as f, q.unsure_count as u, q.shuffle, q.closeness";
+const COLUMNS = "q.id, q.text, q.lang, q.status, q.category, q.true_count as t, q.false_count as f, q.unsure_count as u, q.shuffle, q.closeness, q.approved_at is not null as approved";
 
 export type FeedPage = { rows: FeedRow[]; next: string | null };
 

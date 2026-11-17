@@ -17,12 +17,13 @@ export async function logDecision(
     questionId?: number | null;
     accountId?: number | null;
     detail?: string | null;
+    ruleId?: string | null;    // M1: the rulebook rule the decision was made under (./rules.ts)
   },
   db: Db = pool,
 ): Promise<void> {
   await db.query(
-    `insert into moderation_log (subject, subject_id, question_id, account_id, moderator_id, action, detail)
-     values ($1, $2, $3, $4, $5, $6, $7)`,
+    `insert into moderation_log (subject, subject_id, question_id, account_id, moderator_id, action, detail, rule_id)
+     values ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [
       entry.subject,
       entry.subjectId,
@@ -31,6 +32,7 @@ export async function logDecision(
       entry.moderatorId ?? null,
       entry.action,
       entry.detail ?? null,
+      entry.ruleId ?? null,
     ],
   );
 }

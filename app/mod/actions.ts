@@ -5,7 +5,8 @@ import { getTranslations } from "next-intl/server";
 import { getAccount } from "@/lib/auth";
 import { CATEGORIES } from "@/lib/categories";
 import {
-  aiReview, decide, decideAppeal, isHarmKind, reviewSignal, scanForManipulation, type Decision,
+  aiReview, decide, decideAppeal, decideDuplicate, isHarmKind, isRuleId, reviewSignal, scanForManipulation, type Decision,
+  type DuplicateDecision,
 } from "@/lib/moderation";
 
 // What moderators do from /mod. Every action checks the role again: the page hiding a button
@@ -36,11 +37,15 @@ export async function moderateAction(form: FormData) {
   if (action === "approve" || action === "archive") decision = { action };
   if (action === "remove") {
     const harm = str(form, "harm");
-    decision = { action, why: str(form, "why"), fix: str(form, "fix"), harm: isHarmKind(harm) ? harm : null };
+    const rule = str(form, "rule");
+    decision = {
+      action, why: str(form, "why"), fix: str(form, "fix"), harm: isHarmKind(harm) ? harm : null,
+      rule: isRuleId(rule) && rule.startsWith("deny_") ? rule : null,
+    };
   }
-  if (action === "duplicate") {
+  if (action === "duplicate" || action === "suggest_duplicate") {
     const of = positiveInt(str(form, "of"));
-    if (of) decision = { action, of };
+    if (of) decision = action === "duplicate" ? { action, of, inverted: str(form, "inverted") === "1" } : { action, of };
   }
   if (action === "category") {
     const match = CATEGORIES.find((c) => c.slug === str(form, "category"));
@@ -49,7 +54,22 @@ export async function moderateAction(form: FormData) {
   if (!id || !decision) return fail("incomplete");
   const error = await decide(account.id, id, decision);
   if (error) return fail(error);
-  redirect(`/mod?done=question&id=${id}`);
+  redirect(decision.action === "suggest_duplicate" ? `/mod?done=suggested&id=${id}#duplicates` : `/mod?done=question&id=${id}`);
+}
+
+// M1: a suspected duplicate pair, decided side by side: not duplicates, merge, or merge inverted.
+export async function duplicateAction(form: FormData) {
+  const account = await requireModerator();
+  const id = positiveInt(str(form, "pairId"));
+  const action = str(form, "action");
+  const keep = positiveInt(str(form, "keep"));
+  let decision: DuplicateDecision | null = null;
+  if (action === "dismiss") decision = { action };
+  if ((action === "merge" || action === "merge_inverted") && keep) decision = { action: "merge", inverted: action === "merge_inverted", keep };
+  if (!id || !decision) return fail("incomplete");
+  const error = await decideDuplicate(account.id, id, decision);
+  if (error) return fail(error === "decided" ? "pair_decided" : error);
+  redirect(`/mod?done=duplicate&id=${id}#duplicates`);
 }
 
 export async function aiReviewAction(form: FormData) {

@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { tapAction } from "@/app/v/actions";
+import { ApprovedMark } from "@/components/ApprovedMark";
 import { ShareButton, TellOpener } from "@/components/ShareButton";
 import { Split } from "@/components/Split";
 import { present } from "@/lib/access";
@@ -70,8 +71,9 @@ export default async function VotePage({ params, searchParams }: Props) {
   const done = query.done ?? null;
   // W3: `local` is the question in the reader's language when an approved translation exists.
   // The page title and share previews (generateMetadata) stay canonical.
-  const [account, t, c, local] = await Promise.all([
+  const [account, t, c, local, tq] = await Promise.all([
     getAccount(), getTranslations("vote"), getTranslations("common.choices"), localizeQuestion(question),
+    getTranslations("question"),
   ]);
   const [mine, tally] = await Promise.all([
     account ? myVotes(account.id, [questionId]) : new Map(),
@@ -103,7 +105,10 @@ export default async function VotePage({ params, searchParams }: Props) {
       )}
 
       <article className="fd-card">
-        <h1 className="fd-q" lang={local.lang}>{local.text}</h1>
+        <h1 className="fd-q" lang={local.lang}>
+          {local.text}
+          {question.approved && <ApprovedMark label={tq("approved.label")} hint={tq("approved.hint")} />}
+        </h1>
 
         {counted ? (
           <div className="fd-done" role="status">
