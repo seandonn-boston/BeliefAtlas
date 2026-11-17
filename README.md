@@ -1,7 +1,5 @@
 # BeliefAtlas
 
-The repository is still called `yes-or-no`; the product is BeliefAtlas.
-
 A belief map: people answer true-or-false questions, can change their minds, and every change is kept. The result is not a database of what is true but a record of what people believe, how firmly, and how that moves over time.
 
 This is the first working slice. It runs end to end on Next.js and Postgres.

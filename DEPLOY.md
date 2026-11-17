@@ -47,7 +47,7 @@ Removal checks every touched question's counters against the votes table before 
 
 ## 1. Vercel and the database
 
-1. In Vercel, **Add New → Project** and import `seandonn-boston/yes-or-no`. Leave the build settings alone; `vercel.json` sets the build command, which runs database migrations before every build.
+1. In Vercel, **Add New → Project** and import `seandonn-boston/BeliefAtlas`. Leave the build settings alone; `vercel.json` sets the build command, which runs database migrations before every build.
 2. In the project, open **Storage → Create Database → Neon**. Accept the defaults and connect it to all environments. This adds `DATABASE_URL` for you, using Neon's pooled connection.
 3. In Neon, turn on **branching for preview deployments** if offered. Each pull request then gets its own copy of the database, so preview builds never migrate production.
 
