@@ -48,7 +48,11 @@ export default async function SignupPage({ searchParams }: Props) {
         <ErrorBanner message={error} />
         <form action={signupAction} className="form">
           <input type="hidden" name="back" value={next} />
-          <label>Username<input name="username" autoComplete="username" required minLength={3} maxLength={20} /></label>
+          <label>
+            Username <span className="field-note">(optional)</span>
+            <input name="username" autoComplete="username" minLength={3} maxLength={20} />
+            <span className="field-note">Leave it blank and we&apos;ll pick one. You can change it later.</span>
+          </label>
           <label>
             Date of birth
             {/* autocomplete="bday" lets phones and browsers fill this from the person's own contact card. */}
@@ -63,13 +67,10 @@ export default async function SignupPage({ searchParams }: Props) {
               One account per number; it is stored only as a one-way hash and never shared.
             </span>
           </label>
-          <label>Password<input name="password" type="password" autoComplete="new-password" required minLength={8} /></label>
-          <label className="check">
-            <input type="checkbox" name="consent" required />
-            <span>
-              I agree to the <Link href="/terms">terms</Link> and <Link href="/privacy">privacy policy</Link>, including
-              that my votes are recorded and used, without my name, in published results and data.
-            </span>
+          <label>
+            Password <span className="field-note">(optional)</span>
+            <input name="password" type="password" autoComplete="new-password" minLength={8} />
+            <span className="field-note">Without one, you sign in with a passkey or a texted code.</span>
           </label>
           {challenge.siteKey && (
             <>
@@ -77,7 +78,12 @@ export default async function SignupPage({ searchParams }: Props) {
               <div className="cf-turnstile" data-sitekey={challenge.siteKey} data-action="signup" data-theme="dark" data-appearance="interaction-only" />
             </>
           )}
-          <button className="btn solid">Text me a code</button>
+          <p className="field-note">
+            By continuing, you agree to the <Link href="/terms">terms</Link> and <Link href="/privacy">privacy
+            policy</Link>, including that your votes are recorded and used, without your name, in published results and
+            data.
+          </p>
+          <button className="btn solid">Continue</button>
         </form>
         <p className="q-join">Already have one? <Link href={`/login?next=${encodeURIComponent(next)}`}>Sign in</Link>.</p>
       </main>

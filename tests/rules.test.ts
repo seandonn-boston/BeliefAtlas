@@ -9,6 +9,7 @@ import { decodeCursor, feedPage, topPage } from "../lib/feed";
 import { deleteAccount, exportData } from "../lib/account";
 import { decide, report, REPORT_THRESHOLD, screenQuestion } from "../lib/moderation";
 import { hit } from "../lib/rate-limit";
+import { TERMS_VERSION } from "../lib/legal";
 import { resendCode, startSignup, verifySignup } from "../lib/signup";
 import { ask, booleanProblem, normalize, search, tidy } from "../lib/questions";
 import { questionStats } from "../lib/stats";
@@ -304,11 +305,11 @@ test("signup needs the texted code before an account exists", async () => {
   const username = `${tag}_new`.slice(0, 20);
   const phone = `617${String(Date.now()).slice(-7)}`;
   const base = {
-    username, phone, password: "correct horse", dob: "1990-05-01", consent: true, next: "/", ip: `ip-${tag}`,
+    username, phone, password: "correct horse", dob: "1990-05-01", next: "/", ip: `ip-${tag}`,
     device: `dev-${tag}`, challengeToken: "",
   };
 
-  assert.equal((await startSignup({ ...base, consent: false })).ok, false);
+  assert.equal((await startSignup({ ...base, password: "short" })).ok, false);
   assert.equal((await startSignup({ ...base, username: "deleted_x" })).ok, false);
   const started = await startSignup(base);
   assert.ok(started.ok);
@@ -329,6 +330,11 @@ test("signup needs the texted code before an account exists", async () => {
   assert.ok(account.phone_verified_at);
   assert.ok(account.age_verified_at);
   assert.equal(account.age_method, "dob");
+  const [terms] = await query<{ terms_version: string; consented_at: Date }>(
+    "select terms_version, consented_at from accounts where username = $1", [username],
+  );
+  assert.equal(terms.terms_version, TERMS_VERSION);
+  assert.ok(terms.consented_at);
   const left = await query("select 1 from pending_signups where username = $1", [username]);
   assert.equal(left.length, 0);
   // The same phone can't start another account.
@@ -339,7 +345,7 @@ test("signup needs the texted code before an account exists", async () => {
 test("wrong codes run out", async () => {
   const started = await startSignup({
     username: `${tag}_x`.slice(0, 20), phone: `508${String(Date.now()).slice(-7)}`, password: "correct horse",
-    dob: "1990-05-01", consent: true, next: "/", ip: `ip2-${tag}`, device: `dev2-${tag}`, challengeToken: "",
+    dob: "1990-05-01", next: "/", ip: `ip2-${tag}`, device: `dev2-${tag}`, challengeToken: "",
   });
   assert.ok(started.ok);
   if (!started.ok) return;
@@ -354,14 +360,14 @@ test("signup: under 18 is refused before anything is sent or stored", async () =
   const now = new Date();
   const seventeen = `${now.getUTCFullYear() - 17}-01-01`;
   const result = await startSignup({
-    username, phone: `781${String(Date.now()).slice(-7)}`, password: "correct horse", dob: seventeen, consent: true,
+    username, phone: `781${String(Date.now()).slice(-7)}`, password: "correct horse", dob: seventeen,
     next: "/", ip: `ip3-${tag}`, device: `dev3-${tag}`, challengeToken: "",
   });
   assert.equal(result.ok, false);
   assert.equal(!result.ok && result.underage, true);
   assert.equal((await query("select 1 from pending_signups where username = $1", [username])).length, 0);
   const missing = await startSignup({
-    username, phone: `781${String(Date.now()).slice(-7)}`, password: "correct horse", dob: "", consent: true,
+    username, phone: `781${String(Date.now()).slice(-7)}`, password: "correct horse", dob: "",
     next: "/", ip: `ip3-${tag}`, device: `dev3-${tag}`, challengeToken: "",
   });
   assert.equal(!missing.ok && missing.underage, false);
@@ -372,7 +378,7 @@ test("signup: a shared browser fits a household, but not a bot farm", async () =
   for (let i = 0; i < 11; i++) {
     results.push(await startSignup({
       username: `${tag}_d${i}`.slice(0, 20), phone: `339${String(Date.now() + i * 1000).slice(-7)}`, password: "correct horse",
-      dob: "1985-02-28", consent: true, next: "/", ip: `ip4-${tag}-${i}`, device: `dev4-${tag}`, challengeToken: "",
+      dob: "1985-02-28", next: "/", ip: `ip4-${tag}-${i}`, device: `dev4-${tag}`, challengeToken: "",
     }));
   }
   // Ten people can each start an account from one browser in a day; the eleventh is refused.
@@ -394,7 +400,7 @@ test("signup: a virtual number is turned away before a code is texted", async ()
     const username = `${tag}_voip`.slice(0, 20);
     const result = await startSignup({
       username, phone: `857${String(Date.now()).slice(-7)}`, password: "correct horse", dob: "1990-05-01",
-      consent: true, next: "/", ip: `ip5-${tag}`, device: `dev5-${tag}`, challengeToken: "",
+      next: "/", ip: `ip5-${tag}`, device: `dev5-${tag}`, challengeToken: "",
     });
     assert.equal(result.ok, false);
     assert.match(!result.ok ? result.error : "", /virtual/);

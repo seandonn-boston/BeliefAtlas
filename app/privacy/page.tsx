@@ -19,7 +19,15 @@ export default function PrivacyPage() {
 
         <h2>What we keep</h2>
         <ul>
-          <li><strong>Your username and password.</strong> The password is stored only as a salted hash.</li>
+          <li>
+            <strong>Your username, and a password and PIN if you set them.</strong> Passwords and PINs are stored only
+            as one-way hashes.
+          </li>
+          <li>
+            <strong>Passkeys and authenticator apps, if you add them.</strong> For a passkey we keep only its public key;
+            your face or fingerprint is checked on your own device and never sent to us. An authenticator app&apos;s
+            setup key is stored encrypted.
+          </li>
           <li>
             <strong>Your phone number, as a one-way hash.</strong> We use it to allow one account per number. The number
             itself is held for at most 15 minutes while we confirm it, then deleted. We also keep what kind of line it

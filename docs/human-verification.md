@@ -34,9 +34,11 @@ on Android. Neither is proof of age on its own; both make the honest path one ta
 | Declared Age Range | iOS app | Minors, using the age Apple already holds | Free | **Planned** for the iOS app |
 | Play Age Signals | Android app | Minors, using the age Google already holds | Free | **Planned** for the Android app |
 | App Attest / Play Integrity | Native apps | Requests from emulators, modified apps and scripts | Free (Play Integrity has a daily quota) | **Planned** with the native apps |
-| Passkeys | All | Password stuffing and shared logins | Free | Option |
+| Passkeys with device biometrics | Web now, native later | Password stuffing, phishing, shared logins | Free | **Built** |
+| Authenticator app (TOTP) as a second step | All | Someone with a stolen password or SIM-swapped number | Free | **Built** |
+| Account PIN for sensitive actions | All | Someone using a signed-in device that isn't theirs | Free | **Built** |
 | Digital Credentials API | Web | Minors, with a wallet ID's over-18 claim | Free to call; a verifier library or vendor to read the result | Option |
-| ID document and selfie check | All | Most of what's left, including one person with several SIMs | About $1 to $3 per check (Persona, Veriff, Yoti and similar) | Option, for the paid "verified" tier |
+| Face scan with ID document | All | Most of what's left, including one person with several SIMs | About $1 to $3 per check (Persona, Veriff, Yoti and similar) | Interface **built, switched off** (paid) |
 
 No single layer is enough. An age check does almost nothing against bots, which can type any
 date. The phone code, the line-type lookup and the challenge do the bot work; the age layers
@@ -68,7 +70,8 @@ birthdays now.
 ### Phone verification, hardened
 
 - The texted code (Twilio Verify) is unchanged: no account exists until the code checks out,
-  and only a hash of the number is kept.
+  and only a hash of the number is kept. Twilio is paid, so it also needs `TWILIO_ENABLED=true`
+  (see "Money" below).
 - Before the code is sent, a pluggable line-type check runs (`lib/phone-check.ts`). The
   interface has two implementations: a no-op used by default and in development, and a
   Twilio Lookup v2 adapter switched on with `PHONE_LINE_CHECK=twilio`.
@@ -110,6 +113,63 @@ household won't reach:
   (`bm_device`) that identifies the browser, not the person.
 - Texted codes stay limited per phone number and per IP, as before.
 
+## Signing up and signing in
+
+Decided by Sean on 17 Nov:
+
+- **Required at signup:** phone number (texted code) and date of birth. These are the human
+  and adult checks.
+- **Optional at signup:** username and password. A blank username becomes a generated one
+  like `quiet_harbor42`, changeable once a day in Settings → Security. Without a password, the
+  account signs in by passkey or texted code.
+- **Terms:** no tick box. The line "By continuing, you agree to the terms and privacy policy…"
+  sits right above the Continue button, with both linked. The account records the terms
+  version (`terms_version`, set from `TERMS_VERSION` in `lib/legal.ts`) and the time
+  (`consented_at`). US courts generally uphold this "sign-in wrap" when the notice is clear and
+  next to the button; it is worth a line in the lawyer review the legal pages already wait on.
+
+Ways in, in the order the sign-in page offers them:
+
+1. **Passkey.** Face ID, Touch ID, a fingerprint, Windows Hello or a security key. The
+   biometric check happens on the device; the server only ever sees a signature and keeps a
+   public key. User verification is required, so a passkey counts as two factors (the device
+   plus the face, finger or device PIN) and needs no further step. New accounts land on the
+   Security page, which offers a passkey first. Passkeys are bound to the domain, so ones made
+   on a Vercel preview address only work there.
+2. **Texted code** to the account's phone. The form answers the same way whether or not the
+   number has an account, and only texts numbers that do.
+3. **Password**, for accounts that added one.
+
+**Authenticator app (TOTP).** Optional second step after a texted code or password: six-digit
+codes from Google Authenticator, 1Password, Authy or the iPhone Passwords app. The secret is
+encrypted at rest (AES-256-GCM, key derived from the server's existing `PHONE_PEPPER`). Each
+code works once. Setup gives ten single-use recovery codes, stored hashed.
+
+**Account PIN.** 4 to 8 digits, not a repeated digit or a straight run. Asked for before
+removing a passkey, turning off the authenticator app, changing the password or deleting the
+account. Accounts without a PIN use their password; accounts with neither are asked to set a
+PIN first. Stored with scrypt after keying with the server pepper, so a database copy alone
+can't be used to guess PINs, and limited to 5 tries per 15 minutes.
+
+**Face scan.** A liveness and ID check needs a paid vendor, so `lib/identity-verification.ts`
+defines the interface (start a hosted check, accept the vendor's signed result) with only a
+disabled implementation. We would keep that a check passed, when and with which vendor; never
+face images, document images or biometric templates.
+
+## Money
+
+Sean's rule (17 Nov): no paid services for now. Anything dealing with money can be built as
+far as it goes, but no secrets, keys, access or bank details are put in the code or collected
+from users until a payment plan is in place.
+
+- Twilio (texted codes, line-type lookup) runs only with `TWILIO_ENABLED=true`, and Stripe
+  (membership) only with `STRIPE_ENABLED=true`, even if keys are present. Both flags are off.
+- A scan of every commit on every branch found no real keys. The only key-like strings are
+  obvious fakes in the tests (`sk_test_123`, `whsec_test_secret`, `AC_test`) and the
+  placeholders in `.env.example`, which holds no values.
+- Production signups stay closed until Turnstile (free) and Twilio Verify are both on, which
+  in practice means until texting is paid for.
+
 ## Planned for the native apps
 
 The web can't call any of these; they need the iOS and Android apps.
@@ -128,9 +188,6 @@ The web can't call any of these; they need the iOS and Android apps.
 
 ## Options for later
 
-- **Passkeys.** Sign-in without passwords, tied to the device. Worth adding once accounts
-  exist at scale; they stop password reuse and make account resale harder. They don't prove
-  someone is an adult or unique.
 - **Digital Credentials API (web).** Lets a browser ask a phone wallet for one claim from a
   government ID, such as "over 18", without seeing the birthday. Chrome and Safari have begun
   shipping it; which IDs and states work varies. It needs a verifier for the returned
