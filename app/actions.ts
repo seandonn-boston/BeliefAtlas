@@ -286,8 +286,8 @@ export async function setViewAction(form: FormData) {
 export type InlineResult = { ok: true; card: CardItem } | { ok: false; error: string };
 
 async function cardFor(questionId: number, account: { id: number; tier: "free" | "paid" }, slot: Source): Promise<InlineResult> {
-  const rows = await query<{ id: number; text: string; status: string; category: string; t: number; f: number; u: number }>(
-    `select id, text, status, category, true_count as t, false_count as f, unsure_count as u
+  const rows = await query<{ id: number; text: string; status: string; category: string; t: number; f: number; u: number; approved: boolean }>(
+    `select id, text, status, category, true_count as t, false_count as f, unsure_count as u, approved_at is not null as approved
        from questions where id = $1 and status <> 'removed'`,
     [questionId],
   );
@@ -349,7 +349,9 @@ export async function reportAction(form: FormData) {
   if (!id || !REPORT_REASONS.some((r) => r.value === reason)) redirect(withError(back, "Choose a reason for the report."));
   const limited = await hit([RULES.reportsPerAccount, String(account.id)]);
   if (limited) redirect(withError(back, tooMany(limited)));
-  await report(account.id, id!, reason, str(form, "note"));
+  // M1: for a repeat, the question it repeats, as a number or a /q/ or /v/ link.
+  const repeat = /(?:^#?|\/[qv]\/)(\d+)\/?(?:[?#].*)?$/.exec(str(form, "duplicateOf"));
+  await report(account.id, id!, reason, str(form, "note"), reason === "duplicate" && repeat ? Number(repeat[1]) : null);
   const [base, search = ""] = withoutError(back).split("?");
   const params = new URLSearchParams(search);
   params.set("reported", "1");

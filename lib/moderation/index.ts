@@ -4,7 +4,10 @@
 //   bans.ts         demerits and the escalating temporary bans they bring
 //   reports.ts      reports from voters, hide pending review, the switched-off auto-remove
 //   decisions.ts    what a moderator does with a question, and the queue they see
-//   merge.ts        merging a repeat into the original, under a named vote rule
+//   merge.ts        merging a repeat into the original, under a named vote rule, maybe inverted
+//   duplicates.ts   M1: suspected duplicates, decided side by side, never hidden
+//   notices.ts      M1: the heads-up for people whose answer a merge moved
+//   rules.ts        M1: rulebook rule ids that merges and denials record
 //   appeals.ts      appeals against removals, bans and demerits
 //   manipulation.ts signals of coordinated voting, the only path to a permanent ban
 export * from "./sweep";
@@ -13,6 +16,9 @@ export * from "./bans";
 export * from "./reports";
 export * from "./decisions";
 export * from "./merge";
+export * from "./duplicates";
+export * from "./notices";
+export * from "./rules";
 export * from "./appeals";
 export * from "./manipulation";
 export { logDecision } from "./log";

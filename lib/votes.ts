@@ -80,8 +80,10 @@ async function countToday(client: PoolClient, accountId: number, where: string, 
 }
 
 // One change per question per day, for every tier. A change is a new value or a delete.
+// M1: history a merge moved here, and a change made in answer to a merge heads-up, don't count.
+const SPENT_CHANGE = "action in ('change', 'delete') and moved_by_merge is null and merge_review is null";
 async function changedToday(client: PoolClient, accountId: number, questionId: number) {
-  return (await countToday(client, accountId, "question_id = $2 and action in ('change', 'delete')", [questionId])) > 0;
+  return (await countToday(client, accountId, `question_id = $2 and ${SPENT_CHANGE}`, [questionId])) > 0;
 }
 
 async function questionState(client: PoolClient, questionId: number) {
@@ -112,6 +114,7 @@ type VoteState = {
   is_private: boolean | null;
   casts_today: number;
   changed_today: boolean;               // this vote was already changed or withdrawn today
+  merge_review: number | null;          // M1: an open merge heads-up here; the next change is free
   private_changes_today: number;        // only counted when the current vote is private
   revealed: boolean;
   skipped: boolean;
@@ -127,7 +130,10 @@ async function lockAndRead(client: PoolClient, accountId: number, questionId: nu
               where e.account_id = $1 and ${TODAY_RANGE} and e.action = 'cast') as casts_today,
             exists (select 1 from vote_events e
                      where e.account_id = $1 and e.question_id = $2 and ${TODAY_RANGE}
-                       and e.action in ('change', 'delete')) as changed_today,
+                       and e.action in ('change', 'delete') and e.moved_by_merge is null and e.merge_review is null) as changed_today,
+            (select n.merge_id::int from merge_notices n
+              where n.account_id = $1 and n.into_question_id = $2 and n.dismissed_at is null and n.changed_at is null
+              order by n.id desc limit 1) as merge_review,
             case when v.is_private then
               (select count(*)::int from vote_events e
                 where e.account_id = $1 and ${TODAY_RANGE} and e.action = 'change' and e.is_private)
@@ -159,14 +165,16 @@ const OPEN_FOR_EDIT = "status not in ('archived', 'removed')";
 // which fired the counter trigger (003_vote_counters.sql) and so holds the question's row lock
 // until commit; this statement therefore sees any archive or removal that committed first, and
 // one that commits later comes after the vote. Either way no vote lands on a closed question.
-async function insertEvent(client: PoolClient, action: "cast" | "change", open: string, params: unknown[]) {
+// M1: `mergeReview` marks a change made in answer to a merge heads-up (it doesn't use up the
+// day's change).
+async function insertEvent(client: PoolClient, action: "cast" | "change", open: string, params: unknown[], mergeReview: number | null = null) {
   const res = await client.query(
     `insert into vote_events (account_id, question_id, action, value, is_private, source, blind,
-                              surface, placement, surface_context, shown_at, tapped_at, answer_ms, lang)
+                              surface, placement, surface_context, shown_at, tapped_at, answer_ms, lang, merge_review)
      select $1::int, $2::int, '${action}', $3::text, $4::boolean, $5::text, $6::boolean,
-            $7::text, $8::text, $9::jsonb, $10::timestamptz, $11::timestamptz, $12::int, $13::text
+            $7::text, $8::text, $9::jsonb, $10::timestamptz, $11::timestamptz, $12::int, $13::text, $14::bigint
        from questions where id = $2::int and ${open}`,
-    params,
+    [...params, mergeReview],
   );
   if (res.rowCount !== 1) throw new QuestionClosed();
 }
@@ -251,7 +259,8 @@ export function castVote(
     }
 
     if (state.value === value) return { ok: true, outcome: "same" };
-    if (state.changed_today) return fail(CHANGE_USED, "change_used");
+    // M1: the first change after a merge moved this answer here is free.
+    if (state.changed_today && !state.merge_review) return fail(CHANGE_USED, "change_used");
     if (state.is_private && state.private_changes_today >= limits.privateRecastsPerDay) {
       return fail(`You've used your ${limits.privateRecastsPerDay} private vote changes for today.`, "private_limit");
     }
@@ -263,7 +272,14 @@ export function castVote(
     );
     await insertEvent(client, "change", OPEN_FOR_EDIT, [
       account.id, questionId, value, state.is_private, source, null, surface, placement, context, shownAt, tappedAt, answerMs, lang,
-    ]);
+    ], state.merge_review);
+    if (state.merge_review) {
+      // M1: the heads-up is answered.
+      await client.query(
+        "update merge_notices set changed_at = now() where account_id = $1 and into_question_id = $2 and changed_at is null and dismissed_at is null",
+        [account.id, questionId],
+      );
+    }
     return { ok: true, outcome: "changed" };
   }).catch(closedOr(CLOSED));
 }

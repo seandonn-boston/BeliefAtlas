@@ -9,11 +9,12 @@ import { detailLevel, present, type DetailLevel } from "@/lib/access";
 import { getAccount } from "@/lib/auth";
 import { trendChart, visibilityChart } from "@/lib/charts";
 import { query } from "@/lib/db";
-import { REPORT_REASONS } from "@/lib/moderation";
+import { openMergeNotices, REPORT_REASONS, type MergeNotice } from "@/lib/moderation";
 import { localizeQuestion } from "@/lib/i18n/questions";
 import { getQuestion, mergedInto } from "@/lib/questions";
 import { questionStats, type QuestionStats } from "@/lib/stats";
 import { hasRevealed, myVotes } from "@/lib/votes";
+import { keepMergedAnswerAction } from "./actions";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -33,10 +34,11 @@ export default async function QuestionPage({ params, searchParams }: Props) {
 
   // W3: the question's text in the reader's language when an approved translation exists.
   const [account, t, local] = await Promise.all([getAccount(), getTranslations("question"), localizeQuestion(question)]);
-  const [stats, mine, revealed] = await Promise.all([
+  const [stats, mine, revealed, notices] = await Promise.all([
     questionStats(questionId),
     account ? myVotes(account.id, [questionId]) : new Map(),
     account ? hasRevealed(account.id, questionId) : false,
+    account ? openMergeNotices(account.id, questionId) : ([] as MergeNotice[]),
   ]);
   const myVote = mine.get(questionId);
   const aiAnswers = await query<{ model: string; value: string }>(
@@ -58,7 +60,22 @@ export default async function QuestionPage({ params, searchParams }: Props) {
           <p className="notice" role="status">{t("held")}</p>
         )}
         {reported && <p className="notice" role="status">{t("reported")}</p>}
-        <div className="feed feed-detail">
+        {/* M1: the heads-up after a merge moved their answer here. Only while they still have an answer. */}
+        {myVote && notices.map((n) => (
+          <section key={n.id} className="notice merge-notice" aria-labelledby={`rephrased-${n.id}`}>
+            <p id={`rephrased-${n.id}`}>
+              {t("rephrased.body", { old: n.from_text, original: n.original_value, counted: n.counted_value })}
+            </p>
+            <p className="field-note">{t("rephrased.free")}</p>
+            <form action={keepMergedAnswerAction} className="mod-actions">
+              <input type="hidden" name="questionId" value={questionId} />
+              <input type="hidden" name="noticeId" value={n.id} />
+              <button className="btn small">{t("rephrased.keep")}</button>
+              <a className="btn small" href="#answer">{t("rephrased.change")}</a>
+            </form>
+          </section>
+        ))}
+        <div className="feed feed-detail" id="answer">
           <QuestionCard
             question={local}
             shown={shown}
@@ -112,6 +129,10 @@ export default async function QuestionPage({ params, searchParams }: Props) {
                   <label key={r.value} className="check"><input type="radio" name="reason" value={r.value} required /> {t(`report.reasons.${r.value}`)}</label>
                 ))}
               </fieldset>
+              <label>
+                {t("report.duplicateOf")} <span className="field-note">{t("report.duplicateOfNote")}</span>
+                <input name="duplicateOf" maxLength={300} inputMode="url" />
+              </label>
               <label>
                 {t("report.note")} <span className="field-note">{t("report.optional")}</span>
                 <input name="note" maxLength={500} placeholder={t("report.notePlaceholder")} />

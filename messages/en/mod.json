@@ -4,12 +4,14 @@
   "sections": {
     "questions": "Questions",
     "appeals": "Appeals",
-    "signals": "Manipulation signals"
+    "signals": "Manipulation signals",
+    "duplicates": "Suspected duplicates"
   },
   "empty": {
     "questions": "Nothing waiting. Held and reported questions appear here.",
     "appeals": "No open appeals.",
-    "signals": "No open signals."
+    "signals": "No open signals.",
+    "duplicates": "No suspected duplicates. Pairs found when a question is asked, reported as repeats, or paired by a moderator appear here."
   },
   "done": {
     "question": "Question #{id} updated.",
@@ -17,7 +19,9 @@
     "signal": "Signal #{id} reviewed.",
     "banned": "{n, plural, =0 {Nobody was banned.} one {# account banned permanently for vote manipulation.} other {# accounts banned permanently for vote manipulation.}}",
     "scan": "Scan finished: {n, plural, =0 {no new signals} one {# new signal} other {# new signals}}.",
-    "ai": "AI review added to question #{id}."
+    "ai": "AI review added to question #{id}.",
+    "duplicate": "Pair #{id} decided.",
+    "suggested": "Question #{id} sent to the duplicates queue."
   },
   "item": {
     "held": "Held",
@@ -27,7 +31,8 @@
     "byUser": "asked by a user",
     "catalog": "catalog",
     "reasonCount": "{n} × {reason}",
-    "aiReview": "AI review: answerable true or false {answerable, select, true {yes} other {no}}; names a private person {private_person, select, true {yes} other {no}}; harassing or hateful {harassing_or_hateful, select, true {yes} other {no}}."
+    "aiReview": "AI review: answerable true or false {answerable, select, true {yes} other {no}}; names a private person {private_person, select, true {yes} other {no}}; harassing or hateful {harassing_or_hateful, select, true {yes} other {no}}.",
+    "approvedBefore": "approved before"
   },
   "reasons": {
     "duplicate": "It repeats another question",
@@ -54,7 +59,11 @@
     "mergeRule": "Votes are combined by the rule “{rule}”: {explain}",
     "subject": "Subject",
     "changeSubject": "Change subject",
-    "aiReview": "AI deep review"
+    "aiReview": "AI deep review",
+    "suggestDuplicate": "Suggest as duplicate",
+    "suggestDuplicateNote": "Sends both questions to the duplicates queue, where they are decided side by side. Neither is hidden.",
+    "rule": "Rule it falls under",
+    "ruleFromHarm": "Follow the harm above"
   },
   "harm": {
     "hateful": "Hateful (adds a demerit)",
@@ -115,7 +124,10 @@
     "decided": "That appeal has already been decided.",
     "reviewed": "That signal has already been reviewed.",
     "off": "AI review is switched off.",
-    "unavailable": "The AI review didn't answer. Try again later."
+    "unavailable": "The AI review didn't answer. Try again later.",
+    "pair_decided": "That pair has already been decided.",
+    "keep_not_in_pair": "Choose which of the two questions stays.",
+    "not_a_pair": "Those two can't be paired: check the number, and that neither has been removed."
   },
   "denial": {
     "where": "Where: “{where}”.",
@@ -123,5 +135,32 @@
     "remove": "Suggested fix: take it out.",
     "suggestion": "Try: “{suggestion}”",
     "demerit": "This added a demerit to your account. Repeated harmful questions bring a temporary ban from asking."
+  },
+  "rulebook": {
+    "dup_same_polarity": "Same subject, same polarity: combine",
+    "dup_inverted_polarity": "Same subject, only the polarity differs: combine with answers flipped",
+    "dup_different_subject": "Different subjects, even two halves of one coin: keep apart",
+    "keep_reviewed": "Reviewed by a moderator and kept",
+    "deny_not_yes_no": "Can't be answered true or false",
+    "deny_private_person": "About a private person",
+    "deny_hateful": "Hateful",
+    "deny_harassing": "Harassing",
+    "deny_spam": "Spam or advertising",
+    "deny_other": "Other reason, explained in the removal"
+  },
+  "duplicates": {
+    "meta": "Pair #{id} · {source, select, ask {found when asked} report {reported as a repeat} moderator {paired by a moderator} other {suggested}} · {times, plural, one {suggested once} other {suggested # times}}",
+    "similarity": "Wording {pct}% alike",
+    "side": "#{id} · {status, select, active {live} review {held} archived {archived} other {other}} · {votes, plural, one {# vote} other {# votes}} · {byUser, select, yes {asked by a user} other {catalog}}",
+    "keep": "Which one stays? The other is merged into it.",
+    "keepThis": "This one stays",
+    "guidanceTitle": "Does the data tell two different stories?",
+    "guidanceInverted": "Same subject, only the polarity differs (“the Democrats won the 2026 midterm election” and “the Democrats did not lose the 2026 midterm election”): merge inverted. The merged question's False counts as True here, and its True as False.",
+    "guidanceSame": "Same subject, same polarity: merge.",
+    "guidanceApart": "Different subjects stay apart, even two halves of one coin (“did the Democrats win” and “did the Republicans lose”): they call different nouns into question. Choose “Not duplicates” and the pair is never suggested again.",
+    "guidanceAfter": "Both keep taking answers until you decide. People whose answer moves are told the question was rephrased and can review it.",
+    "dismiss": "Not duplicates",
+    "merge": "Merge",
+    "mergeInverted": "Merge, inverted"
   }
 }

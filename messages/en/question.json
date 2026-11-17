@@ -22,7 +22,7 @@
     "legend": "What's wrong with it?",
     "note": "Anything a moderator should know",
     "optional": "(optional)",
-    "notePlaceholder": "For a repeat, the number of the original question",
+    "notePlaceholder": "Anything that helps a moderator decide",
     "send": "Send report",
     "reasons": {
       "duplicate": "It repeats another question",
@@ -31,7 +31,9 @@
       "hateful": "It's hateful or harassing",
       "spam": "It's spam or advertising",
       "other": "Something else"
-    }
+    },
+    "duplicateOf": "Which question does it repeat?",
+    "duplicateOfNote": "(for a repeat: its number or link)"
   },
   "details": {
     "firmly": "How firmly people hold this",
@@ -56,5 +58,15 @@
     "visibilityLabel": "Public votes: {pt}% true, {pf}% false. Private votes: {qt}% true, {qf}% false.",
     "visibilityNote": "{pt}% of public votes say true, against {qt}% of private ones ({pn} public, {qn} private). A gap is the difference between what people say with and without their name on it.",
     "tooFewVisibility": "Too few public or private votes to compare yet."
+  },
+  "approved": {
+    "label": "Moderator approved",
+    "hint": "Moderator approved: a moderator reviewed this question after reports and kept it. You can still report it."
+  },
+  "rephrased": {
+    "body": "This question has been rephrased. You answered “{old}” with {original, select, true {True} false {False} other {Don't know}}, which counts here as {counted, select, true {True} false {False} other {Don't know}}. Would you like to review your answer?",
+    "free": "Changing it now won't use up today's change.",
+    "keep": "Keep my answer",
+    "change": "Change it"
   }
 }
