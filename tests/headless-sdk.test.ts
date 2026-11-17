@@ -6,7 +6,10 @@ import { after, before, test } from "node:test";
 import { pool, query } from "../lib/db";
 import { currentText, recordConsent } from "../lib/consent";
 import { linkIdentity } from "../lib/vote-engine";
-import { createOrg, createPlacement } from "../lib/headless/placements";
+import { createOrg, createPlacement, deleteTestOrgs } from "../lib/headless/placements";
+
+// Test orgs only: their sanctions screening marked approved, so their placements serve.
+const approveScreening = (o: number) => query("update screened_parties set status = 'approved', status_reason = 'Test org, approved for tests.' where id = (select screened_party_id from organizations where id = $1 and origin = 'test')", [o]);
 import {
   answer, BeliefAtlas, BeliefAtlasError, describeOutcome, renderCardHtml, UNOFFICIAL_NOTICE, type QuestionCard,
 } from "../sdks/javascript/src/index";
@@ -47,7 +50,8 @@ before(async () => {
     "insert into accounts (username, phone_hash, password_hash, consented_at, origin) values ($1, $1, 'x', now(), 'test') returning id",
     [`${tag}_admin`],
   );
-  const orgId = await createOrg({ slug: `${tag}-org`, name: "SDK Test Org", createdBy: admin.id, origin: "test", status: "active", country: "US", sanctionsClearedAt: new Date() });
+  const orgId = await createOrg({ slug: `${tag}-org`, name: "SDK Test Org", createdBy: admin.id, origin: "test", status: "active", country: "US" });
+  await approveScreening(orgId);
   const [row] = await query<{ id: number }>(
     "insert into questions (text, normalized) values ($1, lower($1)) returning id",
     [`Headless sdk ${tag} claim is true`],
@@ -68,7 +72,7 @@ after(async () => {
     if (saved[k] === undefined) delete process.env[k];
     else process.env[k] = saved[k];
   }
-  await query("delete from organizations where slug like $1", [`${tag}-%`]);
+  await deleteTestOrgs(`${tag}-%`);
   await query("delete from questions where normalized like $1", [`headless sdk ${tag} %`]);
   await query("delete from accounts where username like $1", [`${tag}\\_%`]);
   await pool.end();

@@ -12,8 +12,11 @@ import { questionCard } from "../lib/headless/cards";
 import { testOrgKeys } from "../lib/headless/config";
 import { placementSurfaceContext, returnOrigin } from "../lib/headless/handoff";
 import { UNOFFICIAL_NOTICE } from "../lib/headless/notice";
-import { blockedOrgCountry } from "../lib/headless/org-eligibility";
-import { createOrg, createPlacement, getPlacement, OrgNotAllowed, placementResults } from "../lib/headless/placements";
+import { createOrg, createPlacement, deleteTestOrgs, getPlacement, OrgNotAllowed, placementResults } from "../lib/headless/placements";
+import { noBuyersFrom } from "../lib/sanctions/places";
+
+// Test orgs only: their sanctions screening marked approved, so their placements serve.
+const approveScreening = (o: number) => query("update screened_parties set status = 'approved', status_reason = 'Test org, approved for tests.' where id = (select screened_party_id from organizations where id = $1 and origin = 'test')", [o]);
 import { cleanUserId, orgForCredential, relayVote } from "../lib/headless/relay";
 import contract from "../sdks/contract/v1.json";
 import { GET as indexGET } from "../app/api/headless/v1/route";
@@ -74,9 +77,10 @@ let other: string;     // another org's placement
 
 before(async () => {
   admin = await makeAccount();
-  orgId = await createOrg({ slug: `${tag}-shop`, name: "Test Shop", createdBy: admin.id, origin: "test", status: "active", country: "US", sanctionsClearedAt: new Date() });
-  otherOrgId = await createOrg({ slug: `${tag}-other`, name: "Other", createdBy: admin.id, origin: "test", status: "active", country: "US", sanctionsClearedAt: new Date() });
-  const pendingOrg = await createOrg({ slug: `${tag}-pend`, name: "Pending", createdBy: admin.id, origin: "test", country: "US", sanctionsClearedAt: new Date() });
+  orgId = await createOrg({ slug: `${tag}-shop`, name: "Test Shop", createdBy: admin.id, origin: "test", status: "active", country: "US" });
+  otherOrgId = await createOrg({ slug: `${tag}-other`, name: "Other", createdBy: admin.id, origin: "test", status: "active", country: "US" });
+  const pendingOrg = await createOrg({ slug: `${tag}-pend`, name: "Pending", createdBy: admin.id, origin: "test", country: "US" });
+  for (const o of [orgId, otherOrgId, pendingOrg]) await approveScreening(o);
   q1 = await makeQuestion();
   q2 = await makeQuestion();
   qArchived = await makeQuestion("archived");
@@ -99,7 +103,7 @@ after(async () => {
     if (saved[k] === undefined) delete process.env[k];
     else process.env[k] = saved[k];
   }
-  await query("delete from organizations where slug like $1", [`${tag}-%`]);
+  await deleteTestOrgs(`${tag}-%`);
   await query("delete from questions where normalized like $1", [`headless ${tag} %`]);
   await query("delete from accounts where username like $1", [`${tag}\\_%`]);
   await pool.end();
@@ -196,40 +200,48 @@ test("a placement that isn't serving is 404: org pending, or no child-directed a
   assert.equal((await questionGET(req(`/api/headless/v1/questions/${q1}?placement=${pending}`), ctx(q1))).status, 404);
 });
 
-test("orgs in Russia, Belarus, China or a sanctioned place can't be created", async () => {
-  for (const country of ["RU", "BY", "CN", "IR", "KP", "CU"]) {
-    assert.equal(blockedOrgCountry(country), true, country);
+test("orgs from places the sanctions list refuses can't be created", async () => {
+  for (const country of ["RU", "BY", "CN", "HK", "IR", "KP", "CU"]) {
+    assert.equal(noBuyersFrom(country), true, country);
     await assert.rejects(
       createOrg({ slug: `${tag}-x${country.toLowerCase()}`, name: "No", createdBy: admin.id, origin: "test", country }),
       OrgNotAllowed, country,
     );
   }
-  assert.equal(blockedOrgCountry(null), true);
-  assert.equal(blockedOrgCountry("us"), true);
-  assert.equal(blockedOrgCountry("US"), false);
+  const [{ n }] = await query<{ n: number }>("select count(*)::int as n from organizations where slug like $1", [`${tag}-x%`]);
+  assert.equal(n, 0);
 });
 
-test("an org that hasn't cleared sanctions screening never serves, even when active", async () => {
+test("an org whose screening isn't approved never serves, even when active", async () => {
   const unscreened = await createOrg({ slug: `${tag}-unscr`, name: "Unscreened", createdBy: admin.id, origin: "test", status: "active", country: "US" });
+  const [party] = await query<{ kind: string; status: string }>(
+    "select sp.kind, sp.status from organizations o join screened_parties sp on sp.id = o.screened_party_id where o.id = $1", [unscreened],
+  );
+  assert.equal(party.kind, "org");
+  assert.notEqual(party.status, "approved");
   const id = await createPlacement({ orgId: unscreened, label: "x", kind: "site", questionIds: [q1], notChildDirected: true });
   assert.equal((await getPlacement(id))?.serving, false);
   assert.equal((await placementGET(req(`/api/headless/v1/placements/${id}`), ctx(id))).status, 404);
-  await query("update organizations set sanctions_cleared_at = now() where id = $1", [unscreened]);
+  await approveScreening(unscreened);
   assert.equal((await getPlacement(id))?.serving, true);
-  // A country later found to be blocked switches it off again (a direct edit; the app refuses it).
+  // A later refusal (a confirmed match on a list) switches every placement off at once.
+  await query("update screened_parties set status = 'refused' where id = (select screened_party_id from organizations where id = $1)", [unscreened]);
+  assert.equal((await getPlacement(id))?.serving, false);
+  // So does a country the list refuses (a direct edit here; the app never allows it).
+  await approveScreening(unscreened);
   await query("update organizations set country = 'BY' where id = $1", [unscreened]);
   assert.equal((await getPlacement(id))?.serving, false);
 });
 
 test("every card, split and placement card carries the unofficial notice, in the reader's language", async () => {
   const en = await questionCard(q1);
-  assert.equal(en?.notice, UNOFFICIAL_NOTICE.en);
+  assert.equal(en?.notice, UNOFFICIAL_NOTICE);
   const es = await questionCard(q1, { locale: "es" });
   assert.ok(es?.notice.startsWith("No oficial"));
   const split = await (await splitGET(req(`/api/headless/v1/questions/${q1}/split?lang=es`), ctx(q1))).json();
   assert.ok(split.notice.startsWith("No oficial"));
   const placement = await (await placementGET(req(`/api/headless/v1/placements/${site}`), ctx(site))).json();
-  for (const card of placement.questions) assert.equal(card.notice, UNOFFICIAL_NOTICE.en);
+  for (const card of placement.questions) assert.equal(card.notice, UNOFFICIAL_NOTICE);
 });
 
 test("test orgs never serve in production", async () => {

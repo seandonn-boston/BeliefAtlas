@@ -2,7 +2,8 @@ import { query, transaction } from "../db";
 import { isProductionEnv, type Origin } from "../provenance";
 import { pct } from "../stats";
 import type { Surface } from "../front-door";
-import { blockedOrgCountry, orgEligible } from "./org-eligibility";
+import { noBuyersFrom } from "../sanctions/places";
+import { addParty } from "../sanctions/screening";
 
 // Placements: the spots where an organization shows BeliefAtlas questions (a checkout screen, an
 // article footer, an app's settings page). Created and edited in the BeliefAtlas app by the org's
@@ -22,7 +23,8 @@ export type Placement = {
   allowedOrigins: string[];
   questionIds: number[];
   // Whether it may serve at all: org active, placement not switched off, the org has said it is
-  // not child-directed, the org is outside blocked countries and cleared sanctions screening, and
+  // not child-directed, the org is not based in a refused country and its sanctions screening is
+  // approved, and
   // (in production) a real org.
   serving: boolean;
 };
@@ -40,15 +42,16 @@ type Row = {
   id: string; org_id: string; slug: string; name: string; label: string; kind: PlacementKind;
   allowed_origins: string[]; question_ids: number[]; not_child_directed: boolean;
   disabled_at: Date | null; status: string; origin: Origin;
-  country: string | null; sanctions_cleared_at: Date | null;
+  country: string | null; screening: string | null;
 };
 
 export async function getPlacement(id: string, env: Record<string, string | undefined> = process.env): Promise<Placement | null> {
   if (!isPlacementId(id)) return null;
   const [row] = await query<Row>(
     `select p.id, p.org_id, o.slug, o.name, p.label, p.kind, p.allowed_origins, p.question_ids,
-            p.not_child_directed, p.disabled_at, o.status, o.origin, o.country, o.sanctions_cleared_at
+            p.not_child_directed, p.disabled_at, o.status, o.origin, o.country, sp.status as screening
        from org_placements p join organizations o on o.id = p.org_id
+       left join screened_parties sp on sp.id = o.screened_party_id
       where p.id = $1`,
     [id],
   );
@@ -64,7 +67,7 @@ export async function getPlacement(id: string, env: Record<string, string | unde
     allowedOrigins: row.allowed_origins,
     questionIds: row.question_ids,
     serving: row.status === "active" && !row.disabled_at && row.not_child_directed && originOk
-      && orgEligible({ country: row.country, sanctionsClearedAt: row.sanctions_cleared_at }),
+      && !noBuyersFrom(row.country) && row.screening === "approved",
   };
 }
 
@@ -145,22 +148,35 @@ export async function placementResults(
 
 export class OrgNotAllowed extends Error {}
 
-// An org based in a blocked country can't be created at all. Approval (status active) also needs
-// cleared screening; without it the org can exist but never serves.
+// An org based in a country lib/sanctions/places.ts refuses can't be created at all. Every other
+// org is added for sanctions screening at once; it can exist while that is pending, but none of
+// its placements serves until a person approves the screening.
 export async function createOrg(input: {
   slug: string; name: string; createdBy: number; country: string; origin?: Origin; status?: "pending" | "active";
-  sanctionsClearedAt?: Date | null;
 }): Promise<number> {
-  if (blockedOrgCountry(input.country)) throw new OrgNotAllowed("BeliefAtlas can't take organizations based in this country.");
+  if (noBuyersFrom(input.country)) throw new OrgNotAllowed("BeliefAtlas can't take organizations based in this country.");
+  const party = await addParty({ kind: "org", name: input.name, country: input.country });
   return transaction(async (client) => {
     const { rows } = await client.query<{ id: string }>(
-      `insert into organizations (slug, name, created_by, origin, status, country, sanctions_cleared_at)
+      `insert into organizations (slug, name, created_by, origin, status, country, screened_party_id)
        values ($1, $2, $3, $4, $5, $6, $7) returning id`,
-      [input.slug, input.name, input.createdBy, input.origin ?? "real", input.status ?? "pending", input.country, input.sanctionsClearedAt ?? null],
+      [input.slug, input.name, input.createdBy, input.origin ?? "real", input.status ?? "pending", input.country, party.id],
     );
     const id = Number(rows[0].id);
     await client.query("insert into org_members (org_id, account_id, role) values ($1, $2, 'admin')", [id, input.createdBy]);
     return id;
+  });
+}
+
+// Removes test orgs and their screening records. Refuses anything but test-origin orgs.
+export async function deleteTestOrgs(slugLike: string): Promise<void> {
+  await transaction(async (client) => {
+    const { rows } = await client.query<{ screened_party_id: string | null }>(
+      "delete from organizations where slug like $1 and origin = 'test' returning screened_party_id",
+      [slugLike],
+    );
+    const ids = rows.map((r) => r.screened_party_id).filter((x): x is string => x !== null);
+    if (ids.length) await client.query("delete from screened_parties where id = any($1::bigint[]) and kind = 'org'", [ids]);
   });
 }
 

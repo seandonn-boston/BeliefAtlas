@@ -5,8 +5,8 @@
 -- no bank details. Placement ids are public, like a publishable key: they identify a spot where
 -- an org shows questions; they authorize nothing beyond reading public question cards.
 --
--- No org from a sanctioned place, Russia, Belarus or China, and none that hasn't cleared sanctions
--- screening (lib/headless/org-eligibility.ts).
+-- No org from a place lib/sanctions/places.ts refuses (sanctioned places, Russia, Belarus, China
+-- and the rest of that list), and none that hasn't been approved after sanctions screening.
 --
 -- Orgs never ask questions through the API (Sean's rule: questions are asked on the BeliefAtlas
 -- website or app). Placements only point at questions that already exist.
@@ -19,12 +19,12 @@ create table organizations (
   status      text not null default 'pending' check (status in ('pending', 'active', 'suspended')),
   -- Same origins as accounts (lib/provenance.ts): test orgs exist only for tests and previews.
   origin      text not null default 'real' check (origin in ('real', 'test', 'seed')),
-  -- Where the org is based (ISO 3166-1 alpha-2). Orgs in sanctioned places, Russia, Belarus or China may
-  -- not be orgs at all (Sean, 17 Nov); an org with no country never serves.
+  -- Where the org is based (ISO 3166-1 alpha-2). Orgs from places lib/sanctions/places.ts refuses
+  -- may not be orgs at all (Sean, 17 Nov); an org with no country never serves.
   country     text check (country ~ '^[A-Z]{2}$'),
-  -- Set by the sanctions screening (US, UN, EU and UK lists) when the org is clear. Null means
-  -- not yet screened, or a match: either way it never serves.
-  sanctions_cleared_at timestamptz,
+  -- The org's sanctions screening (lib/sanctions/screening.ts, kind 'org'). No placement serves
+  -- until that party is approved; a later match or refusal switches every placement off.
+  screened_party_id bigint references screened_parties(id) on delete set null,
   created_by  integer references accounts(id) on delete set null,
   created_at  timestamptz not null default now()
 );

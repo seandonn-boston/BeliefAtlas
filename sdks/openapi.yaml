@@ -16,8 +16,10 @@ info:
     Every card, split and results response carries `notice` ("Unofficial. Opinions of BeliefAtlas
     users, not official statistics, polls or law."). Show it with the card, always.
 
-    Organizations based in sanctioned places, Russia, Belarus or China can't use the front door,
-    and every organization is screened against the US, UN, EU and UK sanctions lists first.
+    Organizations based in a sanctioned place, Russia, Belarus, China (with Hong Kong and Macau) or
+    Venezuela can't use the front door, and no organization's placements serve until its
+    screening against the US, UN, EU and UK sanctions lists is approved. Visitors in a blocked
+    place get status 451 from every route.
 servers:
   - url: "{base}/api/headless/v1"
     variables:
