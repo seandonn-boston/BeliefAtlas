@@ -19,5 +19,7 @@
     "password": "Password",
     "setPin": "Set an account PIN in <link>Security</link> first."
   },
-  "createAccountTo": "<link>Create an account</link> to {what, select, vote {vote} ask {ask it} other {continue}}."
+  "createAccountTo": "<link>Create an account</link> to {what, select, vote {vote} ask {ask it} other {continue}}.",
+  "unofficial": { "label": "Unofficial", "full": "Unofficial. Opinions of BeliefAtlas users, not official statistics, polls or law.", "detail": "Opinions of BeliefAtlas users, not official statistics, polls or law." },
+  "unavailable": { "title": "Not available here", "body": "BeliefAtlas isn't available in your country or region." }
 }

@@ -9,6 +9,7 @@ import { lineTypeChecker } from "./phone-check";
 import { TERMS_VERSION } from "./legal";
 import { generateUsername, usernameProblem } from "./usernames";
 import { signupOrigin } from "./provenance";
+import { phoneBlocked, PHONE_NOT_AVAILABLE } from "./sanctions/places";
 
 // Signing up is two steps: details first, then the code texted to the phone. The account is
 // only created once the code checks out.
@@ -44,6 +45,8 @@ export async function startSignup(input: StartInput): Promise<StartResult> {
   if (password && password.length < 8) return { ok: false, error: "Passwords need at least 8 characters." };
   if (password.length > 200) return { ok: false, error: "Passwords can be at most 200 characters." };
   if (!digits) return { ok: false, error: "Enter a valid phone number, with country code if outside the US or Canada." };
+  // Numbers from a blocked country are turned away before anything else is checked or sent.
+  if (phoneBlocked(`+${digits}`)) return { ok: false, error: PHONE_NOT_AVAILABLE };
   const age = checkAdult(input.dob);
   if (!age.ok) return { ok: false, error: age.error, underage: age.underage };
 

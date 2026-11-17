@@ -18,5 +18,7 @@
     "password": "Contraseña",
     "setPin": "Primero configura un PIN de la cuenta en <link>Seguridad</link>."
   },
-  "createAccountTo": "<link>Crea una cuenta</link> para {what, select, vote {votar} ask {preguntarlo} other {continuar}}."
+  "createAccountTo": "<link>Crea una cuenta</link> para {what, select, vote {votar} ask {preguntarlo} other {continuar}}.",
+  "unofficial": { "label": "No oficial", "full": "No oficial. Opiniones de usuarios de BeliefAtlas, no estadísticas oficiales, encuestas ni leyes.", "detail": "Opiniones de usuarios de BeliefAtlas, no estadísticas oficiales, encuestas ni leyes." },
+  "unavailable": { "title": "No disponible aquí", "body": "BeliefAtlas no está disponible en tu país o región." }
 }

@@ -21,8 +21,8 @@ export default async function ModerationPage({ searchParams }: Props) {
   const account = await getAccount();
   if (!account || account.role === "user") notFound();
   const { error, done, id, n, banned } = await searchParams;
-  const [items, pairs, appeals, signals, t] = await Promise.all([
-    queue(), duplicatesQueue(), openAppeals(), openSignals(), getTranslations("mod"),
+  const [items, pairs, appeals, signals, t, compliance] = await Promise.all([
+    queue(), duplicatesQueue(), openAppeals(), openSignals(), getTranslations("mod"), getTranslations("compliance"),
   ]);
 
   const doneKeys = ["question", "appeal", "signal", "scan", "ai", "duplicate", "suggested"];
@@ -32,6 +32,7 @@ export default async function ModerationPage({ searchParams }: Props) {
       <main className="wrap wrap-narrow">
         <h1 className="page-title">{t("title")}</h1>
         <p className="note">{t("intro")}</p>
+        <p className="note"><Link href="/mod/compliance">{compliance("link")}</Link></p>
         <ErrorBanner message={error} />
         {done && doneKeys.includes(done) && (
           <p className="notice" role="status">

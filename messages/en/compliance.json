@@ -1,0 +1,65 @@
+{
+  "link": "Compliance: sanctions screening",
+  "title": "Compliance",
+  "intro": "Sanctions screening for data buyers, organisations and the people given access through one. Every party is approved or refused by a person; nothing is approved automatically.",
+  "back": "Back to the review queue",
+  "sections": {
+    "lists": "Sanctions lists",
+    "review": "Possible matches to review",
+    "clear": "Screened, no match: waiting for approval",
+    "actions": "OFAC recent actions to read"
+  },
+  "lists": {
+    "lastOk": "Last loaded {when}, {n, plural, one {# name} other {# names}}",
+    "never": "Never loaded",
+    "lastFailure": "Last failure {when}: {error}",
+    "stale": "Stale"
+  },
+  "stale": "The sanctions lists are stale: at least one list is missing or older than {hours} hours. Approvals are refused until a refresh succeeds (npm run sanctions:refresh, or the daily sanctions.refresh job).",
+  "empty": {
+    "review": "No possible matches waiting.",
+    "clear": "No screened parties waiting for approval.",
+    "actions": "No flagged actions waiting."
+  },
+  "party": {
+    "kind": "{kind, select, buyer {Data buyer} org {Organisation} org_member {Organisation member} other {Party}}",
+    "country": "Country: {country}",
+    "noCountry": "No country stated",
+    "screened": "Screened {when}"
+  },
+  "hit": {
+    "line": "{list}: {name}, score {score}",
+    "programs": "Programmes: {programs}"
+  },
+  "buttons": {
+    "falseMatch": "Not the same person/organisation",
+    "trueMatch": "Confirmed match",
+    "approve": "Approve",
+    "refuse": "Refuse",
+    "reviewed": "Reviewed"
+  },
+  "fields": {
+    "note": "Note (optional)",
+    "refuseReason": "Why refused"
+  },
+  "action": {
+    "line": "{date}: {title}"
+  },
+  "done": {
+    "hit": "Possible match #{id} decided.",
+    "approved": "Party #{id} approved.",
+    "refused": "Party #{id} refused.",
+    "reviewed": "Action #{id} marked as reviewed."
+  },
+  "errors": {
+    "incomplete": "Something was missing. Try again.",
+    "not_found": "That item no longer exists.",
+    "decided": "That possible match was already decided.",
+    "open_hits": "This party still has open possible matches. Decide each one first.",
+    "no_buyer_country": "No organisations or data buyers are accepted from this party's country.",
+    "refused": "This party was refused and can't be approved.",
+    "reason": "Say why the party is refused.",
+    "not_screened": "This party hasn't been screened against the lists yet.",
+    "stale": "The sanctions lists are stale, so approvals are refused until a refresh succeeds."
+  }
+}

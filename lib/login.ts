@@ -4,6 +4,7 @@ import { hashPhone, normalizePhone, verifyPassword } from "./auth";
 import { mfaEnabled, checkSecondFactor } from "./mfa";
 import { hit, RULES, tooMany } from "./rate-limit";
 import { checkCode, sendCode } from "./sms";
+import { phoneBlocked, PHONE_NOT_AVAILABLE } from "./sanctions/places";
 
 // Three ways in: a passkey (lib/passkeys.ts), a code texted to the phone on the account, or a
 // password for accounts that set one. Texted codes and passwords are followed by the
@@ -56,6 +57,8 @@ export async function passwordLogin(identifier: string, password: string, ip: st
 export async function startSmsLogin(rawPhone: string, ip: string, next: string): Promise<{ ok: true; token: string } | { ok: false; error: string }> {
   const digits = normalizePhone(rawPhone);
   if (!digits) return { ok: false, error: "Enter a valid phone number, with country code if outside the US or Canada." };
+  // No code is ever texted to a number from a blocked country.
+  if (phoneBlocked(`+${digits}`)) return { ok: false, error: PHONE_NOT_AVAILABLE };
   const phoneHash = hashPhone(digits);
   const limited = await hit([RULES.loginPerIp, ip], [RULES.smsPerIp, ip], [RULES.smsPerPhone, phoneHash], [RULES.smsPerPhoneDay, phoneHash]);
   if (limited) return { ok: false, error: tooMany(limited) };

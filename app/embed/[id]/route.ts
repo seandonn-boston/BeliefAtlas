@@ -2,6 +2,7 @@ import { getAccount } from "@/lib/auth";
 import { baseUrl, brandName, cleanPlacement, voteUrl } from "@/lib/front-door";
 import { getQuestion } from "@/lib/questions";
 import { myVotes } from "@/lib/votes";
+import { UNOFFICIAL_NOTICE } from "@/lib/legal";
 
 // GET /embed/:id  (the page inside an embed's iframe)
 //
@@ -52,11 +53,13 @@ h1{margin:0;font-size:22px;line-height:1.15;font-weight:800}
 .v .p{grid-column:1/-1;height:36px;color:#99a1ae;font-weight:600;font-size:15px;border-color:#16181c}
 .done{margin:0}.chip{display:inline-block;padding:0 9px;border-radius:999px;color:#000;font-weight:800}
 .chip.true{background:#2196e8}.chip.false{background:#dd6f17}.chip.unsure{background:#6b7480;color:#fff}
+.n{margin:0;font-size:12px;font-weight:600;color:#99a1ae}
 .row{display:flex;gap:14px;align-items:center;font-size:14px;color:#99a1ae}.row a,.row button{color:#eef1f6}
 button{font:inherit;background:none;border:0;padding:0;text-decoration:underline;cursor:pointer}
 </style></head><body>
 <div class="c" id="c">
 <a class="b" href="${esc(baseUrl())}" target="_blank" rel="noopener">${esc(brandName())}</a>
+<p class="n">${esc(UNOFFICIAL_NOTICE)}</p>
 <h1>${esc(question.text)}</h1>
 <p class="done" id="done"${mine ? "" : " hidden"}>${mine ? `<span class="chip ${mine.value}">${LABEL[mine.value]}</span> counted for @${esc(account!.username)}` : ""}</p>
 ${closed ? '<p class="row">This question no longer takes new votes.</p>' : `<div class="v" id="v"${mine ? " hidden" : ""}>

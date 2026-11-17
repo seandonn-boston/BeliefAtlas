@@ -1,9 +1,11 @@
 import { query } from "./db";
+import { NEVER_SELL_COUNTRIES } from "./sanctions/places";
 
 // Regions decide two things, and nothing else: whether person-level answers may ever be sold
 // there, and how small a group may be before it is hidden from aggregate breakdowns. Voting is
-// open everywhere. Every region is closed to sale until a lawyer has reviewed it; the '*' row
-// stands for everywhere without a row of its own (and for anyone whose region isn't known).
+// open everywhere except the blocked places in lib/sanctions/places.ts, which proxy.ts turns
+// away. Every region is closed to sale until a lawyer has reviewed it; the '*' row stands for
+// everywhere without a row of its own (and for anyone whose region isn't known).
 
 export type Region = {
   code: string;
@@ -40,6 +42,7 @@ export async function listRegions(): Promise<Region[]> {
 // Whether a sale of person-level answers is possible at all in this region. Says nothing about
 // the person: use saleAllowed() for that.
 export async function saleOpenIn(code: string | null | undefined): Promise<boolean> {
+  if (code && NEVER_SELL_COUNTRIES.includes(code.toUpperCase())) return false;
   return (await regionFor(code)).saleAllowed;
 }
 
@@ -62,8 +65,18 @@ export async function minGroupSize(code?: string | null): Promise<number> {
 //   * the account exists and isn't a deleted stand-in;
 //   * their latest 'answering' record is an agreement (answers given without it never count);
 //   * their latest 'sale' record is an opt-in, and was not made with Global Privacy Control on;
-//   * their region (or '*' when unknown or without a row) allows sale.
+//   * their region (or '*' when unknown or without a row) allows sale;
+//   * they have never been seen in a never-sell country (China, Hong Kong, Macau): not as
+//     their current region, and not on any consent record they ever made. Moving or
+//     travelling later doesn't make their answers sellable.
 // Every export query must start from this, so no export can forget a condition.
+// The never-sell countries as a SQL array literal. The codes come from lib/sanctions/places.ts,
+// two capital letters each, so they are safe to write into the query.
+const NEVER_SELL_SQL = `array[${NEVER_SELL_COUNTRIES.map((c) => {
+  if (!/^[A-Z]{2}$/.test(c)) throw new Error(`bad never-sell code: ${c}`);
+  return `'${c}'`;
+}).join(",")}]::text[]`;
+
 export const SALE_ELIGIBLE_ACCOUNTS = `
   select a.id
     from accounts a
@@ -77,7 +90,10 @@ export const SALE_ELIGIBLE_ACCOUNTS = `
                    where code = a.region or code = '*'
                    order by (code = '*') limit 1) r on r.sale_allowed
    where a.deleted_at is null
-     and a.origin = 'real'`;
+     and a.origin = 'real'
+     and coalesce(a.region, '*') <> all(${NEVER_SELL_SQL})
+     and not exists (select 1 from consent_records nc
+                      where nc.account_id = a.id and nc.region = any(${NEVER_SELL_SQL}))`;
 
 // True only when the account's region allows sale AND their latest sale choice is an opt-in AND
 // Global Privacy Control wasn't on when it was recorded (a GPC signal later records an opt-out,

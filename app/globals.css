@@ -183,6 +183,7 @@ input[type="checkbox"] { accent-color: var(--ink); width: 16px; height: 16px; ma
 .fig-label em, .split-foot em { color: var(--ink); font-variant-numeric: tabular-nums; }
 .split-bar { display: flex; gap: 2px; height: 10px; margin: 8px 0 7px; border-radius: 4px; overflow: hidden; }
 .seg { flex: 0 0 0; min-width: 2px; }
+.split-unofficial { border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
 .split-foot { margin: 0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; font-size: 0.8rem; color: var(--dim); }
 
 /* The one piece of motion: the bar opens when you have just voted. */
@@ -393,3 +394,9 @@ dl > .settings-row:last-child { border-bottom: 0; }
 .dup-guidance p, .dup-guidance ul { margin: 0 0 6px; }
 .dup-guidance ul { padding-left: 1.2em; }
 @media (max-width: 560px) { .dup-pair { grid-template-columns: 1fr; } }
+
+/* The always-visible "Unofficial" strip at the top of every page. */
+.unofficial-bar { margin: 0; padding: 6px 16px; display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px 10px;
+  background: var(--raise); border-bottom: 1px solid var(--line); color: var(--text-soft); font-size: 0.82rem; text-align: center; }
+.unofficial-bar strong { color: var(--ink); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.78rem;
+  border: 1px solid var(--control-line); border-radius: 4px; padding: 0 6px; }

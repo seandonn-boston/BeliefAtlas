@@ -4,6 +4,7 @@ import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import "@fontsource-variable/archivo/wdth.css";
 import "./globals.css";
 import { Footer } from "@/components/Footer";
+import { UnofficialBar } from "@/components/UnofficialBar";
 import { direction } from "@/lib/i18n/locales";
 import { getTheme, THEME_COLOR } from "@/lib/theme";
 
@@ -26,6 +27,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} dir={direction(locale)} data-theme={theme}>
       <body>
         <NextIntlClientProvider messages={forBrowser}>
+          <UnofficialBar />
           {children}
           <Footer />
         </NextIntlClientProvider>
