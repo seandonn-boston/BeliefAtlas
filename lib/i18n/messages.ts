@@ -5,6 +5,8 @@ import { DEFAULT_LOCALE, type Locale } from "./locales";
 export const NAMESPACES = [
   "common", "header", "feed", "question", "vote", "ask", "map", "auth", "membership", "account",
   "translate", "mod", "appeals",
+  // W4: consent, settings and signup.
+  "consent", "settings", "signup",
 ] as const;
 export type Namespace = (typeof NAMESPACES)[number];
 

@@ -4,7 +4,10 @@ import { getAccount, type Account } from "@/lib/auth";
 import {
   baseUrl, cleanSurface, confirmationLinks, HOLD_COOKIE, HOLD_COOKIE_SECONDS, readShownToken, voteUrl,
 } from "@/lib/front-door";
-import { accountForIdentity, CHOICES, vote, type Choice, type PlatformIdentity } from "@/lib/vote-engine";
+import { accountForIdentity, CHOICES, type Choice, type PlatformIdentity } from "@/lib/vote-engine";
+// W4 consent gate: no answer counts before the 'answering' agreement (lib/consent/gate.ts).
+import { consentUrl, voteWithConsent } from "@/lib/consent/gate";
+import { contextFromRequest } from "@/lib/consent/request";
 
 // POST /api/vote — the one vote API every surface calls.
 //
@@ -25,7 +28,9 @@ import { accountForIdentity, CHOICES, vote, type Choice, type PlatformIdentity }
 //     account gets "needs_link" and a link to answer on the vote page instead.
 //
 // The answer is { outcome, ... } with outcome one of cast, same, changed, skipped,
-// needs_signup, needs_link, limit_reached, change_used, closed, slow_down, invalid.
+// needs_signup, needs_link, needs_consent, limit_reached, change_used, closed, slow_down, invalid.
+// needs_consent (W4): the account hasn't agreed to answering yet. From our pages the tap is held
+// and consentUrl leads to the agreement, which counts it; adapters get linkUrl to the vote page.
 
 const adapterKeys = () => (process.env.ADAPTER_KEYS ?? "").split(",").map((k) => k.trim()).filter(Boolean);
 
@@ -78,7 +83,10 @@ export async function POST(request: Request) {
     account = await getAccount();
   }
 
-  const outcome = await vote({
+  // W4: an adapter's request comes from the platform's servers, so its GPC and country headers
+  // aren't the tapper's: they're ignored there, and the tap isn't held (no cookie to hold it in).
+  const ctx = adapter ? { gpc: false, region: null, surface, lang: "en" } : contextFromRequest(request, surface);
+  const outcome = await voteWithConsent({
     account,
     questionId,
     value,
@@ -87,9 +95,9 @@ export async function POST(request: Request) {
     surfaceContext: adapter && body.context && typeof body.context === "object" ? (body.context as Record<string, unknown>) : null,
     shownAt: readShownToken(body.shown, questionId),
     idempotencyKey: typeof body.idempotencyKey === "string" ? body.idempotencyKey : null,
-  });
+  }, ctx, { hold: !adapter });
 
-  if (outcome.outcome === "needs_signup" || (outcome.outcome === "limit_reached" && !adapter)) {
+  if (outcome.outcome === "needs_signup" || ((outcome.outcome === "limit_reached" || outcome.outcome === "needs_consent") && !adapter)) {
     (await cookies()).set(HOLD_COOKIE, outcome.holdToken, {
       path: "/", httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: HOLD_COOKIE_SECONDS,
     });
@@ -104,6 +112,10 @@ export async function POST(request: Request) {
       return Response.json({ outcome: "skipped", questionId, handle: outcome.handle });
     case "needs_signup":
       return Response.json({ outcome: "needs_signup", questionId, signupUrl: `/signup?next=${encodeURIComponent("/v/resume")}` });
+    case "needs_consent":
+      return Response.json(adapter
+        ? { outcome: "needs_consent", questionId, linkUrl: voteUrl(questionId, { via: surface, pick: value }) }
+        : { outcome: "needs_consent", questionId, consentUrl: consentUrl("/v/resume", surface) });
     case "limit_reached":
       return Response.json({ outcome: "limit_reached", questionId, message: outcome.message, upgradeUrl: "/membership" });
     case "invalid":

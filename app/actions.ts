@@ -23,6 +23,10 @@ import { report, REPORT_REASONS, type ReportReason } from "@/lib/moderation";
 import { ask, type AskResult } from "@/lib/questions";
 import { VIEW_COOKIE, VIEWS, type View } from "@/lib/view";
 import { askingLanguage } from "@/lib/i18n/asking";
+// W4 consent gate: no answer counts before the 'answering' agreement (lib/consent/gate.ts).
+import { consentUrl, holdIfNoConsent } from "@/lib/consent/gate";
+import { requestContext } from "@/lib/consent/request";
+import { HOLD_COOKIE, HOLD_COOKIE_SECONDS } from "@/lib/front-door";
 import {
   castVote, deleteVote, myVotes, reveal, setVisibility, skip, SOURCES, VOTE_VALUES, type Source, type VoteValue,
 } from "@/lib/votes";
@@ -160,6 +164,24 @@ async function askRefusal(result: Exclude<AskResult, { ok: true }>, raw: string)
   return parts.join(" ");
 }
 
+// W4: the hold cookie for a tap waiting on consent, as app/v/actions.ts sets it.
+async function setHoldCookie(token: string) {
+  (await cookies()).set(HOLD_COOKIE, token, {
+    path: "/", httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: HOLD_COOKIE_SECONDS,
+  });
+}
+
+// W4: the same-site page a call came from, for returning there after /consent.
+async function refererPath(): Promise<string> {
+  try {
+    const ref = new URL((await headers()).get("referer") ?? "");
+    const path = ref.pathname + ref.search;
+    return path.startsWith("/") && !path.startsWith("//") ? path : "/";
+  } catch {
+    return "/";
+  }
+}
+
 // Vote limits are per account only, never per IP address or browser, so people who share a
 // computer or a connection each get the full allowance of their own tier.
 async function voteLimit(accountId: number) {
@@ -174,6 +196,15 @@ export async function voteAction(form: FormData) {
   const id = questionId(form);
   const value = str(form, "value") as VoteValue;
   if (!id || !VOTE_VALUES.includes(value)) redirect(withError(back, "That vote wasn't valid."));
+  // W4: held and sent to /consent until they've agreed to answering; /consent counts it.
+  const held = await holdIfNoConsent(
+    { account, questionId: id!, value, surface: "web", isPrivate: form.get("private") === "on", source: source(form) },
+    await requestContext("web"),
+  );
+  if (held) {
+    await setHoldCookie(held);
+    redirect(consentUrl(back));
+  }
   const result = await castVote(account, id!, value, form.get("private") === "on", source(form));
   redirect(result.ok ? withoutError(back, id!) : withError(back, result.error));
 }
@@ -279,6 +310,15 @@ export async function voteInline(input: InlineInput & { value: string; isPrivate
     return { ok: false, error: "That vote wasn't valid." };
   }
   const slot = cleanSource(input.source);
+  // W4: held and sent to /consent (then back to this page) until they've agreed to answering.
+  const held = await holdIfNoConsent(
+    { account, questionId: input.questionId, value: input.value as VoteValue, surface: "web", isPrivate: input.isPrivate, source: slot },
+    await requestContext("web"),
+  );
+  if (held) {
+    await setHoldCookie(held);
+    redirect(consentUrl(await refererPath()));
+  }
   const result = await castVote(account, input.questionId, input.value as VoteValue, input.isPrivate, slot);
   return result.ok ? cardFor(input.questionId, account, slot) : result;
 }
