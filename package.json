@@ -9,7 +9,7 @@
     "lint": "eslint",
     "db:migrate": "tsx --env-file-if-exists=.env.local db/migrate.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --env-file-if-exists=.env.local --test tests/*.test.ts",
+    "test": "tsx --env-file-if-exists=.env.local --test --test-concurrency=1 tests/*.test.ts",
     "db:seed:questions": "tsx --env-file-if-exists=.env.local db/seed-questions.ts",
     "db:seed:demo": "tsx --env-file-if-exists=.env.local db/seed.ts",
     "ai:answers": "tsx --env-file-if-exists=.env.local db/ai-answers.ts",
