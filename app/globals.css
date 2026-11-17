@@ -347,3 +347,27 @@ dl > .settings-row:last-child { border-bottom: 0; }
 .recovery-codes { padding: 12px 16px; border: 1px solid var(--line); border-radius: 8px; font-size: 0.95rem; line-height: 1.7; }
 .passkey-list { list-style: none; margin: 0 0 14px; padding: 0; }
 .passkey-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; padding: 10px 0; border-top: 1px solid var(--line-soft); }
+
+/* ---------- Your map ---------- */
+
+.map-stats { margin: 0 0 10px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.map-stats div { display: flex; flex-direction: column-reverse; gap: 2px; }
+.map-stats dt { font-size: 0.82rem; color: var(--dim); }
+.map-stats dd { margin: 0; font-size: 1.9rem; font-weight: 800; font-stretch: 62%; line-height: 1; font-variant-numeric: tabular-nums; }
+.map-legend { margin: 0 0 8px; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 0.86rem; color: var(--dim); }
+.map-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.map-subjects, .map-entries { list-style: none; margin: 0; padding: 0; }
+.map-subjects a { display: grid; grid-template-columns: 1fr auto; gap: 0 12px; padding: 10px 0; border-bottom: 1px solid var(--line); text-decoration: none; }
+.map-subjects a[aria-current="page"] .map-subject-name { text-decoration: underline; }
+.map-subject-name { font-weight: 700; }
+.map-subject-meta { font-size: 0.84rem; color: var(--dim); align-self: center; }
+.map-bar { grid-column: 1 / -1; margin: 6px 0 0; height: 8px; }
+.map-entries li { display: grid; gap: 6px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.map-q { font-weight: 700; font-stretch: 80%; line-height: 1.2; text-decoration: none; }
+.map-q:hover { text-decoration: underline; }
+.map-place { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 0.84rem; color: var(--dim); }
+.map-chip { padding: 1px 9px; border-radius: 999px; font-weight: 800; color: var(--on-solid); }
+.map-chip.true { background: var(--true); }
+.map-chip.false { background: var(--false); }
+.map-chip.unsure { background: var(--unsure); color: var(--on-unsure); }
+@media (max-width: 420px) { .map-stats dd { font-size: 1.5rem; } }

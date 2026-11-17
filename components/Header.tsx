@@ -25,6 +25,7 @@ export async function Header({ q = "", view, back, focus = false }: Props) {
             {account ? (
               <form action={logoutAction} className="who">
                 {account.role !== "user" && <Link href="/mod">Review</Link>}
+                <Link href="/me">Your map</Link>
                 <Link href="/settings" className="who-name">{account.username}</Link>
                 <button className="link">Sign out</button>
               </form>
