@@ -1,8 +1,8 @@
 import { query } from "./db";
 import { LIMITS, TODAY_UTC } from "./limits";
 import type { Account } from "./auth";
-import { screenQuestion } from "./moderation";
-import { checkQuestion } from "./checks";
+import { activeBan, addDemerit, classify, sweep, type Ban, type HarmKind } from "./moderation";
+import { checkQuestion, type CheckResult } from "./checks";
 import { meaningMatches } from "./embeddings"; // W3: meaning-based search, off unless EMBEDDINGS_URL is set
 
 export type Question = { id: number; text: string; status: string; category: string; created_at: Date };
@@ -102,12 +102,55 @@ export async function getQuestion(id: number): Promise<Question | null> {
 
 export type AskResult =
   | { ok: true; id: number; held: boolean }
-  | { ok: false; error: string; existingId?: number };
+  | {
+      ok: false;
+      error: string;                     // in English, for logs and callers without a page
+      existingId?: number;               // it was already asked: here
+      results?: CheckResult[];           // what to change: why, where and a fix for each
+      text?: string;                     // the text the results' spans point into
+      suggestion?: string | null;        // the whole question with the fixes applied
+      harmful?: boolean;                 // the denial added a demerit
+      ban?: Ban;                         // they can't ask right now
+    };
+
+// "Why. Where. Fix." in one English line, for logs and for callers that show a single message.
+export function describeResult(r: CheckResult, text: string): string {
+  const where = r.span ? text.slice(r.span.start, r.span.end) : null;
+  const fix = r.fix === null ? null : r.fix === "" ? "remove it" : `"${r.fix}"`;
+  return [r.reason, where && `Where: "${where}".`, fix && `Suggested fix: ${fix}.`].filter(Boolean).join(" ");
+}
+
+export function banMessage(ban: Ban): string {
+  return ban.permanent
+    ? "This account is banned for vote manipulation. You can appeal at /appeals."
+    : `You can't ask questions until ${ban.ends_at!.toISOString().slice(0, 16).replace("T", " ")} UTC. You can still vote and browse, and you can appeal at /appeals.`;
+}
+
+async function deny(account: Account, raw: string, results: CheckResult[], harm: HarmKind | null, suggestion: string | null): Promise<AskResult> {
+  const text = raw.replace(/\s+/g, " ").trim();
+  // Only harmful questions cost anything. Rewording is free.
+  if (harm) await addDemerit({ accountId: account.id, kind: harm, reason: results[0]?.reason ?? harm, detail: text });
+  return {
+    ok: false, error: results[0] ? describeResult(results[0], text) : "This question can't be asked.",
+    results, text, suggestion, harmful: Boolean(harm),
+  };
+}
 
 export async function ask(account: Account, raw: string): Promise<AskResult> {
-  // The same checks the search page shows with their fixes; here they only refuse.
-  const blocking = checkQuestion(raw).results.find((r) => r.blocking);
-  if (blocking) return { ok: false, error: blocking.reason };
+  // A ban from asking: they can still vote and browse.
+  const ban = await activeBan(account.id, "asking");
+  if (ban) return { ok: false, error: banMessage(ban), ban };
+
+  // Harm first, so a hateful question with a link in it still counts as hateful.
+  const harmful = classify(raw);
+  if (harmful.harm) return deny(account, raw, harmful.results, harmful.harm, null);
+
+  // The same checks the search page shows with their fixes; here they refuse.
+  const checked = checkQuestion(raw);
+  if (checked.blocked) {
+    const blocking = checked.results.filter((r) => r.blocking);
+    return { ok: false, error: describeResult(blocking[0], checked.text), results: blocking, text: checked.text, suggestion: checked.suggestion };
+  }
   const problem = booleanProblem(raw);
   if (problem) return { ok: false, error: problem };
 
@@ -125,18 +168,20 @@ export async function ask(account: Account, raw: string): Promise<AskResult> {
     if (n >= limit) return { ok: false, error: `You've asked ${limit} questions today. Try again tomorrow.` };
   }
 
-  const screen = await screenQuestion(text, matches);
-  if (screen.reject) return { ok: false, error: screen.reject };
-  if (screen.duplicateOf) return { ok: false, error: "That question has already been asked.", existingId: screen.duplicateOf };
+  // The sweep: allow, hold for a moderator, or deny with why, where and a fix.
+  const swept = await sweep(text, matches);
+  if (swept.duplicateOf) return { ok: false, error: "That question has already been asked.", existingId: swept.duplicateOf };
+  if (swept.decision === "deny") return deny(account, text, swept.results, swept.harm, swept.suggestion);
+  const hold = swept.decision === "hold" ? swept.hold ?? "Held for review" : null;
 
   const rows = await query<{ id: number }>(
     `insert into questions (text, normalized, asked_by, category, status, held_reason)
      values ($1, $2, $3, $4, $5, $6)
      on conflict (normalized) do nothing returning id`,
-    [text, normalize(text), account.id, screen.category, screen.hold ? "review" : "active", screen.hold ?? null],
+    [text, normalize(text), account.id, swept.category, hold ? "review" : "active", hold],
   );
   if (!rows[0]) return { ok: false, error: "That question has already been asked." };
-  return { ok: true, id: rows[0].id, held: Boolean(screen.hold) };
+  return { ok: true, id: rows[0].id, held: Boolean(hold) };
 }
 
 // Where a removed question now lives, if it was merged into another.

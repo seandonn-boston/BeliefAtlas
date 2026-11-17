@@ -1,7 +1,9 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { DidYouMean } from "@/components/DidYouMean";
 import { ErrorBanner, Header } from "@/components/Header";
-import { checkQuestion } from "@/lib/checks";
+import { AskBanNotice } from "@/app/appeals/AskBanNotice";
+import { checkQuestionWithGrammar } from "@/lib/checks/grammar";
+import { activeBan } from "@/lib/moderation";
 import { QuestionCard } from "@/components/QuestionCard";
 import { present } from "@/lib/access";
 import { getAccount } from "@/lib/auth";
@@ -27,7 +29,10 @@ export default async function SearchPage({ searchParams }: Props) {
   // There is no "new question" button anywhere. Asking is only offered here, after a search
   // that didn't turn up the same question.
   const alreadyAsked = matches.some((m) => normalize(m.text) === normalize(tidy(text)));
-  const checked = checkQuestion(text);
+  const [checked, ban] = await Promise.all([
+    checkQuestionWithGrammar(text, { lang: await getLocale() }),
+    account ? activeBan(account.id, "asking") : null,
+  ]);
   const back = `/search?q=${encodeURIComponent(text)}`;
 
   return (
@@ -37,7 +42,8 @@ export default async function SearchPage({ searchParams }: Props) {
         <ErrorBanner message={error} />
 
         {text && !alreadyAsked && (
-          <DidYouMean checked={checked} signedIn={Boolean(account)} dismissed={keep === "1"} hasMatches={matches.length > 0} back={back} />
+          <DidYouMean checked={checked} signedIn={Boolean(account)} dismissed={keep === "1"} hasMatches={matches.length > 0} back={back}
+            askBlocked={ban ? <AskBanNotice ban={ban} /> : undefined} />
         )}
 
         {text && <h1 className="list-title">{matches.length ? t("matches") : t("noMatches")}</h1>}

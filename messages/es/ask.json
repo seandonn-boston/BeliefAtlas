@@ -27,6 +27,18 @@
     "too_long": "Las preguntas pueden tener como máximo {max} caracteres; esta tiene {length}. Intenta quedarte con la única afirmación que quieres que respondan.",
     "too_short": "Es demasiado corto para ser una pregunta. Escribe la afirmación completa, como \"¿Se ve la Gran Muralla China desde el espacio?\"",
     "open_ended": "Las preguntas que empiezan con \"{word}\" piden una explicación, y las de BeliefAtlas necesitan una respuesta de verdadero o falso. Pregunta por una sola afirmación.",
-    "statement": "Esto se lee como una afirmación. Las preguntas de BeliefAtlas necesitan una respuesta de verdadero o falso; escríbela como pregunta de sí o no."
+    "statement": "Esto se lee como una afirmación. Las preguntas de BeliefAtlas necesitan una respuesta de verdadero o falso; escríbela como pregunta de sí o no.",
+    "grammar": "{message} (“{where}”)",
+    "grammar_fix": "{message} (“{where}” → “{fix}”)",
+    "obscene": "Las preguntas no pueden tener palabrotas. Quita “{word}”; la pregunta funciona sin ella.",
+    "obscene_fix": "Las preguntas no pueden tener palabrotas. Prueba “{fix}” en lugar de “{word}”.",
+    "too_specific_relation": "Solo tú conoces a “{where}”, así que nadie más puede responder esto. Pregúntalo sobre {fix} en general.",
+    "too_specific_self": "“{where}” pregunta por ti, y solo tú puedes responderlo. Para todo el mundo, queda “{fix}”.",
+    "hateful_slur": "“{word}” es un insulto discriminatorio. Las preguntas no pueden usarlos; si la pregunta trata de un grupo de personas, llámalas por su propio nombre.",
+    "hateful_dehumanising": "Las preguntas no pueden llamar a un grupo de personas alimañas, animales o menos que humanas. Pregunta por una afirmación o una política concreta.",
+    "hateful_violence": "Las preguntas no pueden llamar a la violencia contra un grupo de personas.",
+    "harassing": "Esto insulta a {name}, que puede ser una persona particular. Las preguntas no pueden insultar ni humillar a nadie.",
+    "private_person": "Esto señala a una persona particular y la acusa de algo. Las preguntas no pueden ir contra personas particulares; pregunta por el comportamiento en general.",
+    "spam": "Esto parece publicidad. Las preguntas son para afirmaciones que se responden con verdadero o falso, no para promocionar nada."
   }
 }
