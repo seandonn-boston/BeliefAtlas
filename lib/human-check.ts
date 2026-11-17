@@ -6,6 +6,8 @@
 // a development bypass passes every signup so the form works on a laptop. In production
 // without them, signup is closed, the same as with phone verification.
 
+import { logger } from "@/lib/log";
+
 export type ChallengeResult = { ok: true } | { ok: false; error: string };
 
 export interface HumanChallenge {
@@ -51,7 +53,7 @@ export function turnstile(siteKey: string, secret: string): HumanChallenge {
         const data = (await response.json().catch(() => ({}))) as { success?: boolean; action?: string; "error-codes"?: string[] };
         if (data.success !== true) {
           if (data["error-codes"]?.some((c) => c.startsWith("invalid-input-secret") || c === "missing-input-secret")) {
-            console.error("turnstile secret rejected", data["error-codes"]);
+            logger.error("turnstile secret rejected", { errorCodes: data["error-codes"] });
           }
           return { ok: false, error: FAILED };
         }
@@ -60,7 +62,7 @@ export function turnstile(siteKey: string, secret: string): HumanChallenge {
         return { ok: true };
       } catch (err) {
         // Failing closed: if the check can't run, a bot would otherwise walk straight in.
-        console.error("turnstile unreachable", (err as Error).message);
+        logger.error("turnstile unreachable", { err });
         return { ok: false, error: "The signup check didn't load. Try again in a minute." };
       }
     },

@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { query } from "./db";
 import { previewTestMode } from "./preview";
+import { logger } from "@/lib/log";
 
 // Membership is a Stripe subscription. Stripe is the source of truth: every webhook re-reads
 // the subscription from Stripe and sets the account's tier from its status.
@@ -87,7 +88,7 @@ async function applySubscription(subscriptionId: string, accountHint?: number): 
         `update accounts set subscription_status = $2, tier = $3 where stripe_customer_id = $1 and deleted_at is null returning id`,
         params,
       );
-  if (!updated.length) console.warn("stripe subscription for an unknown or deleted account", subscriptionId);
+  if (!updated.length) logger.warn("stripe subscription for an unknown or deleted account", { subscriptionId });
 }
 
 export type WebhookResult = { status: number; body: string };
@@ -136,7 +137,7 @@ export async function cancelForDeletion(accountId: number): Promise<{ ok: true }
     }
     return { ok: true };
   } catch (err) {
-    console.error("stripe cancel before deletion failed", (err as Error).message);
+    logger.error("stripe cancel before deletion failed", { err });
     return { ok: false, error: "We couldn't cancel your membership, so the account wasn't deleted. Try again in a minute." };
   }
 }

@@ -1,5 +1,6 @@
 import { createHash, randomInt } from "crypto";
 import { PREVIEW_SMS_CODE, previewTestMode } from "./preview";
+import { logger } from "@/lib/log";
 
 // Phone codes are sent and checked by Twilio Verify, which holds the code itself.
 // Without Twilio credentials, outside production, a development mode makes its own code and
@@ -39,6 +40,7 @@ export async function sendCode(e164: string): Promise<SendResult> {
   if (smsMode === "off") return { ok: false, error: "Phone verification isn't set up on this server yet." };
   if (smsMode === "dev") {
     const code = previewTestMode ? PREVIEW_SMS_CODE : process.env.SMS_DEV_CODE || String(randomInt(0, 1_000_000)).padStart(6, "0");
+    // Dev mode only: the code is printed so a developer can sign in locally. Never runs in production.
     console.log(`[sms dev mode] code for ${e164.slice(0, -4).replace(/\d/g, "•")}${e164.slice(-4)}: ${code}`);
     return { ok: true, devCodeHash: hashCode(code) };
   }
@@ -47,7 +49,7 @@ export async function sendCode(e164: string): Promise<SendResult> {
   // 60200: invalid parameter, 60205: landline or unreachable, 60410: blocked prefix.
   if (data.code === 60200 || data.code === 60205) return { ok: false, error: "That number can't receive text messages." };
   if (data.code === 60410) return { ok: false, error: "Texts to that number aren't allowed." };
-  console.error("twilio verify send failed", data.code, data.message);
+  logger.error("twilio verify send failed", { errorCode: data.code, detail: data.message });
   return { ok: false, error: "The text didn't send. Try again in a minute." };
 }
 

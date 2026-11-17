@@ -9,6 +9,8 @@
 // PHONE_ALLOW_UNKNOWN=false also turns away numbers the lookup can't classify. By default they
 // pass, because many genuine non-US mobiles come back unknown.
 
+import { logger } from "@/lib/log";
+
 export type LineType =
   | "mobile" | "personal" | "landline" | "fixedVoip" | "nonFixedVoip" | "tollFree" | "premium"
   | "sharedCost" | "uan" | "voicemail" | "pager" | "unknown";
@@ -59,7 +61,7 @@ export function twilioLookup(sid: string, token: string, allowUnknown: boolean):
       } catch (err) {
         // The lookup is a filter in front of the texted code, not the check itself. If it is
         // unreachable, let the number through rather than closing signups.
-        console.error("twilio lookup unreachable", (err as Error).message);
+        logger.error("twilio lookup unreachable", { err });
         return { ok: true, lineType: "unknown" };
       }
       const data = (await response.json().catch(() => ({}))) as {
@@ -71,7 +73,7 @@ export function twilioLookup(sid: string, token: string, allowUnknown: boolean):
         return { ok: false, error: "Enter a valid phone number, with country code if outside the US or Canada." };
       }
       if (!response.ok) {
-        console.error("twilio lookup failed", response.status, data.code);
+        logger.error("twilio lookup failed", { status: response.status, errorCode: data.code });
         return { ok: true, lineType: "unknown" };
       }
       const raw = data.line_type_intelligence?.type ?? "unknown";
@@ -86,7 +88,7 @@ export function lineTypeChecker(env: NodeJS.ProcessEnv = process.env): LineTypeC
   const allowUnknown = env.PHONE_ALLOW_UNKNOWN !== "false";
   if (env.PHONE_LINE_CHECK === "twilio" && env.TWILIO_ENABLED === "true") {
     if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN) {
-      console.error("PHONE_LINE_CHECK=twilio needs TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN");
+      logger.error("PHONE_LINE_CHECK=twilio needs TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN");
       return { name: "misconfigured", check: async () => ({ ok: false, error: "Phone verification isn't set up on this server yet." }) };
     }
     return twilioLookup(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN, allowUnknown);
