@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getFormatter, getTranslations } from "next-intl/server";
 import { Header } from "@/components/Header";
 import { getAccount } from "@/lib/auth";
 import { beliefMap, type Answer } from "@/lib/map";
 
-export const metadata: Metadata = { title: "Your map · BeliefAtlas" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("map");
+  return { title: `${t("title")} · BeliefAtlas` };
+}
 
 type Props = { searchParams: Promise<{ subject?: string }> };
 
-const WORD: Record<Answer, string> = { true: "True", false: "False", unsure: "Don't know" };
 const pct = (part: number, whole: number) => (whole ? Math.round((part / whole) * 100) : 0);
 
 function Bar({ counts }: { counts: Record<Answer, number> }) {
@@ -28,41 +31,44 @@ export default async function MapPage({ searchParams }: Props) {
   const account = await getAccount();
   if (!account) redirect("/login?next=%2Fme");
   const { subject } = await searchParams;
-  const map = await beliefMap(account.id, { subject });
+  const [map, t, c, cats, format] = await Promise.all([
+    beliefMap(account.id, { subject }), getTranslations("map"), getTranslations("common.choices"),
+    getTranslations("common.categories"), getFormatter(),
+  ]);
+  const WORD = (a: Answer) => c(a);
+  const label = (slug: string) => (cats.has(slug) ? cats(slug) : slug);
   const current = map.subjects.find((s) => s.category === subject);
 
   return (
     <>
       <Header />
       <main className="wrap wrap-narrow">
-        <h1 className="page-title">Your map</h1>
+        <h1 className="page-title">{t("title")}</h1>
 
         {map.answered === 0 ? (
-          <p className="empty">
-            Nothing here yet. <Link href="/">Answer a few questions</Link> and your map fills in: what you believe, by
-            subject, and where you stand against everyone else.
-          </p>
+          <p className="empty">{t.rich("empty", { link: (x) => <Link href="/">{x}</Link> })}</p>
         ) : (
           <>
             <dl className="map-stats">
-              <div><dt>Answered</dt><dd>{map.answered.toLocaleString("en-US")}</dd></div>
-              <div><dt>With most people</dt><dd>{map.comparable ? `${pct(map.withMost, map.comparable)}%` : "–"}</dd></div>
-              <div><dt>Changed your mind</dt><dd>{map.changedMind.toLocaleString("en-US")}</dd></div>
+              <div><dt>{t("answered")}</dt><dd>{format.number(map.answered)}</dd></div>
+              <div><dt>{t("withMost")}</dt><dd>{map.comparable ? `${pct(map.withMost, map.comparable)}%` : "–"}</dd></div>
+              <div><dt>{t("changedMind")}</dt><dd>{format.number(map.changedMind)}</dd></div>
             </dl>
             <p className="map-legend">
-              <span><i className="swatch true" />True {map.counts.true}</span>
-              <span><i className="swatch false" />False {map.counts.false}</span>
-              <span><i className="swatch unsure" />Don&apos;t know {map.counts.unsure}</span>
+              <span><i className="swatch true" />{c("true")} {format.number(map.counts.true)}</span>
+              <span><i className="swatch false" />{c("false")} {format.number(map.counts.false)}</span>
+              <span><i className="swatch unsure" />{c("unsure")} {format.number(map.counts.unsure)}</span>
             </p>
 
-            <h2 className="list-title">By subject</h2>
+            <h2 className="list-title">{t("bySubject")}</h2>
             <ul className="map-subjects">
               {map.subjects.map((s) => (
                 <li key={s.category}>
                   <Link href={s.category === subject ? "/me" : `/me?subject=${s.category}`} aria-current={s.category === subject ? "page" : undefined}>
-                    <span className="map-subject-name">{s.label}</span>
+                    <span className="map-subject-name">{label(s.category)}</span>
                     <span className="map-subject-meta">
-                      {s.answered} answered{s.comparable ? ` · with most people on ${pct(s.withMost, s.comparable)}%` : ""}
+                      {t("subjectMeta", { n: format.number(s.answered) })}
+                      {s.comparable ? ` · ${t("subjectWithMost", { pct: pct(s.withMost, s.comparable) })}` : ""}
                     </span>
                     <Bar counts={s.counts} />
                   </Link>
@@ -70,17 +76,17 @@ export default async function MapPage({ searchParams }: Props) {
               ))}
             </ul>
 
-            <h2 className="list-title">{current ? `Your answers in ${current.label}` : "Your answers, latest first"}</h2>
+            <h2 className="list-title">{current ? t("inSubject", { subject: label(current.category) }) : t("latest")}</h2>
             <ul className="map-entries">
               {map.entries.map((e) => (
                 <li key={e.questionId}>
                   <Link href={`/q/${e.questionId}`} className="map-q">{e.text}</Link>
                   <p className="map-place">
-                    <span className={`map-chip ${e.value}`}>{WORD[e.value]}</span>
+                    <span className={`map-chip ${e.value}`}>{WORD(e.value)}</span>
                     {e.sameAsYou === null
-                      ? <span>Too few answers yet to compare</span>
-                      : <span>{e.sameAsYou}% of {e.total.toLocaleString("en-US")} said the same{e.withMost ? ", the most common answer" : ""}</span>}
-                    {e.firstValue && e.firstValue !== e.value && <span>First said {WORD[e.firstValue]}</span>}
+                      ? <span>{t("tooFew")}</span>
+                      : <span>{t("sameAsYou", { pct: e.sameAsYou, total: format.number(e.total) })}{e.withMost ? t("mostCommon") : ""}</span>}
+                    {e.firstValue && e.firstValue !== e.value && <span>{t("firstSaid", { choice: WORD(e.firstValue) })}</span>}
                   </p>
                 </li>
               ))}

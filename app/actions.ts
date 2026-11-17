@@ -2,6 +2,7 @@
 
 import { cookies, headers } from "next/headers";
 import { isTheme, THEME_COOKIE } from "@/lib/theme";
+import { isLocale, LANG_COOKIE } from "@/lib/i18n/locales";
 import { redirect } from "next/navigation";
 import { query } from "@/lib/db";
 import { endSession, getAccount, startSession } from "@/lib/auth";
@@ -183,18 +184,35 @@ export async function revealAction(form: FormData) {
 }
 
 // Remember how this browser likes its question lists laid out.
-export async function setThemeAction(form: FormData) {
-  const theme = str(form, "theme");
-  if (isTheme(theme)) {
-    (await cookies()).set(THEME_COOKIE, theme, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
-  }
-  // The switch sits in the footer of every page, so it returns to the page it was pressed on.
+// The theme and language switches sit in the footer of every page, so each returns to the page
+// it was pressed on.
+async function backToReferer(): Promise<never> {
   let back = "/";
   try {
     const ref = new URL((await headers()).get("referer") ?? "");
     back = ref.pathname + ref.search;
   } catch {}
   redirect(withoutError(back.startsWith("/") && !back.startsWith("//") ? back : "/"));
+}
+
+export async function setThemeAction(form: FormData) {
+  const theme = str(form, "theme");
+  if (isTheme(theme)) {
+    (await cookies()).set(THEME_COOKIE, theme, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+  }
+  await backToReferer();
+}
+
+// The language is kept in a cookie for everyone, and on the account too when signed in, so it
+// follows them to another device.
+export async function setLanguageAction(form: FormData) {
+  const lang = str(form, "lang");
+  if (isLocale(lang)) {
+    (await cookies()).set(LANG_COOKIE, lang, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+    const account = await getAccount();
+    if (account) await query("update accounts set lang = $2 where id = $1", [account.id, lang]);
+  }
+  await backToReferer();
 }
 
 export async function setViewAction(form: FormData) {

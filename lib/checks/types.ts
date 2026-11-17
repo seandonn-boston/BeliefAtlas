@@ -18,7 +18,11 @@ export type CheckResult = {
   // Must be fixed before the question can be posted. Grammar and spelling never block: the
   // asker can always say No and post what they wrote.
   blocking: boolean;
-  reason: string;                                   // why, in plain words
+  reason: string;                                   // why, in plain words (English)
+  // The same reason as a message key under "ask.checks" and its values, so the page can say it
+  // in the reader's language. `reason` stays for logs and server-side errors.
+  key: string;
+  values?: Record<string, string | number>;
   span: { start: number; end: number } | null;      // where, as offsets into CheckedQuestion.text
   fix: string | null;                               // what this one part should become ("" = remove it)
   // The stretch the fix replaces when it is wider than what's highlighted, e.g. removing a link

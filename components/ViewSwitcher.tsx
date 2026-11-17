@@ -1,15 +1,14 @@
+import { useTranslations } from "next-intl";
 import { setViewAction } from "@/app/actions";
 import type { View } from "@/lib/view";
 
-const OPTIONS: { view: View; label: string; icon: React.ReactNode }[] = [
+const OPTIONS: { view: View; icon: React.ReactNode }[] = [
   {
     view: "compact",
-    label: "Compact list",
     icon: <path d="M3 5h14M3 10h14M3 15h14" />,
   },
   {
     view: "tiles",
-    label: "Tiles",
     icon: (
       <>
         <rect x="3" y="3" width="6" height="8" rx="1" />
@@ -21,7 +20,6 @@ const OPTIONS: { view: View; label: string; icon: React.ReactNode }[] = [
   },
   {
     view: "swipe",
-    label: "One at a time",
     icon: (
       <>
         <rect x="5" y="5" width="10" height="10" rx="1.5" />
@@ -32,11 +30,12 @@ const OPTIONS: { view: View; label: string; icon: React.ReactNode }[] = [
 ];
 
 export function ViewSwitcher({ current, back }: { current: View; back: string }) {
+  const t = useTranslations("header");
   return (
-    <form action={setViewAction} className="views" aria-label="Layout">
+    <form action={setViewAction} className="views" aria-label={t("layout")}>
       <input type="hidden" name="back" value={back} />
       {OPTIONS.map((o) => (
-        <button key={o.view} name="view" value={o.view} aria-pressed={current === o.view} aria-label={o.label} title={o.label}>
+        <button key={o.view} name="view" value={o.view} aria-pressed={current === o.view} aria-label={t(`views.${o.view}`)} title={t(`views.${o.view}`)}>
           <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6"
             strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{o.icon}</svg>
         </button>

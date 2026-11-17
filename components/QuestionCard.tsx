@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { FormEvent } from "react";
+import { useTranslations } from "next-intl";
 import { deleteVoteAction, skipAction, voteAction } from "@/app/actions";
 import type { Shown } from "@/lib/access";
 import type { MyVote, Source } from "@/lib/votes";
@@ -21,17 +22,18 @@ type Props = {
   error?: string | null;
 };
 
-const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
 export function QuestionCard({
   question, shown, myVote, signedIn, source, back, linkTitle = true, reveal, onSubmit, busy, error,
 }: Props) {
+  const t = useTranslations("question");
+  const c = useTranslations("common.choices");
+  const common = useTranslations("common");
   const closed = question.status !== "active";
   const canVote = signedIn && !(closed && !myVote);
-  const answer = (value: "true" | "false" | "unsure", label: string, kind: string) => (
+  const answer = (value: "true" | "false" | "unsure", kind: string) => (
     <button name="value" value={value} data-act={value} disabled={busy}
       className={`btn ${kind} ${value}${myVote?.value === value ? " mine" : ""}`}
-      aria-pressed={myVote?.value === value}>{label}</button>
+      aria-pressed={myVote?.value === value}>{c(value)}</button>
   );
 
   return (
@@ -44,7 +46,10 @@ export function QuestionCard({
         <Split shown={shown} reveal={reveal} />
       ) : (
         <p className="q-hint">
-          {shown.totalLabel ? `${sentence(shown.totalLabel)} so far. ` : ""}Vote to see how they split.
+          {shown.count
+            ? `${t("countSoFar", { kind: shown.count.kind, n: shown.count.kind === "exact" ? shown.count.n : 0, e: shown.count.kind === "exact" ? "" : shown.count.e })} `
+            : ""}
+          {t("voteToSee")}
         </p>
       )}
 
@@ -54,32 +59,34 @@ export function QuestionCard({
           <input type="hidden" name="source" value={source} />
           <input type="hidden" name="back" value={back} />
           <div className="vote-main">
-            {answer("true", "True", "answer")}
-            {answer("false", "False", "answer")}
+            {answer("true", "answer")}
+            {answer("false", "answer")}
           </div>
           <div className="vote-side">
-            {answer("unsure", "Don&apos;t know", "quiet")}
+            {answer("unsure", "quiet")}
             {myVote ? (
-              <button formAction={deleteVoteAction} data-act="delete" disabled={busy} className="btn quiet">Delete</button>
+              <button formAction={deleteVoteAction} data-act="delete" disabled={busy} className="btn quiet">{t("delete")}</button>
             ) : (
-              <button formAction={skipAction} data-act="skip" disabled={busy} className="btn quiet">Skip</button>
+              <button formAction={skipAction} data-act="skip" disabled={busy} className="btn quiet">{c("skip")}</button>
             )}
           </div>
           {error && <p className="q-error" role="alert">{error}</p>}
           {myVote ? (
-            <p className="vote-note">You voted {myVote.value}, {myVote.is_private ? "privately" : "publicly"}. One change per day.</p>
+            <p className="vote-note">{t("voted", { value: myVote.value, private: myVote.is_private ? "yes" : "no" })}</p>
           ) : (
-            <label className="vote-private"><input type="checkbox" name="private" /> Vote privately</label>
+            <label className="vote-private"><input type="checkbox" name="private" /> {t("votePrivately")}</label>
           )}
         </form>
       )}
 
-      {question.status === "archived" && <p className="q-hint">Archived. This question no longer takes new votes.</p>}
+      {question.status === "archived" && <p className="q-hint">{t("archived")}</p>}
       {question.status === "review" && (
-        <p className="q-hint">A moderator is reviewing this question. It takes votes again once approved.</p>
+        <p className="q-hint">{t("inReview")}</p>
       )}
       {!signedIn && (
-        <p className="q-join"><Link href={`/signup?next=${encodeURIComponent(back)}`}>Create an account</Link> to vote.</p>
+        <p className="q-join">
+          {common.rich("createAccountTo", { what: "vote", link: (x) => <Link href={`/signup?next=${encodeURIComponent(back)}`}>{x}</Link> })}
+        </p>
       )}
     </article>
   );

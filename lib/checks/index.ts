@@ -39,12 +39,12 @@ const LINK_PATTERNS: RegExp[] = [
   new RegExp(`\\b[a-z0-9-]+\\s*(?:\\(|\\[)?\\s*(?:dot|\\.)\\s*(?:\\)|\\])?\\s*(?:${TLDS})\\b(?:\\s*(?:slash|\\/)\\s*\\S+)?`, "gi"),
 ];
 
-const PERSONAL_DATA: [RegExp, string][] = [
-  [/[\w.+-]+@[\w-]+\.[\w.]+/g, "Questions can't include email addresses, so nobody can be contacted or identified through one."],
-  [/(?:\+?\d[\s().-]*){10,}/g, "Questions can't include phone numbers, so nobody can be contacted or identified through one."],
-  [/(^|\s)@[A-Za-z0-9_]{2,}/g, "Questions can't include social media handles, which point at one person's account."],
+const PERSONAL_DATA: [RegExp, string, string][] = [
+  [/[\w.+-]+@[\w-]+\.[\w.]+/g, "Questions can't include email addresses, so nobody can be contacted or identified through one.", "email"],
+  [/(?:\+?\d[\s().-]*){10,}/g, "Questions can't include phone numbers, so nobody can be contacted or identified through one.", "phone"],
+  [/(^|\s)@[A-Za-z0-9_]{2,}/g, "Questions can't include social media handles, which point at one person's account.", "handle"],
   [/\b\d{1,5}\s+(?:[A-Z][a-z]+\s+){1,3}(?:St|Street|Ave|Avenue|Rd|Road|Blvd|Boulevard|Ln|Lane|Dr|Drive|Ct|Court|Way|Pl|Place)\b/g,
-    "Questions can't include street addresses, which point at someone's home."],
+    "Questions can't include street addresses, which point at someone's home.", "address"],
 ];
 
 // Common misspellings. A starting list until a self-hosted grammar checker (LanguageTool) is
@@ -139,13 +139,13 @@ export function checkQuestion(raw: string): CheckedQuestion {
   const results: CheckResult[] = [];
 
   const taken: { start: number; end: number }[] = [];
-  for (const [pattern, reason] of PERSONAL_DATA) {
+  for (const [pattern, reason, kind] of PERSONAL_DATA) {
     for (const m of findAll(text, pattern)) {
       if (taken.some((t) => overlaps(t, m))) continue;
       taken.push(m);
       results.push({
         code: "personal_data", blocking: true, span: { start: m.start, end: m.end }, fix: "",
-        replace: removal(text, m), reason,
+        replace: removal(text, m), reason, key: `personal_${kind}`,
       });
     }
   }
@@ -157,6 +157,7 @@ export function checkQuestion(raw: string): CheckedQuestion {
       taken.push(m);
       results.push({
         code: "link", blocking: true, span: { start: m.start, end: m.end }, fix: "", replace: removal(text, m),
+        key: "link",
         reason: "Questions can't contain links, including shortened or spelled-out ones. Name the source in words instead, like \"an article in the New York Times\".",
       });
     }
@@ -169,7 +170,8 @@ export function checkQuestion(raw: string): CheckedQuestion {
     if (fix && fix !== word.toLowerCase()) {
       results.push({
         code: "spelling", blocking: false, span: { start: m.index!, end: m.index! + word.length },
-        fix: matchCase(word, fix), reason: `"${word}" looks misspelled; did you mean "${matchCase(word, fix)}"?`,
+        fix: matchCase(word, fix), key: "spelling", values: { word, fix: matchCase(word, fix) },
+        reason: `"${word}" looks misspelled; did you mean "${matchCase(word, fix)}"?`,
       });
     }
   }
@@ -177,12 +179,12 @@ export function checkQuestion(raw: string): CheckedQuestion {
     if (results.some((r) => r.span && overlaps(r.span, { start: m.index!, end: m.index! + m[0].length }))) continue;
     results.push({
       code: "repeated_word", blocking: false, span: { start: m.index!, end: m.index! + m[0].length },
-      fix: m[1], reason: `"${m[1]}" appears twice in a row.`,
+      fix: m[1], key: "repeated_word", values: { word: m[1] }, reason: `"${m[1]}" appears twice in a row.`,
     });
   }
   for (const m of text.matchAll(/(^|\s)(i)(?=\s|'|$)/g)) {
     const start = m.index! + m[1].length;
-    results.push({ code: "lowercase_i", blocking: false, span: { start, end: start + 1 }, fix: "I", reason: '"I" is always a capital letter.' });
+    results.push({ code: "lowercase_i", blocking: false, span: { start, end: start + 1 }, fix: "I", key: "lowercase_i", reason: '"I" is always a capital letter.' });
   }
 
   // Shape: long enough, short enough, and answerable true or false. Checked on the text with
@@ -192,11 +194,12 @@ export function checkQuestion(raw: string): CheckedQuestion {
   if (cleaned.length > MAX_LENGTH) {
     results.push({
       code: "too_long", blocking: true, span: { start: Math.min(MAX_LENGTH, text.length), end: text.length }, fix: null,
+      key: "too_long", values: { max: MAX_LENGTH, length: cleaned.length },
       reason: `Questions can be at most ${MAX_LENGTH} characters; this one is ${cleaned.length}. Try cutting it to the one claim you want answered.`,
     });
   } else if (cleaned.length < MIN_LENGTH || words.length < 3 || !/\p{L}{2,}/u.test(cleaned)) {
     results.push({
-      code: "too_short", blocking: true, span: null, fix: null,
+      code: "too_short", blocking: true, span: null, fix: null, key: "too_short",
       reason: "That's too short to be a question. Say the whole claim, like \"Is the Great Wall of China visible from space?\"",
     });
   } else if (!OPENERS.has(words[0].toLowerCase())) {
@@ -206,6 +209,8 @@ export function checkQuestion(raw: string): CheckedQuestion {
       code: "not_true_false", blocking: true,
       span: firstWord ? { start: 0, end: firstWord[0].length } : null,
       fix: null,
+      key: openEnded ? "open_ended" : "statement",
+      values: { word: words[0] },
       reason: openEnded
         ? `Questions starting with "${words[0]}" ask for an explanation, and BeliefAtlas questions need a true-or-false answer. Ask about one claim, starting with a word like "Is", "Did", "Will" or "Does".`
         : 'This reads as a statement. BeliefAtlas questions need a true-or-false answer, so start with a word like "Is", "Did", "Will" or "Does".',

@@ -27,17 +27,27 @@ export function estimate(n: number): string {
   return "<1k";
 }
 
-// "about 45K votes", or "<1k votes" below a thousand.
-export function estimateLabel(n: number): string {
+// How the vote total may be shown: exact, rounded ("about 45K"), or under a thousand. The words
+// around it come from the message files, so it reads right in every language.
+export type VoteCount = { kind: "exact"; n: number } | { kind: "about"; e: string } | { kind: "under"; e: string };
+
+export function estimateCount(n: number): VoteCount {
   const e = estimate(n);
-  return e.startsWith("<") ? `${e} votes` : `about ${e} votes`;
+  return e.startsWith("<") ? { kind: "under", e: "1k" } : { kind: "about", e };
+}
+
+// English wording, kept for the API and logs: "45,212 votes", "about 45K votes", "<1k votes".
+export function countLabel(c: VoteCount | null): string | null {
+  if (!c) return null;
+  if (c.kind === "exact") return `${c.n.toLocaleString("en-US")} ${c.n === 1 ? "vote" : "votes"}`;
+  return c.kind === "under" ? "<1k votes" : `about ${c.e} votes`;
 }
 
 export type Shown = {
   hasVotes: boolean;
   split: { true: number; false: number; unsure: number } | null; // null while results are hidden
   sides: Tally | null;        // exact per-answer counts
-  totalLabel: string | null;  // "45,212 votes", "about 45K votes", "<1k votes", or nothing
+  count: VoteCount | null;    // the total, as far as this viewer may know it
 };
 
 type Viewer = {
@@ -52,14 +62,13 @@ type Viewer = {
 export function present(tally: Tally, viewer: Viewer): Shown {
   const access = countAccess(viewer.account, viewer.voted);
   const splitVisible = !viewer.account || viewer.voted || Boolean(viewer.revealed) || Boolean(viewer.closed);
-  const votes = (n: string) => `${n} ${n === "1" ? "vote" : "votes"}`;
   return {
     hasVotes: tally.total > 0,
     split: splitVisible ? percentages(tally) : null,
     sides: access === "full" && splitVisible ? tally : null,
-    totalLabel:
-      access === "full" ? votes(tally.total.toLocaleString("en-US"))
-      : access === "estimate" ? estimateLabel(tally.total)
+    count:
+      access === "full" ? { kind: "exact", n: tally.total }
+      : access === "estimate" ? estimateCount(tally.total)
       : null,
   };
 }

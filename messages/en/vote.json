@@ -1,0 +1,16 @@
+{
+  "metaDescription": "True or false? Answer in one tap on {brand}.",
+  "heldAnswer": "You have a held answer. <link>Count it now</link>.",
+  "counted": "{done, select, same {was already counted for} changed {is your new answer, counted for} other {counted for}}",
+  "skipped": "Skipped. Nothing was counted, and it may come back around another day.",
+  "limitReached": "You've used today's votes. Your answer is held for 24 hours: <link>become a member</link> and it counts straight away, or come back tomorrow.",
+  "closed": "This question no longer takes new votes.",
+  "tapToConfirm": "Tap {choice} to confirm.",
+  "change": "Change your vote",
+  "account": "Your account",
+  "joinHint": "Tap an answer, then make an account in a few seconds and it counts.",
+  "share": "Share",
+  "copied": "Link copied",
+  "copyPrompt": "Copy this link",
+  "shareText": "{text} True or false?"
+}

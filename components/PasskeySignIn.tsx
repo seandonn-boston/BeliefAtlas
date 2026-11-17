@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { passkeyLoginFinish, passkeyLoginStart } from "@/app/auth-actions";
 
 // "Sign in with a passkey": the phone or computer asks for Face ID, a fingerprint, Windows
 // Hello or its PIN, then signs in. Nothing biometric leaves the device.
 export function PasskeySignIn({ next }: { next: string }) {
+  const t = useTranslations("auth.passkey");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,7 +24,7 @@ export function PasskeySignIn({ next }: { next: string }) {
       window.location.assign(done.next);
     } catch (err) {
       const name = (err as Error).name;
-      setError(name === "NotAllowedError" ? "Passkey sign-in was cancelled." : "This browser couldn't use a passkey here.");
+      setError(name === "NotAllowedError" ? t("cancelled") : t("unsupported"));
     } finally {
       setBusy(false);
     }
@@ -31,7 +33,7 @@ export function PasskeySignIn({ next }: { next: string }) {
   return (
     <div className="form">
       <button type="button" className="btn solid" onClick={go} disabled={busy}>
-        {busy ? "Waiting for your device…" : "Sign in with a passkey"}
+        {busy ? t("waiting") : t("signIn")}
       </button>
       {error && <p className="note" role="alert">{error}</p>}
     </div>

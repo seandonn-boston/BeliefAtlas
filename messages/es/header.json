@@ -1,0 +1,13 @@
+{
+  "home": "BeliefAtlas, inicio",
+  "review": "Revisar",
+  "map": "Tu mapa",
+  "signOut": "Cerrar sesión",
+  "signIn": "Iniciar sesión",
+  "join": "Únete",
+  "searchPlaceholder": "Busca una pregunta o haz una",
+  "searchLabel": "Buscar preguntas",
+  "search": "Buscar",
+  "layout": "Diseño",
+  "views": { "compact": "Lista compacta", "tiles": "Mosaico", "swipe": "Una a la vez" }
+}

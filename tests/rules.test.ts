@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { pool, query } from "../lib/db";
 import type { Account } from "../lib/auth";
-import { countAccess, detailLevel, estimate, present, shapeStats } from "../lib/access";
+import { countAccess, countLabel, detailLevel, estimate, present, shapeStats } from "../lib/access";
 import { decodeCursor, feedPage, topPage } from "../lib/feed";
 import { deleteAccount, exportData } from "../lib/account";
 import { decide, report, REPORT_THRESHOLD, screenQuestion } from "../lib/moderation";
@@ -204,20 +204,20 @@ test("who sees how many votes", () => {
   const tally = { true: 30000, false: 14000, unsure: 1212, total: 45212 };
   // No account: the split, and nothing about how many voted.
   const visitor = present(tally, { account: null, voted: false });
-  assert.deepEqual([visitor.split?.true, visitor.sides, visitor.totalLabel], [66.4, null, null]);
+  assert.deepEqual([visitor.split?.true, visitor.sides, countLabel(visitor.count)], [66.4, null, null]);
   // Free, before voting: no split, a rounded total.
   const before = present(tally, { account: freeTier, voted: false });
-  assert.deepEqual([before.split, before.sides, before.totalLabel], [null, null, "about 45K votes"]);
-  assert.equal(present({ ...tally, total: 312 }, { account: freeTier, voted: false }).totalLabel, "<1k votes");
+  assert.deepEqual([before.split, before.sides, countLabel(before.count)], [null, null, "about 45K votes"]);
+  assert.equal(countLabel(present({ ...tally, total: 312 }, { account: freeTier, voted: false }).count), "<1k votes");
   // Free, after asking to see results first: the split, still only a rounded total.
   const peeked = present(tally, { account: freeTier, voted: false, revealed: true });
-  assert.deepEqual([peeked.split?.true, peeked.sides, peeked.totalLabel], [66.4, null, "about 45K votes"]);
+  assert.deepEqual([peeked.split?.true, peeked.sides, countLabel(peeked.count)], [66.4, null, "about 45K votes"]);
   // Free, after voting: exact counts on every side.
   const after = present(tally, { account: freeTier, voted: true });
-  assert.deepEqual([after.sides, after.totalLabel], [tally, "45,212 votes"]);
+  assert.deepEqual([after.sides, countLabel(after.count)], [tally, "45,212 votes"]);
   // Paid, before voting: the exact total, but no split until they vote or ask.
   const paidBefore = present(tally, { account: paidTier, voted: false });
-  assert.deepEqual([paidBefore.split, paidBefore.sides, paidBefore.totalLabel], [null, null, "45,212 votes"]);
+  assert.deepEqual([paidBefore.split, paidBefore.sides, countLabel(paidBefore.count)], [null, null, "45,212 votes"]);
 });
 
 test("question detail is tiered: visitor, voter, member, API", async () => {

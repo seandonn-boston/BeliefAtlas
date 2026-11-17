@@ -1,0 +1,22 @@
+{
+  "title": "Membership",
+  "titleMember": "You're a member",
+  "welcomeMember": "Welcome. Your membership is active.",
+  "welcomePending": "Payment received. Your membership can take a few seconds to switch on; refresh in a moment.",
+  "price": "$5",
+  "priceNote": "a month, cancel any time",
+  "perks": {
+    "unlimited": "Unlimited votes, questions and changes to private votes",
+    "counts": "Exact vote counts on every question, before you vote",
+    "firmly": "How firmly people hold each answer: who changed once, more than once, and this week",
+    "trend": "Each question's 14-day trend",
+    "visibility": "What people say publicly against what they say privately"
+  },
+  "joinPrompt": "<signup>Create an account</signup> or <login>sign in</login> to join.",
+  "endDev": "End membership (development mode)",
+  "manage": "Manage billing or cancel",
+  "soon": "Membership opens soon.",
+  "joinDev": "Join (development mode, no charge)",
+  "join": "Join for $5 a month",
+  "stripeNote": "Payment is handled by Stripe. Your vote still counts once, like everyone else's."
+}

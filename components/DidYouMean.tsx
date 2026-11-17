@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { askAction } from "@/app/actions";
 import type { CheckedQuestion } from "@/lib/checks";
 
@@ -34,57 +35,59 @@ function Marked({ checked }: { checked: CheckedQuestion }) {
 // serves every check: Yes posts the suggestion, No goes back to what they wrote, Edit puts the
 // suggestion in the search box to change further.
 export function DidYouMean({ checked, signedIn, dismissed, hasMatches, back }: Props) {
+  const t = useTranslations("ask");
+  const common = useTranslations("common");
   const { results, suggestion, blocked } = checked;
   const offer = suggestion && !dismissed;
   const original = checked.text;
   return (
     <section className="ask">
       <h1 className="list-title">
-        {blocked ? "This needs a change before it can be asked" : results.length ? "Nobody has asked this yet, but check this first" : "Nobody has asked this yet"}
+        {blocked ? t("needsChange") : results.length ? t("checkFirst") : t("notAsked")}
       </h1>
       {results.length ? <Marked checked={checked} /> : <p className="ask-text">{suggestion ?? original}</p>}
       {results.length > 0 && (
         <ol className="fix-list">
           {results.map((r, i) => (
             <li key={i} className={r.blocking ? "fix-must" : "fix-may"}>
-              {r.reason}{!r.blocking && <span className="fix-tag"> Suggestion only.</span>}
+              {t(`checks.${r.key}`, r.values)}{!r.blocking && <span className="fix-tag"> {t("suggestionOnly")}</span>}
             </li>
           ))}
         </ol>
       )}
 
       {offer && (
-        <div className="did-you-mean" role="group" aria-label="Did you mean">
-          <p className="dym-label">Did you mean:</p>
+        <div className="did-you-mean" role="group" aria-label={t("didYouMean")}>
+          <p className="dym-label">{t("didYouMeanLabel")}</p>
           <p className="ask-text dym-text">{suggestion}</p>
           <div className="dym-actions">
             {signedIn ? (
               <form action={askAction}>
                 <input type="hidden" name="text" value={suggestion} />
                 <input type="hidden" name="back" value={back} />
-                <button className="btn solid">Yes, ask this</button>
+                <button className="btn solid">{t("yesAsk")}</button>
               </form>
             ) : (
-              <Link className="btn solid" href={searchFor(suggestion)}>Yes</Link>
+              <Link className="btn solid" href={searchFor(suggestion)}>{t("yes")}</Link>
             )}
-            <Link className="btn" href={searchFor(original, "&keep=1")}>No</Link>
-            <Link className="btn" href={searchFor(suggestion, "&edit=1")}>Edit</Link>
+            <Link className="btn" href={searchFor(original, "&keep=1")}>{t("no")}</Link>
+            <Link className="btn" href={searchFor(suggestion, "&edit=1")}>{t("edit")}</Link>
           </div>
         </div>
       )}
 
-      {!offer && blocked && <p className="ask-note">Change your question in the search box above, then search again.</p>}
+      {!offer && blocked && <p className="ask-note">{t("changeAbove")}</p>}
 
       {!offer && !blocked && (signedIn ? (
         <form action={askAction}>
           <input type="hidden" name="text" value={original} />
           <input type="hidden" name="back" value={back} />
-          <button className="btn solid">Ask now</button>
-          <span className="ask-note">Asked anonymously.{hasMatches && " Check the similar questions first."}</span>
+          <button className="btn solid">{t("askNow")}</button>
+          <span className="ask-note">{t("anonymous")}{hasMatches && ` ${t("checkSimilar")}`}</span>
         </form>
       ) : (
         <p className="q-join">
-          <Link href={`/signup?next=${encodeURIComponent(back)}`}>Create an account</Link> to ask it.
+          {common.rich("createAccountTo", { what: "ask", link: (x) => <Link href={`/signup?next=${encodeURIComponent(back)}`}>{x}</Link> })}
         </p>
       ))}
     </section>

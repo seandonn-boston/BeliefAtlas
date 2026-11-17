@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getFormatter, getTranslations } from "next-intl/server";
 import { reportAction, revealAction, visibilityAction } from "@/app/actions";
 import { Chart } from "@/components/Chart";
 import { ErrorBanner, Header } from "@/components/Header";
@@ -29,7 +30,7 @@ export default async function QuestionPage({ params, searchParams }: Props) {
     notFound();
   }
 
-  const account = await getAccount();
+  const [account, t] = await Promise.all([getAccount(), getTranslations("question")]);
   const [stats, mine, revealed] = await Promise.all([
     questionStats(questionId),
     account ? myVotes(account.id, [questionId]) : new Map(),
@@ -52,12 +53,9 @@ export default async function QuestionPage({ params, searchParams }: Props) {
       <main className="wrap wrap-narrow">
         <ErrorBanner message={error} />
         {held && question.status === "review" && (
-          <p className="notice" role="status">
-            Your question is saved. A moderator checks questions that may name a private person or cause harm before
-            they go live; this usually takes less than a day.
-          </p>
+          <p className="notice" role="status">{t("held")}</p>
         )}
-        {reported && <p className="notice" role="status">Thanks. A moderator will look at it.</p>}
+        {reported && <p className="notice" role="status">{t("reported")}</p>}
         <div className="feed feed-detail">
           <QuestionCard
             question={question}
@@ -76,8 +74,8 @@ export default async function QuestionPage({ params, searchParams }: Props) {
             <input type="hidden" name="questionId" value={questionId} />
             <input type="hidden" name="back" value={back} />
             <input type="hidden" name="to" value={myVote.is_private ? "public" : "private"} />
-            <span>Your vote is {myVote.is_private ? "private" : "public"}.</span>
-            <button className="link">Make it {myVote.is_private ? "public" : "private"}</button>
+            <span>{t("yourVoteIs", { private: myVote.is_private ? "yes" : "no" })}</span>
+            <button className="link">{t("makeIt", { private: myVote.is_private ? "yes" : "no" })}</button>
           </form>
         )}
 
@@ -85,16 +83,16 @@ export default async function QuestionPage({ params, searchParams }: Props) {
           <form action={revealAction} className="aside-form">
             <input type="hidden" name="questionId" value={questionId} />
             <input type="hidden" name="back" value={back} />
-            <span>Voting before you see the results keeps your answer your own.</span>
-            <button className="link">Show results first</button>
+            <span>{t("voteFirst")}</span>
+            <button className="link">{t("showResults")}</button>
           </form>
         )}
 
         {/* Only once the split is visible, so an AI's answer can't steer a first vote. */}
         {shown.split && aiAnswers.length > 0 && (
           <p className="ai-note">
-            {aiAnswers.map((a) => `${a.model} answered ${a.value}`).join("; ")}.
-            {" "}AI answers are shown for comparison and are never counted as votes.
+            {aiAnswers.map((a) => t("aiAnswered", { model: a.model, value: a.value })).join("; ")}.
+            {" "}{t("aiNote")}
           </p>
         )}
 
@@ -102,21 +100,21 @@ export default async function QuestionPage({ params, searchParams }: Props) {
 
         {account && question.status === "active" && !reported && (
           <details className="report">
-            <summary>Report this question</summary>
+            <summary>{t("report.summary")}</summary>
             <form action={reportAction} className="form">
               <input type="hidden" name="questionId" value={questionId} />
               <input type="hidden" name="back" value={back} />
               <fieldset>
-                <legend>What&apos;s wrong with it?</legend>
+                <legend>{t("report.legend")}</legend>
                 {REPORT_REASONS.map((r) => (
-                  <label key={r.value} className="check"><input type="radio" name="reason" value={r.value} required /> {r.label}</label>
+                  <label key={r.value} className="check"><input type="radio" name="reason" value={r.value} required /> {t(`report.reasons.${r.value}`)}</label>
                 ))}
               </fieldset>
               <label>
-                Anything a moderator should know <span className="field-note">(optional)</span>
-                <input name="note" maxLength={500} placeholder="For a repeat, the number of the original question" />
+                {t("report.note")} <span className="field-note">{t("report.optional")}</span>
+                <input name="note" maxLength={500} placeholder={t("report.notePlaceholder")} />
               </label>
-              <button className="btn">Send report</button>
+              <button className="btn">{t("report.send")}</button>
             </form>
           </details>
         )}
@@ -127,44 +125,45 @@ export default async function QuestionPage({ params, searchParams }: Props) {
 
 // What the page shows grows with the viewer's level (lib/access.ts). Arrival routes and the
 // time filters are never shown here; they are API-only.
-function Details({ stats, level, signedIn, back }: { stats: QuestionStats; level: DetailLevel; signedIn: boolean; back: string }) {
+async function Details({ stats, level, signedIn, back }: { stats: QuestionStats; level: DetailLevel; signedIn: boolean; back: string }) {
   const { churn, visibility, blindFirstVotes, history } = stats;
+  const [t, format] = await Promise.all([getTranslations("question.details"), getFormatter()]);
 
   if (level !== "member") {
     return (
       <>
         {level === "voter" && (
           <section className="block">
-            <h2>How firmly people hold this</h2>
+            <h2>{t("firmly")}</h2>
             <p className="headline-stat">
               <span className="tile-value">{churn.pctChangedMind}%</span>
-              <span>have changed their mind on this at least once</span>
+              <span>{t("changedMind")}</span>
             </p>
           </section>
         )}
         <section className="block locked">
-          <h2>More on this question, for members</h2>
+          <h2>{t("forMembers")}</h2>
           <ul>
-            <li>How the split has moved over the last 14 days</li>
-            <li>How many changed once, more than once, or this week</li>
-            <li>What people say publicly against what they say privately</li>
+            <li>{t("lockedTrend")}</li>
+            <li>{t("lockedChurn")}</li>
+            <li>{t("lockedVisibility")}</li>
           </ul>
           <p className="note">
             {signedIn
-              ? <><Link href="/membership">Join for $5 a month</Link> to see all of it.</>
-              : <><Link href={`/signup?next=${encodeURIComponent(back)}`}>Create an account</Link> and vote to see how firmly people hold this. The rest comes with membership, $5 a month.</>}
+              ? t.rich("joinMember", { link: (c) => <Link href="/membership">{c}</Link> })
+              : t.rich("joinVisitor", { link: (c) => <Link href={`/signup?next=${encodeURIComponent(back)}`}>{c}</Link> })}
           </p>
         </section>
       </>
     );
   }
 
-  const count = (x: number) => `${x.toLocaleString("en-US")} people`;
+  const count = (n: number) => t("people", { n });
   const tiles = [
-    { value: churn.pctChangedOnce, label: "changed their vote once", sub: count(churn.changedOnce) },
-    { value: churn.pctChangedMoreThanOnce, label: "changed it more than once", sub: count(churn.changedMoreThanOnce) },
-    { value: churn.pctChangedInLast7Days, label: "changed or withdrew this week", sub: count(churn.changedInLast7Days) },
-    { value: blindFirstVotes.pct, label: "voted before seeing results", sub: count(blindFirstVotes.count) },
+    { value: churn.pctChangedOnce, label: t("changedOnce"), sub: count(churn.changedOnce) },
+    { value: churn.pctChangedMoreThanOnce, label: t("changedMore"), sub: count(churn.changedMoreThanOnce) },
+    { value: churn.pctChangedInLast7Days, label: t("changedWeek"), sub: count(churn.changedInLast7Days) },
+    { value: blindFirstVotes.pct, label: t("blind"), sub: count(blindFirstVotes.count) },
   ];
   const days = history.filter((h) => h.total > 0);
   const first = days[0], last = days[days.length - 1];
@@ -172,7 +171,7 @@ function Details({ stats, level, signedIn, back }: { stats: QuestionStats; level
   return (
     <>
       <section className="block">
-        <h2>How firmly people hold this</h2>
+        <h2>{t("firmly")}</h2>
         <ul className="tiles">
           {tiles.map((t) => (
             <li key={t.label}>
@@ -182,43 +181,41 @@ function Details({ stats, level, signedIn, back }: { stats: QuestionStats; level
             </li>
           ))}
         </ul>
-        <p className="note">Shares of everyone who has ever voted on this question.</p>
+        <p className="note">{t("sharesNote")}</p>
       </section>
 
       <section className="block">
-        <h2>Over the last 14 days</h2>
+        <h2>{t("last14")}</h2>
         {days.length >= 2 ? (
           <>
             <Chart
               spec={trendChart(history)}
-              label={`Share answering true went from ${first.pctTrue}% on ${first.day} to ${last.pctTrue}% on ${last.day}; false went from ${first.pctFalse}% to ${last.pctFalse}%.`}
+              label={t("trendLabel", { t1: first.pctTrue, d1: first.day, t2: last.pctTrue, d2: last.day, f1: first.pctFalse, f2: last.pctFalse })}
             />
-            <p className="note">
-              True moved from {first.pctTrue}% to {last.pctTrue}%, false from {first.pctFalse}% to {last.pctFalse}%.
-              The dashed line marks an even split.
-            </p>
+            <p className="note">{t("trendNote", { t1: first.pctTrue, t2: last.pctTrue, f1: first.pctFalse, f2: last.pctFalse })}</p>
           </>
         ) : (
-          <p className="note">Not enough history yet.</p>
+          <p className="note">{t("noHistory")}</p>
         )}
       </section>
 
       <section className="block">
-        <h2>With a name attached, and without</h2>
+        <h2>{t("visibility")}</h2>
         {visibility.public && visibility.private ? (
           <>
             <Chart
               spec={visibilityChart(visibility.public, visibility.private)}
-              label={`Public votes: ${visibility.public.pctTrue}% true, ${visibility.public.pctFalse}% false. Private votes: ${visibility.private.pctTrue}% true, ${visibility.private.pctFalse}% false.`}
+              label={t("visibilityLabel", { pt: visibility.public.pctTrue, pf: visibility.public.pctFalse, qt: visibility.private.pctTrue, qf: visibility.private.pctFalse })}
             />
             <p className="note">
-              {visibility.public.pctTrue}% of public votes say true, against {visibility.private.pctTrue}% of private ones
-              ({visibility.public.total.toLocaleString("en-US")} public, {visibility.private.total.toLocaleString("en-US")} private).
-              A gap is the difference between what people say with and without their name on it.
+              {t("visibilityNote", {
+                pt: visibility.public.pctTrue, qt: visibility.private.pctTrue,
+                pn: format.number(visibility.public.total), qn: format.number(visibility.private.total),
+              })}
             </p>
           </>
         ) : (
-          <p className="note">Too few public or private votes to compare yet.</p>
+          <p className="note">{t("tooFewVisibility")}</p>
         )}
       </section>
     </>

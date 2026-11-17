@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, type FormEvent } from "react";
+import { useTranslations } from "next-intl";
 import { deleteVoteInline, skipInline, voteInline } from "@/app/actions";
 import type { CardItem } from "@/lib/cards";
 import { QuestionCard } from "./QuestionCard";
@@ -15,6 +16,7 @@ type Props = {
 // A question card whose votes are saved without leaving the page, so a long list keeps its
 // place and the one-at-a-time view shows the result on the panel you are looking at.
 export function LiveCard({ item, signedIn, back, onSkip }: Props) {
+  const t = useTranslations("feed");
   const [card, setCard] = useState(item);
   const [error, setError] = useState<string | null>(null);
   const [busy, startTransition] = useTransition();
@@ -32,7 +34,7 @@ export function LiveCard({ item, signedIn, back, onSkip }: Props) {
       if (act === "skip") {
         const result = await skipInline(base);
         if (result.ok) onSkip(card.id);
-        else setError("That didn't save. Try again.");
+        else setError(t("saveFailed"));
         return;
       }
       const result = act === "delete" ? await deleteVoteInline(base) : await voteInline({ ...base, value: act, isPrivate });

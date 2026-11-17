@@ -1,0 +1,23 @@
+{
+  "brand": "BeliefAtlas",
+  "description": "What people believe, how firmly, and how it changes.",
+  "choices": { "true": "True", "false": "False", "unsure": "Don't know", "skip": "Skip" },
+  "footer": { "membership": "Membership", "terms": "Terms", "privacy": "Privacy" },
+  "theme": { "label": "Theme", "oled": "OLED", "paper": "Digital Paper" },
+  "language": { "label": "Language", "review": "Translation in review" },
+  "categories": {
+    "everything": "Everything", "society": "Society", "politics": "Politics", "philosophy": "Philosophy",
+    "future": "The future", "science": "Science", "space": "Space", "health": "Health", "technology": "Technology",
+    "economics": "Money", "history": "History", "geography": "Geography", "math": "Math", "sports": "Sports",
+    "culture": "Arts", "food": "Food", "animals": "Animals", "language": "Language", "everyday": "Everyday",
+    "mysteries": "Mysteries", "general": "Asked by people"
+  },
+  "legalDraft": "Draft. This page has not yet been reviewed by a lawyer and may change before BeliefAtlas opens to the public.",
+  "lastUpdated": "Last updated {date}",
+  "confirm": {
+    "pin": "Account PIN",
+    "password": "Password",
+    "setPin": "Set an account PIN in <link>Security</link> first."
+  },
+  "createAccountTo": "<link>Create an account</link> to {what, select, vote {vote} ask {ask it} other {continue}}."
+}

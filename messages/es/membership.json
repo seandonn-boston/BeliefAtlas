@@ -1,0 +1,22 @@
+{
+  "title": "Membresía",
+  "titleMember": "Eres miembro",
+  "welcomeMember": "Bienvenido. Tu membresía está activa.",
+  "welcomePending": "Pago recibido. Tu membresía puede tardar unos segundos en activarse; actualiza en un momento.",
+  "price": "5 $",
+  "priceNote": "al mes, cancela cuando quieras",
+  "perks": {
+    "unlimited": "Votos, preguntas y cambios a votos privados ilimitados",
+    "counts": "Recuentos exactos de votos en cada pregunta, antes de votar",
+    "firmly": "Con qué firmeza se sostiene cada respuesta: quién cambió una vez, más de una vez y esta semana",
+    "trend": "La tendencia de 14 días de cada pregunta",
+    "visibility": "Lo que la gente dice en público frente a lo que dice en privado"
+  },
+  "joinPrompt": "<signup>Crea una cuenta</signup> o <login>inicia sesión</login> para unirte.",
+  "endDev": "Terminar membresía (modo de desarrollo)",
+  "manage": "Gestionar el pago o cancelar",
+  "soon": "La membresía abre pronto.",
+  "joinDev": "Unirse (modo de desarrollo, sin cargo)",
+  "join": "Únete por 5 $ al mes",
+  "stripeNote": "Stripe gestiona el pago. Tu voto sigue contando una vez, como el de todos."
+}

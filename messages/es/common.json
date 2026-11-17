@@ -1,0 +1,22 @@
+{
+  "description": "Lo que la gente cree, con qué firmeza y cómo cambia.",
+  "choices": { "true": "Verdadero", "false": "Falso", "unsure": "No sé", "skip": "Saltar" },
+  "footer": { "membership": "Membresía", "terms": "Términos", "privacy": "Privacidad" },
+  "theme": { "label": "Tema", "oled": "OLED", "paper": "Papel digital" },
+  "language": { "label": "Idioma", "review": "Traducción en revisión" },
+  "categories": {
+    "everything": "Todo", "society": "Sociedad", "politics": "Política", "philosophy": "Filosofía",
+    "future": "El futuro", "science": "Ciencia", "space": "Espacio", "health": "Salud", "technology": "Tecnología",
+    "economics": "Dinero", "history": "Historia", "geography": "Geografía", "math": "Matemáticas", "sports": "Deportes",
+    "culture": "Artes", "food": "Comida", "animals": "Animales", "language": "Lenguaje", "everyday": "Día a día",
+    "mysteries": "Misterios", "general": "Preguntas de la gente"
+  },
+  "legalDraft": "Borrador. Un abogado aún no ha revisado esta página, que puede cambiar antes de que BeliefAtlas abra al público. El texto legal se muestra en inglés.",
+  "lastUpdated": "Última actualización: {date}",
+  "confirm": {
+    "pin": "PIN de la cuenta",
+    "password": "Contraseña",
+    "setPin": "Primero configura un PIN de la cuenta en <link>Seguridad</link>."
+  },
+  "createAccountTo": "<link>Crea una cuenta</link> para {what, select, vote {votar} ask {preguntarlo} other {continuar}}."
+}

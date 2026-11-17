@@ -1,0 +1,16 @@
+{
+  "title": "Tu mapa",
+  "empty": "Todavía no hay nada aquí. <link>Responde algunas preguntas</link> y tu mapa se llena: lo que crees, por tema, y dónde estás frente a los demás.",
+  "answered": "Respondidas",
+  "withMost": "Con la mayoría",
+  "changedMind": "Cambiaste de opinión",
+  "bySubject": "Por tema",
+  "subjectMeta": "{n} respondidas",
+  "subjectWithMost": "con la mayoría en el {pct} %",
+  "inSubject": "Tus respuestas en {subject}",
+  "latest": "Tus respuestas, las más recientes primero",
+  "tooFew": "Todavía hay muy pocas respuestas para comparar",
+  "sameAsYou": "El {pct} % de {total} dijo lo mismo",
+  "mostCommon": ", la respuesta más común",
+  "firstSaid": "Primero dijiste {choice}"
+}

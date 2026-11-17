@@ -1,0 +1,13 @@
+{
+  "home": "BeliefAtlas, home",
+  "review": "Review",
+  "map": "Your map",
+  "signOut": "Sign out",
+  "signIn": "Sign in",
+  "join": "Join",
+  "searchPlaceholder": "Search for a question, or ask one",
+  "searchLabel": "Search questions",
+  "search": "Search",
+  "layout": "Layout",
+  "views": { "compact": "Compact list", "tiles": "Tiles", "swipe": "One at a time" }
+}

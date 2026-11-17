@@ -1,0 +1,16 @@
+{
+  "title": "Your map",
+  "empty": "Nothing here yet. <link>Answer a few questions</link> and your map fills in: what you believe, by subject, and where you stand against everyone else.",
+  "answered": "Answered",
+  "withMost": "With most people",
+  "changedMind": "Changed your mind",
+  "bySubject": "By subject",
+  "subjectMeta": "{n} answered",
+  "subjectWithMost": "with most people on {pct}%",
+  "inSubject": "Your answers in {subject}",
+  "latest": "Your answers, latest first",
+  "tooFew": "Too few answers yet to compare",
+  "sameAsYou": "{pct}% of {total} said the same",
+  "mostCommon": ", the most common answer",
+  "firstSaid": "First said {choice}"
+}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { logoutAction } from "@/app/actions";
 import { getAccount } from "@/lib/auth";
 import type { View } from "@/lib/view";
@@ -12,35 +13,35 @@ type Props = {
 };
 
 export async function Header({ q = "", view, back, focus = false }: Props) {
-  const account = await getAccount();
+  const [account, t] = await Promise.all([getAccount(), getTranslations("header")]);
   return (
     <header className="header">
       <div className="header-in">
         <div className="topline">
-          <Link href="/" className="brand" aria-label="BeliefAtlas, home">
+          <Link href="/" className="brand" aria-label={t("home")}>
             Belief<span>Atlas</span>
           </Link>
           <nav>
             {view && back && <ViewSwitcher current={view} back={back} />}
             {account ? (
               <form action={logoutAction} className="who">
-                {account.role !== "user" && <Link href="/mod">Review</Link>}
-                <Link href="/me">Your map</Link>
+                {account.role !== "user" && <Link href="/mod">{t("review")}</Link>}
+                <Link href="/me">{t("map")}</Link>
                 <Link href="/settings" className="who-name">{account.username}</Link>
-                <button className="link">Sign out</button>
+                <button className="link">{t("signOut")}</button>
               </form>
             ) : (
               <>
-                <Link href="/login">Sign in</Link>
-                <Link href="/signup" className="btn solid small">Join</Link>
+                <Link href="/login">{t("signIn")}</Link>
+                <Link href="/signup" className="btn solid small">{t("join")}</Link>
               </>
             )}
           </nav>
         </div>
         <form action="/search" className="search" role="search">
-          <input name="q" defaultValue={q} placeholder="Search for a question, or ask one"
-            aria-label="Search questions" maxLength={200} required autoFocus={focus} />
-          <button className="btn">Search</button>
+          <input name="q" defaultValue={q} placeholder={t("searchPlaceholder")}
+            aria-label={t("searchLabel")} maxLength={200} required autoFocus={focus} />
+          <button className="btn">{t("search")}</button>
         </form>
       </div>
     </header>

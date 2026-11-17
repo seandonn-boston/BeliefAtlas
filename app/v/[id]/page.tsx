@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { tapAction } from "@/app/v/actions";
 import { ShareButton, TellOpener } from "@/components/ShareButton";
 import { Split } from "@/components/Split";
@@ -12,7 +13,7 @@ import {
 } from "@/lib/front-door";
 import { getQuestion, mergedInto } from "@/lib/questions";
 import { tallies } from "@/lib/stats";
-import { CHOICE_LABELS, CHOICES, peekHeldVote, type Choice } from "@/lib/vote-engine";
+import { CHOICES, peekHeldVote, type Choice } from "@/lib/vote-engine";
 import { myVotes } from "@/lib/votes";
 import "../front-door.css";
 
@@ -36,7 +37,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const question = Number.isInteger(questionId) && questionId > 0 ? await getQuestion(questionId) : null;
   if (!question) return { title: brandName() };
   const url = voteUrl(question.id);
-  const description = `True or false? Answer in one tap on ${brandName()}.`;
+  const t = await getTranslations("vote");
+  const description = t("metaDescription", { brand: brandName() });
   return {
     metadataBase: new URL(baseUrl()),
     title: `${question.text} | ${brandName()}`,
@@ -65,7 +67,7 @@ export default async function VotePage({ params, searchParams }: Props) {
   const at = cleanPlacement(query.at);
   const pick = CHOICES.includes(query.pick as Choice) ? (query.pick as Choice) : null;
   const done = query.done ?? null;
-  const account = await getAccount();
+  const [account, t, c] = await Promise.all([getAccount(), getTranslations("vote"), getTranslations("common.choices")]);
   const [mine, tally] = await Promise.all([
     account ? myVotes(account.id, [questionId]) : new Map(),
     tallies([questionId]),
@@ -91,7 +93,7 @@ export default async function VotePage({ params, searchParams }: Props) {
         <p className="notice" role="status">
           {/* A plain link on purpose: <Link> could prefetch it, and opening it counts the held answer. */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          You have a held answer. <a href="/v/resume">Count it now</a>.
+          {t.rich("heldAnswer", { link: (x) => <a href="/v/resume">{x}</a> })}
         </p>
       )}
 
@@ -101,8 +103,8 @@ export default async function VotePage({ params, searchParams }: Props) {
         {counted ? (
           <div className="fd-done" role="status">
             <p className="fd-done-line">
-              <span className={`fd-chip ${myVote.value}`}>{CHOICE_LABELS[myVote.value as Choice]}</span>
-              {done === "same" ? " was already counted for " : done === "changed" ? " is your new answer, counted for " : " counted for "}
+              <span className={`fd-chip ${myVote.value}`}>{c(myVote.value as Choice)}</span>
+              {" "}{t("counted", { done: done ?? "cast" })}{" "}
               <Link href={links.accountUrl}>@{account!.username}</Link>
             </p>
             <TellOpener
@@ -112,11 +114,10 @@ export default async function VotePage({ params, searchParams }: Props) {
             />
           </div>
         ) : done === "skipped" ? (
-          <p className="fd-done-line" role="status">Skipped. Nothing was counted, and it may come back around another day.</p>
+          <p className="fd-done-line" role="status">{t("skipped")}</p>
         ) : done === "limit_reached" ? (
           <p className="notice" role="status">
-            You&apos;ve used today&apos;s votes. Your answer is held for 24 hours:{" "}
-            <Link href="/membership">become a member</Link> and it counts straight away, or come back tomorrow.
+            {t.rich("limitReached", { link: (x) => <Link href="/membership">{x}</Link> })}
           </p>
         ) : query.error ? (
           <p className="error" role="alert">{query.error}</p>
@@ -140,23 +141,23 @@ export default async function VotePage({ params, searchParams }: Props) {
                 aria-pressed={myVote?.value === v}
                 className={`fd-btn ${v}${myVote?.value === v ? " mine" : ""}${pick === v && !myVote ? " picked" : ""}`}
               >
-                {CHOICE_LABELS[v]}
+                {c(v)}
               </button>
             ))}
             {!myVote && (
               <button name="value" value="skip" autoFocus={pick === "skip"} className={`fd-btn skip${pick === "skip" ? " picked" : ""}`}>
-                Skip
+                {c("skip")}
               </button>
             )}
           </form>
         )}
-        {closed && <p className="q-hint">This question no longer takes new votes.</p>}
-        {pick && !myVote && !done && <p className="fd-hint">Tap {CHOICE_LABELS[pick]} to confirm.</p>}
+        {closed && <p className="q-hint">{t("closed")}</p>}
+        {pick && !myVote && !done && <p className="fd-hint">{t("tapToConfirm", { choice: c(pick) })}</p>}
 
         <div className="fd-links">
-          {myVote && <Link href={links.changeUrl}>Change your vote</Link>}
-          {account && <Link href={links.accountUrl}>Your account</Link>}
-          {!account && <span>Tap an answer, then make an account in a few seconds and it counts.</span>}
+          {myVote && <Link href={links.changeUrl}>{t("change")}</Link>}
+          {account && <Link href={links.accountUrl}>{t("account")}</Link>}
+          {!account && <span>{t("joinHint")}</span>}
           <ShareButton url={links.shareUrl} text={question.text} className="btn small" />
         </div>
       </article>

@@ -1,0 +1,32 @@
+{
+  "matches": "Preguntas como la tuya",
+  "noMatches": "No hay preguntas que coincidan",
+  "needsChange": "Hay que cambiar esto antes de poder preguntarlo",
+  "checkFirst": "Nadie lo ha preguntado todavía, pero revisa esto primero",
+  "notAsked": "Nadie lo ha preguntado todavía",
+  "suggestionOnly": "Solo es una sugerencia.",
+  "didYouMean": "Quizás quisiste decir",
+  "didYouMeanLabel": "¿Quisiste decir…?",
+  "yesAsk": "Sí, preguntar esto",
+  "yes": "Sí",
+  "no": "No",
+  "edit": "Editar",
+  "changeAbove": "Cambia tu pregunta en el buscador de arriba y vuelve a buscar.",
+  "askNow": "Preguntar ahora",
+  "anonymous": "Se pregunta de forma anónima.",
+  "checkSimilar": "Revisa primero las preguntas parecidas.",
+  "checks": {
+    "link": "Las preguntas no pueden tener enlaces, ni acortados ni escritos con palabras. Nombra la fuente con palabras, como \"un artículo de El País\".",
+    "personal_email": "Las preguntas no pueden incluir direcciones de correo, para que nadie pueda ser contactado ni identificado.",
+    "personal_phone": "Las preguntas no pueden incluir números de teléfono, para que nadie pueda ser contactado ni identificado.",
+    "personal_handle": "Las preguntas no pueden incluir usuarios de redes sociales, que señalan la cuenta de una persona.",
+    "personal_address": "Las preguntas no pueden incluir direcciones postales, que señalan la casa de alguien.",
+    "spelling": "\"{word}\" parece mal escrito; ¿quisiste decir \"{fix}\"?",
+    "repeated_word": "\"{word}\" aparece dos veces seguidas.",
+    "lowercase_i": "En inglés, \"I\" siempre va en mayúscula.",
+    "too_long": "Las preguntas pueden tener como máximo {max} caracteres; esta tiene {length}. Intenta quedarte con la única afirmación que quieres que respondan.",
+    "too_short": "Es demasiado corto para ser una pregunta. Escribe la afirmación completa, como \"¿Se ve la Gran Muralla China desde el espacio?\"",
+    "open_ended": "Las preguntas que empiezan con \"{word}\" piden una explicación, y las de BeliefAtlas necesitan una respuesta de verdadero o falso. Pregunta por una sola afirmación.",
+    "statement": "Esto se lee como una afirmación. Las preguntas de BeliefAtlas necesitan una respuesta de verdadero o falso; escríbela como pregunta de sí o no."
+  }
+}

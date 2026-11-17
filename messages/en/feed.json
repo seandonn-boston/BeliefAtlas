@@ -1,0 +1,10 @@
+{
+  "subjects": "Subjects",
+  "doneAll": "You've answered every question here. Pick another subject, or search to ask a new one.",
+  "empty": "No questions here yet.",
+  "loadFailed": "Couldn't load more. Try again",
+  "loading": "Loading more questions",
+  "endSignedIn": "That's every question for now.",
+  "end": "That's every question.",
+  "saveFailed": "That didn't save. Try again."
+}

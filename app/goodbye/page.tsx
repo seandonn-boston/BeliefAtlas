@@ -1,14 +1,16 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Header } from "@/components/Header";
 
-export default function GoodbyePage() {
+export default async function GoodbyePage() {
+  const t = await getTranslations("account");
   return (
     <>
       <Header />
       <main className="wrap wrap-narrow">
-        <h1 className="page-title">Your account is deleted</h1>
-        <p>Your votes have been withdrawn and you&apos;ve been signed out. You can still browse questions.</p>
-        <p><Link href="/">Back to questions</Link></p>
+        <h1 className="page-title">{t("goodbyeTitle")}</h1>
+        <p>{t("goodbyeBody")}</p>
+        <p><Link href="/">{t("backToQuestions")}</Link></p>
       </main>
     </>
   );

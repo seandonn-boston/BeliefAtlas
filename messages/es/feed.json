@@ -1,0 +1,10 @@
+{
+  "subjects": "Temas",
+  "doneAll": "Ya respondiste todas las preguntas de aquí. Elige otro tema o busca para hacer una nueva.",
+  "empty": "Todavía no hay preguntas aquí.",
+  "loadFailed": "No se pudieron cargar más. Inténtalo de nuevo",
+  "loading": "Cargando más preguntas",
+  "endSignedIn": "Esas son todas las preguntas por ahora.",
+  "end": "Esas son todas las preguntas.",
+  "saveFailed": "No se guardó. Inténtalo de nuevo."
+}

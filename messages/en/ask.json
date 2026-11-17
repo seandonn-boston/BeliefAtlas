@@ -1,0 +1,32 @@
+{
+  "matches": "Questions like yours",
+  "noMatches": "No matching questions",
+  "needsChange": "This needs a change before it can be asked",
+  "checkFirst": "Nobody has asked this yet, but check this first",
+  "notAsked": "Nobody has asked this yet",
+  "suggestionOnly": "Suggestion only.",
+  "didYouMean": "Did you mean",
+  "didYouMeanLabel": "Did you mean:",
+  "yesAsk": "Yes, ask this",
+  "yes": "Yes",
+  "no": "No",
+  "edit": "Edit",
+  "changeAbove": "Change your question in the search box above, then search again.",
+  "askNow": "Ask now",
+  "anonymous": "Asked anonymously.",
+  "checkSimilar": "Check the similar questions first.",
+  "checks": {
+    "link": "Questions can't contain links, including shortened or spelled-out ones. Name the source in words instead, like \"an article in the New York Times\".",
+    "personal_email": "Questions can't include email addresses, so nobody can be contacted or identified through one.",
+    "personal_phone": "Questions can't include phone numbers, so nobody can be contacted or identified through one.",
+    "personal_handle": "Questions can't include social media handles, which point at one person's account.",
+    "personal_address": "Questions can't include street addresses, which point at someone's home.",
+    "spelling": "\"{word}\" looks misspelled; did you mean \"{fix}\"?",
+    "repeated_word": "\"{word}\" appears twice in a row.",
+    "lowercase_i": "\"I\" is always a capital letter.",
+    "too_long": "Questions can be at most {max} characters; this one is {length}. Try cutting it to the one claim you want answered.",
+    "too_short": "That's too short to be a question. Say the whole claim, like \"Is the Great Wall of China visible from space?\"",
+    "open_ended": "Questions starting with \"{word}\" ask for an explanation, and BeliefAtlas questions need a true-or-false answer. Ask about one claim, starting with a word like \"Is\", \"Did\", \"Will\" or \"Does\".",
+    "statement": "This reads as a statement. BeliefAtlas questions need a true-or-false answer, so start with a word like \"Is\", \"Did\", \"Will\" or \"Does\"."
+  }
+}

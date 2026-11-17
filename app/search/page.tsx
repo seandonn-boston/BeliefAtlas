@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { DidYouMean } from "@/components/DidYouMean";
 import { ErrorBanner, Header } from "@/components/Header";
 import { checkQuestion } from "@/lib/checks";
@@ -13,7 +14,7 @@ type Props = { searchParams: Promise<{ q?: string; error?: string; keep?: string
 export default async function SearchPage({ searchParams }: Props) {
   const { q = "", error, keep, edit } = await searchParams;
   const text = q.trim().slice(0, 200);
-  const account = await getAccount();
+  const [account, t] = await Promise.all([getAccount(), getTranslations("ask")]);
   const view = "compact"; // a short list of matches to scan
   const matches = text ? await search(text) : [];
   const ids = matches.map((m) => m.id);
@@ -35,7 +36,7 @@ export default async function SearchPage({ searchParams }: Props) {
           <DidYouMean checked={checked} signedIn={Boolean(account)} dismissed={keep === "1"} hasMatches={matches.length > 0} back={back} />
         )}
 
-        {text && <h1 className="list-title">{matches.length ? "Questions like yours" : "No matching questions"}</h1>}
+        {text && <h1 className="list-title">{matches.length ? t("matches") : t("noMatches")}</h1>}
         <div className={`feed feed-${view}`}>
           {matches.map((m) => (
             <QuestionCard

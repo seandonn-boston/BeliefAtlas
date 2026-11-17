@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { CardItem } from "@/lib/cards";
 import type { View } from "@/lib/view";
 import { LiveCard } from "./LiveCard";
@@ -30,6 +31,7 @@ function useColumns(enabled: boolean): number {
 // The question list for all three layouts. The first page arrives with the HTML; later pages
 // are fetched as the reader nears the end, so the browser never holds more than it has shown.
 export function FeedList({ initial, next, view, signedIn, category, back }: Props) {
+  const t = useTranslations("feed");
   const [items, setItems] = useState(initial);
   const [cursor, setCursor] = useState(next);
   const [failed, setFailed] = useState(false);
@@ -79,11 +81,11 @@ export function FeedList({ initial, next, view, signedIn, category, back }: Prop
   const end = (
     <div ref={sentinel} className="feed-end" aria-live="polite">
       {failed ? (
-        <button className="btn" onClick={() => { setFailed(false); void loadMore(); }}>Couldn&apos;t load more. Try again</button>
+        <button className="btn" onClick={() => { setFailed(false); void loadMore(); }}>{t("loadFailed")}</button>
       ) : cursor ? (
-        <span>Loading more questions</span>
+        <span>{t("loading")}</span>
       ) : items.length > 0 ? (
-        <span>{signedIn ? "That's every question for now." : "That's every question."}</span>
+        <span>{signedIn ? t("endSignedIn") : t("end")}</span>
       ) : null}
     </div>
   );

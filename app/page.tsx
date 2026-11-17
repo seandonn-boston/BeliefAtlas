@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { FeedList } from "@/components/FeedList";
 import { ErrorBanner, Header } from "@/components/Header";
 import { getAccount } from "@/lib/auth";
@@ -14,7 +15,9 @@ type Props = { searchParams: Promise<{ error?: string; voted?: string; c?: strin
 export default async function Home({ searchParams }: Props) {
   const { error, voted, c } = await searchParams;
   const category = isCategory(c) ? c : null;
-  const [account, view] = await Promise.all([getAccount(), getView()]);
+  const [account, view, t, cats] = await Promise.all([
+    getAccount(), getView(), getTranslations("feed"), getTranslations("common.categories"),
+  ]);
   const page = account ? await feedPage(account.id, null, category) : await topPage(null, category);
   const items = page.rows.map((row) => toCard(row, account));
 
@@ -35,12 +38,12 @@ export default async function Home({ searchParams }: Props) {
   return (
     <>
       <Header view={view} back={back} />
-      <nav className="cats" aria-label="Subjects">
+      <nav className="cats" aria-label={t("subjects")}>
         <div className="cats-in">
-          <Link href="/" aria-current={category ? undefined : "page"}>Everything</Link>
+          <Link href="/" aria-current={category ? undefined : "page"}>{cats("everything")}</Link>
           {CATEGORIES.map((cat) => (
             <Link key={cat.slug} href={`/?c=${cat.slug}`} aria-current={category === cat.slug ? "page" : undefined}>
-              {cat.label}
+              {cats(cat.slug)}
             </Link>
           ))}
         </div>
@@ -49,7 +52,7 @@ export default async function Home({ searchParams }: Props) {
         <ErrorBanner message={error} />
         {items.length === 0 && (
           <p className="empty">
-            {account ? "You've answered every question here. Pick another subject, or search to ask a new one." : "No questions here yet."}
+            {account ? t("doneAll") : t("empty")}
           </p>
         )}
         {/* Remount when the layout or subject changes so the list starts from its first page. */}

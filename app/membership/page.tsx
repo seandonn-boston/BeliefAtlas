@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { billingPortalAction, checkoutAction } from "@/app/actions";
 import { ErrorBanner, Header } from "@/components/Header";
 import { getAccount } from "@/lib/auth";
@@ -11,45 +12,44 @@ type Props = { searchParams: Promise<{ error?: string; welcome?: string }> };
 
 export default async function MembershipPage({ searchParams }: Props) {
   const { error, welcome } = await searchParams;
-  const account = await getAccount();
+  const [account, t] = await Promise.all([getAccount(), getTranslations("membership")]);
   const member = account?.tier === "paid";
 
   return (
     <>
       <Header />
       <main className="wrap wrap-narrow">
-        <h1 className="page-title">{member ? "You're a member" : "Membership"}</h1>
+        <h1 className="page-title">{member ? t("titleMember") : t("title")}</h1>
         <ErrorBanner message={error} />
         {welcome && (
           <p className="notice" role="status">
-            {member ? "Welcome. Your membership is active." : "Payment received. Your membership can take a few seconds to switch on; refresh in a moment."}
+            {member ? t("welcomeMember") : t("welcomePending")}
           </p>
         )}
-        {!member && <p className="price">$5 <span>a month, cancel any time</span></p>}
+        {!member && <p className="price">{t("price")} <span>{t("priceNote")}</span></p>}
         <ul className="member-list">
-          <li>Unlimited votes, questions and changes to private votes</li>
-          <li>Exact vote counts on every question, before you vote</li>
-          <li>How firmly people hold each answer: who changed once, more than once, and this week</li>
-          <li>Each question&apos;s 14-day trend</li>
-          <li>What people say publicly against what they say privately</li>
+          {(["unlimited", "counts", "firmly", "trend", "visibility"] as const).map((k) => <li key={k}>{t(`perks.${k}`)}</li>)}
         </ul>
 
         {!account ? (
           <p className="q-join">
-            <Link href="/signup?next=%2Fmembership">Create an account</Link> or <Link href="/login?next=%2Fmembership">sign in</Link> to join.
+            {t.rich("joinPrompt", {
+              signup: (x) => <Link href="/signup?next=%2Fmembership">{x}</Link>,
+              login: (x) => <Link href="/login?next=%2Fmembership">{x}</Link>,
+            })}
           </p>
         ) : member ? (
           <form action={billingPortalAction}>
             <input type="hidden" name="back" value="/membership" />
-            <button className="btn">{billingMode === "dev" ? "End membership (development mode)" : "Manage billing or cancel"}</button>
+            <button className="btn">{billingMode === "dev" ? t("endDev") : t("manage")}</button>
           </form>
         ) : billingMode === "off" ? (
-          <p className="q-hint">Membership opens soon.</p>
+          <p className="q-hint">{t("soon")}</p>
         ) : (
           <form action={checkoutAction}>
             <input type="hidden" name="back" value="/membership" />
-            <button className="btn solid">{billingMode === "dev" ? "Join (development mode, no charge)" : "Join for $5 a month"}</button>
-            <p className="field-note">Payment is handled by Stripe. Your vote still counts once, like everyone else&apos;s.</p>
+            <button className="btn solid">{billingMode === "dev" ? t("joinDev") : t("join")}</button>
+            <p className="field-note">{t("stripeNote")}</p>
           </form>
         )}
       </main>

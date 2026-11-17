@@ -1,0 +1,16 @@
+{
+  "metaDescription": "¿Verdadero o falso? Responde con un toque en {brand}.",
+  "heldAnswer": "Tienes una respuesta en espera. <link>Cuéntala ahora</link>.",
+  "counted": "{done, select, same {ya estaba contado para} changed {es tu nueva respuesta, contada para} other {contado para}}",
+  "skipped": "Saltada. No se contó nada y puede volver a aparecer otro día.",
+  "limitReached": "Ya usaste los votos de hoy. Tu respuesta queda en espera 24 horas: <link>hazte miembro</link> y cuenta al instante, o vuelve mañana.",
+  "closed": "Esta pregunta ya no acepta votos nuevos.",
+  "tapToConfirm": "Toca {choice} para confirmar.",
+  "change": "Cambiar tu voto",
+  "account": "Tu cuenta",
+  "joinHint": "Toca una respuesta, crea una cuenta en unos segundos y cuenta.",
+  "share": "Compartir",
+  "copied": "Enlace copiado",
+  "copyPrompt": "Copia este enlace",
+  "shareText": "{text} ¿Verdadero o falso?"
+}
