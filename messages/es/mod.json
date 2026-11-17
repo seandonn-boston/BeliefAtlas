@@ -1,0 +1,127 @@
+{
+  "title": "Cola de revisión",
+  "intro": "Preguntas retenidas y denunciadas, apelaciones y señales de votación coordinada. Aquí se ve el número de votos; hacia dónde respondió la gente, nunca.",
+  "sections": {
+    "questions": "Preguntas",
+    "appeals": "Apelaciones",
+    "signals": "Señales de manipulación"
+  },
+  "empty": {
+    "questions": "No hay nada pendiente. Aquí aparecen las preguntas retenidas y denunciadas.",
+    "appeals": "No hay apelaciones abiertas.",
+    "signals": "No hay señales abiertas."
+  },
+  "done": {
+    "question": "Pregunta #{id} actualizada.",
+    "appeal": "Apelación #{id} resuelta.",
+    "signal": "Señal #{id} revisada.",
+    "banned": "{n, plural, =0 {No se suspendió a nadie.} one {# cuenta suspendida para siempre por manipular votos.} other {# cuentas suspendidas para siempre por manipular votos.}}",
+    "scan": "Revisión terminada: {n, plural, =0 {ninguna señal nueva} one {# señal nueva} other {# señales nuevas}}.",
+    "ai": "Revisión de IA añadida a la pregunta #{id}."
+  },
+  "item": {
+    "held": "Retenida",
+    "live": "Publicada",
+    "votes": "{n, plural, one {# voto} other {# votos}}",
+    "reports": "{n, plural, =0 {sin denuncias abiertas} one {# denuncia abierta} other {# denuncias abiertas}}",
+    "byUser": "hecha por un usuario",
+    "catalog": "catálogo",
+    "reasonCount": "{n} × {reason}",
+    "aiReview": "Revisión de IA: se responde con verdadero o falso {answerable, select, true {sí} other {no}}; nombra a una persona particular {private_person, select, true {sí} other {no}}; acoso u odio {harassing_or_hateful, select, true {sí} other {no}}."
+  },
+  "reasons": {
+    "duplicate": "Repite otra pregunta",
+    "not_yes_no": "No se puede responder con verdadero o falso",
+    "private_person": "Trata de una persona particular",
+    "hateful": "Es de odio o acoso",
+    "spam": "Es spam o publicidad",
+    "other": "Otra cosa"
+  },
+  "actions": {
+    "approve": "Aprobar",
+    "keep": "Mantener",
+    "archive": "Archivar",
+    "remove": "Quitar",
+    "removeWhy": "Por qué se quita",
+    "removeWhyNote": "Se le muestra a quien preguntó.",
+    "removeFix": "Arreglo sugerido",
+    "removeFixNote": "Se le muestra a quien preguntó: cómo podría preguntarse en su lugar.",
+    "harm": "¿Era dañina?",
+    "harmNone": "No, solo hay que reformularla (sin penalización)",
+    "merge": "Fusionar como repetida",
+    "original": "Original #",
+    "originalLabel": "Número de la pregunta original",
+    "mergeRule": "Los votos se combinan con la regla “{rule}”: {explain}",
+    "subject": "Tema",
+    "changeSubject": "Cambiar tema",
+    "aiReview": "Revisión a fondo con IA"
+  },
+  "harm": {
+    "hateful": "De odio (añade una falta)",
+    "harassing": "Acoso (añade una falta)",
+    "private_person": "Va contra una persona particular (añade una falta)",
+    "spam": "Spam (añade una falta)"
+  },
+  "harmShort": {
+    "hateful": "de odio",
+    "harassing": "acoso",
+    "private_person": "va contra una persona particular",
+    "spam": "spam"
+  },
+  "rules": {
+    "move_unanswered_keep_original": "a quien respondió solo la repetida se le pasa la respuesta a la original; quien respondió las dos conserva su respuesta en la original."
+  },
+  "appeals": {
+    "about": "Apelación #{id} · {subject, select, question {pregunta quitada} ban {suspensión} demerit {falta} other {elemento}} #{subjectId}",
+    "theirWords": "Su apelación",
+    "removedWhy": "Se quitó porque: {why}",
+    "removedFix": "Arreglo sugerido: {fix}",
+    "autoRemoved": "Se quitó automáticamente por la regla de denuncias.",
+    "harm": "Marcada como dañina: {kind}",
+    "banUntil": "Sin poder preguntar hasta el {date}",
+    "banPermanent": "Suspensión permanente por manipular votos",
+    "banReason": "Motivo de la suspensión: {reason}",
+    "demeritReason": "Motivo de la falta: {reason}",
+    "note": "Nota de la decisión",
+    "noteHelp": "Se le muestra junto con el resultado.",
+    "uphold": "Mantener",
+    "overturn": "Revocar",
+    "overturnHelp": "Revocar restaura una pregunta quitada, levanta una suspensión o anula una falta."
+  },
+  "signals": {
+    "summary": "{n, plural, one {# cuenta} other {# cuentas}} con menos de {days} días dieron la misma respuesta en {minutes} minutos.",
+    "question": "En la pregunta #{id}: {text}",
+    "votes": "{n, plural, one {# voto} other {# votos}} en total",
+    "accounts": "Cuentas de la ráfaga",
+    "account": "Cuenta #{id}",
+    "accountsHelp": "Confirmar suspende para siempre las cuentas marcadas. Solo se puede suspender a cuentas de la ráfaga: nunca a quien preguntó ni a quien votó con honestidad.",
+    "confirm": "Confirmar y suspender",
+    "dismiss": "Descartar",
+    "scan": "Buscar manipulación ahora",
+    "kinds": {
+      "new_account_burst": "Ráfaga de cuentas nuevas"
+    }
+  },
+  "errors": {
+    "incomplete": "La decisión no estaba completa.",
+    "self_merge": "Una pregunta no puede ser repetición de sí misma.",
+    "original_not_live": "La original no está publicada, así que no puede recibir la fusión.",
+    "not_found": "No se encontró.",
+    "already_merged": "Esa pregunta ya se fusionó.",
+    "already_removed": "Esa pregunta ya se quitó.",
+    "why_and_fix_required": "Para quitar una pregunta hace falta el motivo y un arreglo sugerido.",
+    "note_required": "Añade una nota que explique la decisión.",
+    "own_appeal": "No puedes resolver tu propia apelación.",
+    "decided": "Esa apelación ya se resolvió.",
+    "reviewed": "Esa señal ya se revisó.",
+    "off": "La revisión con IA está desactivada.",
+    "unavailable": "La revisión con IA no respondió. Inténtalo más tarde."
+  },
+  "denial": {
+    "where": "Dónde: “{where}”.",
+    "fix": "Arreglo sugerido: “{fix}”.",
+    "remove": "Arreglo sugerido: quítalo.",
+    "suggestion": "Prueba: “{suggestion}”",
+    "demerit": "Esto añadió una falta a tu cuenta. Las preguntas dañinas repetidas traen una suspensión temporal para preguntar."
+  }
+}

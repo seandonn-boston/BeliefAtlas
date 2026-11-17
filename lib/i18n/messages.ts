@@ -4,6 +4,7 @@ import { DEFAULT_LOCALE, type Locale } from "./locales";
 // pieces of work never edit the same file. Each file is one namespace: `t("ask.title")`.
 export const NAMESPACES = [
   "common", "header", "feed", "question", "vote", "ask", "map", "auth", "membership", "account",
+  "mod", "appeals",
 ] as const;
 export type Namespace = (typeof NAMESPACES)[number];
 

@@ -11,7 +11,15 @@ export type CheckCode =
   | "not_true_false"   // can't be answered true or false as written
   | "spelling"
   | "repeated_word"
-  | "lowercase_i";
+  | "lowercase_i"
+  | "grammar"          // from a self-hosted LanguageTool server, only when LANGUAGETOOL_URL is set
+  // The sweep when a question is asked (lib/moderation/sweep.ts):
+  | "obscene"          // swearing or sexual words; reword, no penalty
+  | "too_specific"     // about the asker's own acquaintance ("my boss"); nobody else can answer it
+  | "hateful"          // slurs or dehumanising a group; harmful
+  | "harassing"        // insults aimed at a person; harmful
+  | "private_person"   // names a private person with an accusation; harmful
+  | "spam";            // advertising or promotion; harmful
 
 export type CheckResult = {
   code: CheckCode;

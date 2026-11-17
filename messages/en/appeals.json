@@ -1,0 +1,47 @@
+{
+  "title": "Appeals",
+  "intro": "Your removed questions, bans and demerits. You can appeal each one once, and a moderator other than you decides.",
+  "signIn": "<link>Sign in</link> to see your removed questions, bans and demerits.",
+  "nothing": "Nothing to appeal. Removed questions, bans and demerits would show here.",
+  "sent": "Your appeal is in. You'll see the outcome here.",
+  "questions": "Removed questions",
+  "bans": "Bans",
+  "demerits": "Demerits",
+  "removedWhy": "Why: {why}",
+  "removedFix": "Suggested fix: {fix}",
+  "merged": "Merged into <link>question #{id}</link> as a repeat.",
+  "autoWhy": "Removed automatically because many of the people who answered it reported it.",
+  "autoFix": "If it asks a fair true-or-false question, appeal and a moderator will look at it.",
+  "harm": "Marked as {kind, select, hateful {hateful} harassing {harassing} private_person {targeting a private person} spam {spam} other {harmful}}.",
+  "banAsking": "No asking until {date}. You can still vote and browse.",
+  "banPermanent": "Banned permanently for vote manipulation.",
+  "banEnded": "Ended {date}.",
+  "banLifted": "Lifted {date}.",
+  "demerit": "{points, plural, one {# point} other {# points}}, expires {date}.",
+  "demeritExpired": "Expired.",
+  "demeritRevoked": "Revoked.",
+  "demeritText": "Question: “{text}”",
+  "demeritKind": "For: {kind, select, hateful {a hateful question} harassing {a harassing question} private_person {targeting a private person} spam {spam} other {a harmful question}}",
+  "status": {
+    "open": "Appeal sent. Waiting for a moderator.",
+    "upheld": "Appeal decided: the decision stands.",
+    "overturned": "Appeal decided: the decision was reversed."
+  },
+  "note": "Moderator's note: {note}",
+  "yourAppeal": "Your appeal: {body}",
+  "why": "Why should this be reversed?",
+  "send": "Send appeal",
+  "once": "You can appeal this once.",
+  "errors": {
+    "empty": "Say why it should be reversed.",
+    "too_long": "Keep the appeal under {max} characters.",
+    "not_yours": "That isn't something you can appeal.",
+    "already_appealed": "You've already appealed that."
+  },
+  "askBan": {
+    "title": "You can't ask questions right now",
+    "until": "After repeated harmful questions, this account can't ask questions until {date}. You can still vote and browse.",
+    "permanent": "This account is banned for vote manipulation.",
+    "appeal": "Think this is wrong? <link>Appeal it</link>."
+  }
+}

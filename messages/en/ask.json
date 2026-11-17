@@ -27,6 +27,18 @@
     "too_long": "Questions can be at most {max} characters; this one is {length}. Try cutting it to the one claim you want answered.",
     "too_short": "That's too short to be a question. Say the whole claim, like \"Is the Great Wall of China visible from space?\"",
     "open_ended": "Questions starting with \"{word}\" ask for an explanation, and BeliefAtlas questions need a true-or-false answer. Ask about one claim, starting with a word like \"Is\", \"Did\", \"Will\" or \"Does\".",
-    "statement": "This reads as a statement. BeliefAtlas questions need a true-or-false answer, so start with a word like \"Is\", \"Did\", \"Will\" or \"Does\"."
+    "statement": "This reads as a statement. BeliefAtlas questions need a true-or-false answer, so start with a word like \"Is\", \"Did\", \"Will\" or \"Does\".",
+    "grammar": "{message} (“{where}”)",
+    "grammar_fix": "{message} (“{where}” → “{fix}”)",
+    "obscene": "Questions can't swear. Take out “{word}”; the question works without it.",
+    "obscene_fix": "Questions can't swear. Try “{fix}” instead of “{word}”.",
+    "too_specific_relation": "Only you know “{where}”, so nobody else can answer this. Ask it about {fix} in general.",
+    "too_specific_self": "“{where}” asks about you, and only you can answer that. For everyone, it becomes “{fix}”.",
+    "hateful_slur": "“{word}” is a slur. Questions can't use slurs; if the question is about a group of people, call them by their own name.",
+    "hateful_dehumanising": "Questions can't call a group of people vermin, animals or less than human. Ask about a specific claim or policy instead.",
+    "hateful_violence": "Questions can't call for violence against a group of people.",
+    "harassing": "This insults {name}, who may be a private person. Questions can't insult or demean people.",
+    "private_person": "This points at a private person and accuses them of something. Questions can't target private people; ask about the behaviour in general.",
+    "spam": "This reads as advertising. Questions are for claims people can answer true or false, not for promoting anything."
   }
 }

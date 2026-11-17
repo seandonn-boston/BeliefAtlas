@@ -1,0 +1,47 @@
+{
+  "title": "Apelaciones",
+  "intro": "Tus preguntas quitadas, suspensiones y faltas. Puedes apelar cada una una vez, y decide un moderador que no eres tú.",
+  "signIn": "<link>Inicia sesión</link> para ver tus preguntas quitadas, suspensiones y faltas.",
+  "nothing": "No hay nada que apelar. Aquí aparecerían las preguntas quitadas, las suspensiones y las faltas.",
+  "sent": "Tu apelación está enviada. Verás el resultado aquí.",
+  "questions": "Preguntas quitadas",
+  "bans": "Suspensiones",
+  "demerits": "Faltas",
+  "removedWhy": "Por qué: {why}",
+  "removedFix": "Arreglo sugerido: {fix}",
+  "merged": "Fusionada con la <link>pregunta #{id}</link> por estar repetida.",
+  "autoWhy": "Se quitó automáticamente porque muchas de las personas que la respondieron la denunciaron.",
+  "autoFix": "Si plantea una pregunta justa de verdadero o falso, apela y un moderador la revisará.",
+  "harm": "Marcada como {kind, select, hateful {de odio} harassing {acoso} private_person {contra una persona particular} spam {spam} other {dañina}}.",
+  "banAsking": "Sin poder preguntar hasta el {date}. Puedes seguir votando y navegando.",
+  "banPermanent": "Suspensión permanente por manipular votos.",
+  "banEnded": "Terminó el {date}.",
+  "banLifted": "Se levantó el {date}.",
+  "demerit": "{points, plural, one {# punto} other {# puntos}}, caduca el {date}.",
+  "demeritExpired": "Caducada.",
+  "demeritRevoked": "Anulada.",
+  "demeritText": "Pregunta: “{text}”",
+  "demeritKind": "Por: {kind, select, hateful {una pregunta de odio} harassing {una pregunta de acoso} private_person {ir contra una persona particular} spam {spam} other {una pregunta dañina}}",
+  "status": {
+    "open": "Apelación enviada. Esperando a un moderador.",
+    "upheld": "Apelación resuelta: la decisión se mantiene.",
+    "overturned": "Apelación resuelta: la decisión se revocó."
+  },
+  "note": "Nota del moderador: {note}",
+  "yourAppeal": "Tu apelación: {body}",
+  "why": "¿Por qué debería revocarse?",
+  "send": "Enviar apelación",
+  "once": "Puedes apelar esto una vez.",
+  "errors": {
+    "empty": "Di por qué debería revocarse.",
+    "too_long": "La apelación debe tener menos de {max} caracteres.",
+    "not_yours": "Eso no es algo que puedas apelar.",
+    "already_appealed": "Ya apelaste eso."
+  },
+  "askBan": {
+    "title": "Ahora mismo no puedes hacer preguntas",
+    "until": "Tras varias preguntas dañinas, esta cuenta no puede hacer preguntas hasta el {date}. Puedes seguir votando y navegando.",
+    "permanent": "Esta cuenta está suspendida por manipular votos.",
+    "appeal": "¿Crees que es un error? <link>Apélalo</link>."
+  }
+}

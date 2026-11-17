@@ -9,6 +9,8 @@ type Props = {
   dismissed: boolean;     // they pressed No on the suggestion for this text
   hasMatches: boolean;
   back: string;
+  // Shown instead of every ask button, e.g. while the account is banned from asking.
+  askBlocked?: React.ReactNode;
 };
 
 const searchFor = (text: string, extra = "") => `/search?q=${encodeURIComponent(text)}${extra}`;
@@ -34,7 +36,7 @@ function Marked({ checked }: { checked: CheckedQuestion }) {
 // Sean's rule: when a question has to change, say why, show where and offer a fix. One box
 // serves every check: Yes posts the suggestion, No goes back to what they wrote, Edit puts the
 // suggestion in the search box to change further.
-export function DidYouMean({ checked, signedIn, dismissed, hasMatches, back }: Props) {
+export function DidYouMean({ checked, signedIn, dismissed, hasMatches, back, askBlocked }: Props) {
   const t = useTranslations("ask");
   const common = useTranslations("common");
   const { results, suggestion, blocked } = checked;
@@ -61,7 +63,7 @@ export function DidYouMean({ checked, signedIn, dismissed, hasMatches, back }: P
           <p className="dym-label">{t("didYouMeanLabel")}</p>
           <p className="ask-text dym-text">{suggestion}</p>
           <div className="dym-actions">
-            {signedIn ? (
+            {askBlocked ? null : signedIn ? (
               <form action={askAction}>
                 <input type="hidden" name="text" value={suggestion} />
                 <input type="hidden" name="back" value={back} />
@@ -78,7 +80,9 @@ export function DidYouMean({ checked, signedIn, dismissed, hasMatches, back }: P
 
       {!offer && blocked && <p className="ask-note">{t("changeAbove")}</p>}
 
-      {!offer && !blocked && (signedIn ? (
+      {askBlocked}
+
+      {!offer && !blocked && !askBlocked && (signedIn ? (
         <form action={askAction}>
           <input type="hidden" name="text" value={original} />
           <input type="hidden" name="back" value={back} />

@@ -96,7 +96,7 @@ function removal(text: string, m: { start: number; end: number }): { start: numb
 const overlaps = (a: { start: number; end: number }, b: { start: number; end: number }) => a.start < b.end && b.start < a.end;
 
 // Apply each result's fix to its span, from the end backwards so earlier offsets stay right.
-function applyFixes(text: string, results: CheckResult[]): string {
+export function applyFixes(text: string, results: CheckResult[]): string {
   const edits = results
     .filter((r) => r.span && r.fix !== null)
     .map((r) => ({ range: r.replace ?? r.span!, fix: r.fix! }))
@@ -151,7 +151,7 @@ export function checkQuestion(raw: string): CheckedQuestion {
   }
 
   // Links block. Naming a source in words is fine; a link isn't (Sean, 17 Nov 2026).
-    for (const pattern of LINK_PATTERNS) {
+  for (const pattern of LINK_PATTERNS) {
     for (const m of findAll(text, pattern)) {
       if (taken.some((t) => overlaps(t, m))) continue;
       taken.push(m);

@@ -17,9 +17,9 @@ import { resendCode, startSignup, verifySignup } from "@/lib/signup";
 import { toCard, type CardItem } from "@/lib/cards";
 import { deleteAccount } from "@/lib/account";
 import { billingPortal, cancelForDeletion, startCheckout } from "@/lib/billing";
-import { CATEGORIES } from "@/lib/categories";
-import { decide, report, REPORT_REASONS, type Decision, type ReportReason } from "@/lib/moderation";
-import { ask } from "@/lib/questions";
+import { getFormatter, getTranslations } from "next-intl/server";
+import { report, REPORT_REASONS, type ReportReason } from "@/lib/moderation";
+import { ask, type AskResult } from "@/lib/questions";
 import { VIEW_COOKIE, VIEWS, type View } from "@/lib/view";
 import {
   castVote, deleteVote, myVotes, reveal, setVisibility, skip, SOURCES, VOTE_VALUES, type Source, type VoteValue,
@@ -130,7 +130,28 @@ export async function askAction(form: FormData) {
   const result = await ask(account, str(form, "text"));
   if (result.ok) redirect(`/q/${result.id}${result.held ? "?held=1" : ""}`);
   if (result.existingId) redirect(withError(`/q/${result.existingId}`, result.error));
-  redirect(withError(backPath(form), result.error));
+  redirect(withError(backPath(form), await askRefusal(result, str(form, "text"))));
+}
+
+// A refusal in the reader's language: why, where and the fix for a denial, or when a ban ends.
+async function askRefusal(result: Exclude<AskResult, { ok: true }>, raw: string): Promise<string> {
+  const [ask, mod, appeals, format] = await Promise.all([
+    getTranslations("ask"), getTranslations("mod.denial"), getTranslations("appeals.askBan"), getFormatter(),
+  ]);
+  if (result.ban) {
+    return result.ban.permanent || !result.ban.ends_at
+      ? appeals("permanent")
+      : appeals("until", { date: format.dateTime(result.ban.ends_at, { dateStyle: "medium", timeStyle: "short" }) });
+  }
+  const first = result.results?.[0];
+  if (!first) return result.error;
+  const text = result.text ?? raw.replace(/\s+/g, " ").trim();
+  const parts = [ask.has(`checks.${first.key}`) ? ask(`checks.${first.key}`, first.values) : first.reason];
+  if (first.span) parts.push(mod("where", { where: text.slice(first.span.start, first.span.end) }));
+  if (first.fix !== null) parts.push(first.fix === "" ? mod("remove") : mod("fix", { fix: first.fix }));
+  if (result.suggestion) parts.push(mod("suggestion", { suggestion: result.suggestion }));
+  if (result.harmful) parts.push(mod("demerit"));
+  return parts.join(" ");
 }
 
 // Vote limits are per account only, never per IP address or browser, so people who share a
@@ -288,26 +309,8 @@ export async function reportAction(form: FormData) {
   redirect(`${base}?${params}`);
 }
 
-export async function moderateAction(form: FormData) {
-  const account = await getAccount();
-  if (!account || account.role === "user") redirect("/");
-  const id = questionId(form);
-  const action = str(form, "action");
-  let decision: Decision | null = null;
-  if (action === "approve" || action === "remove" || action === "archive") decision = { action };
-  if (action === "duplicate") {
-    const of = Number(str(form, "of").replace(/^#/, ""));
-    if (Number.isInteger(of) && of > 0) decision = { action, of };
-  }
-  if (action === "category") {
-    const category = str(form, "category");
-    const match = CATEGORIES.find((c) => c.slug === category);
-    if (match) decision = { action, category: match.slug };
-  }
-  if (!id || !decision) redirect(withError("/mod", "That decision wasn't complete."));
-  const error = await decide(account!.id, id!, decision!);
-  redirect(error ? withError("/mod", error) : `/mod?done=${id}`);
-}
+// Moderator decisions, appeals and manipulation signals live in app/mod/actions.ts and
+// app/appeals/actions.ts.
 
 // ---------- Membership ----------
 

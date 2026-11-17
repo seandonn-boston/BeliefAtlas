@@ -1,0 +1,127 @@
+{
+  "title": "Review queue",
+  "intro": "Held and reported questions, appeals, and signs of coordinated voting. Vote counts are shown here; which way people answered never is.",
+  "sections": {
+    "questions": "Questions",
+    "appeals": "Appeals",
+    "signals": "Manipulation signals"
+  },
+  "empty": {
+    "questions": "Nothing waiting. Held and reported questions appear here.",
+    "appeals": "No open appeals.",
+    "signals": "No open signals."
+  },
+  "done": {
+    "question": "Question #{id} updated.",
+    "appeal": "Appeal #{id} decided.",
+    "signal": "Signal #{id} reviewed.",
+    "banned": "{n, plural, =0 {Nobody was banned.} one {# account banned permanently for vote manipulation.} other {# accounts banned permanently for vote manipulation.}}",
+    "scan": "Scan finished: {n, plural, =0 {no new signals} one {# new signal} other {# new signals}}.",
+    "ai": "AI review added to question #{id}."
+  },
+  "item": {
+    "held": "Held",
+    "live": "Live",
+    "votes": "{n, plural, one {# vote} other {# votes}}",
+    "reports": "{n, plural, =0 {no open reports} one {# open report} other {# open reports}}",
+    "byUser": "asked by a user",
+    "catalog": "catalog",
+    "reasonCount": "{n} × {reason}",
+    "aiReview": "AI review: answerable true or false {answerable, select, true {yes} other {no}}; names a private person {private_person, select, true {yes} other {no}}; harassing or hateful {harassing_or_hateful, select, true {yes} other {no}}."
+  },
+  "reasons": {
+    "duplicate": "It repeats another question",
+    "not_yes_no": "It can't be answered true or false",
+    "private_person": "It's about a private person",
+    "hateful": "It's hateful or harassing",
+    "spam": "It's spam or advertising",
+    "other": "Something else"
+  },
+  "actions": {
+    "approve": "Approve",
+    "keep": "Keep",
+    "archive": "Archive",
+    "remove": "Remove",
+    "removeWhy": "Why it's removed",
+    "removeWhyNote": "Shown to the asker.",
+    "removeFix": "Suggested fix",
+    "removeFixNote": "Shown to the asker: how the question could be asked instead.",
+    "harm": "Was it harmful?",
+    "harmNone": "No, it only needs rewording (no penalty)",
+    "merge": "Merge as repeat",
+    "original": "Original #",
+    "originalLabel": "Number of the original question",
+    "mergeRule": "Votes are combined by the rule “{rule}”: {explain}",
+    "subject": "Subject",
+    "changeSubject": "Change subject",
+    "aiReview": "AI deep review"
+  },
+  "harm": {
+    "hateful": "Hateful (adds a demerit)",
+    "harassing": "Harassing (adds a demerit)",
+    "private_person": "Targets a private person (adds a demerit)",
+    "spam": "Spam (adds a demerit)"
+  },
+  "harmShort": {
+    "hateful": "hateful",
+    "harassing": "harassing",
+    "private_person": "targets a private person",
+    "spam": "spam"
+  },
+  "rules": {
+    "move_unanswered_keep_original": "people who answered only the repeat have their answer moved to the original; people who answered both keep their answer on the original."
+  },
+  "appeals": {
+    "about": "Appeal #{id} · {subject, select, question {removed question} ban {ban} demerit {demerit} other {item}} #{subjectId}",
+    "theirWords": "Their appeal",
+    "removedWhy": "Removed because: {why}",
+    "removedFix": "Suggested fix given: {fix}",
+    "autoRemoved": "Removed automatically by the report rule.",
+    "harm": "Marked harmful: {kind}",
+    "banUntil": "Ban from asking until {date}",
+    "banPermanent": "Permanent ban for vote manipulation",
+    "banReason": "Ban reason: {reason}",
+    "demeritReason": "Demerit reason: {reason}",
+    "note": "Decision note",
+    "noteHelp": "Shown to them with the outcome.",
+    "uphold": "Uphold",
+    "overturn": "Overturn",
+    "overturnHelp": "Overturning restores a removed question, lifts a ban, or revokes a demerit."
+  },
+  "signals": {
+    "summary": "{n, plural, one {# account} other {# accounts}} under {days} days old gave the same answer within {minutes} minutes.",
+    "question": "On question #{id}: {text}",
+    "votes": "{n, plural, one {# vote} other {# votes}} in total",
+    "accounts": "Accounts in the burst",
+    "account": "Account #{id}",
+    "accountsHelp": "Confirming bans the ticked accounts permanently. Only accounts in the burst can be banned: never the asker, never honest voters.",
+    "confirm": "Confirm and ban",
+    "dismiss": "Dismiss",
+    "scan": "Scan for manipulation now",
+    "kinds": {
+      "new_account_burst": "Burst of new accounts"
+    }
+  },
+  "errors": {
+    "incomplete": "That decision wasn't complete.",
+    "self_merge": "A question can't be a repeat of itself.",
+    "original_not_live": "The original isn't live, so it can't take the merge.",
+    "not_found": "That wasn't found.",
+    "already_merged": "That question has already been merged.",
+    "already_removed": "That question has already been removed.",
+    "why_and_fix_required": "Removing a question needs both why and a suggested fix.",
+    "note_required": "Add a note explaining the decision.",
+    "own_appeal": "You can't decide your own appeal.",
+    "decided": "That appeal has already been decided.",
+    "reviewed": "That signal has already been reviewed.",
+    "off": "AI review is switched off.",
+    "unavailable": "The AI review didn't answer. Try again later."
+  },
+  "denial": {
+    "where": "Where: “{where}”.",
+    "fix": "Suggested fix: “{fix}”.",
+    "remove": "Suggested fix: take it out.",
+    "suggestion": "Try: “{suggestion}”",
+    "demerit": "This added a demerit to your account. Repeated harmful questions bring a temporary ban from asking."
+  }
+}
