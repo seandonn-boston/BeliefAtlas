@@ -3,8 +3,9 @@ import { NEVER_SELL_COUNTRIES } from "./sanctions/places";
 
 // Regions decide two things, and nothing else: whether person-level answers may ever be sold
 // there, and how small a group may be before it is hidden from aggregate breakdowns. Voting is
-// open everywhere. Every region is closed to sale until a lawyer has reviewed it; the '*' row
-// stands for everywhere without a row of its own (and for anyone whose region isn't known).
+// open everywhere except the blocked places in lib/sanctions/places.ts, which proxy.ts turns
+// away. Every region is closed to sale until a lawyer has reviewed it; the '*' row stands for
+// everywhere without a row of its own (and for anyone whose region isn't known).
 
 export type Region = {
   code: string;
