@@ -106,6 +106,12 @@ test("human check: development bypass, closed in production without keys", async
   assert.equal(prod.name, "off");
   assert.equal((await prod.verify("anything", "1.2.3.4", "signup")).ok, false);
 
+  // Preview test mode passes, but only on a Vercel preview: the same flag in production stays closed.
+  const preview = humanChallenge({ NODE_ENV: "production", VERCEL_ENV: "preview", PREVIEW_TEST_MODE: "1" } as unknown as NodeJS.ProcessEnv);
+  assert.equal(preview.name, "dev");
+  const flaggedProd = humanChallenge({ NODE_ENV: "production", VERCEL_ENV: "production", PREVIEW_TEST_MODE: "1" } as unknown as NodeJS.ProcessEnv);
+  assert.equal(flaggedProd.name, "off");
+
   const on = humanChallenge({ NODE_ENV: "production", TURNSTILE_SITE_KEY: "site", TURNSTILE_SECRET_KEY: "secret" } as unknown as NodeJS.ProcessEnv);
   assert.equal(on.name, "turnstile");
   assert.equal(on.siteKey, "site");

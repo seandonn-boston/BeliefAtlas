@@ -73,5 +73,9 @@ export function humanChallenge(env: NodeJS.ProcessEnv = process.env): HumanChall
   const siteKey = env.TURNSTILE_SITE_KEY;
   const secret = env.TURNSTILE_SECRET_KEY;
   if (siteKey && secret) return turnstile(siteKey, secret);
+  // Preview test mode (lib/preview.ts): a Vercel preview where testers sign up with the fixed
+  // code. Same two conditions as previewTestMode, read from `env` so tests can pass their own;
+  // VERCEL_ENV=preview means it can never apply to production.
+  if (env.VERCEL_ENV === "preview" && env.PREVIEW_TEST_MODE === "1") return devChallenge;
   return env.NODE_ENV === "production" ? closedChallenge : devChallenge;
 }
