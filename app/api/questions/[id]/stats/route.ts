@@ -31,6 +31,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (!question) return Response.json({ error: "Question not found." }, { status: 404 });
 
   const hasKey = isApiKey(request.headers.get("authorization"));
+  // Keyed callers are the data-buyer path: archived (and removed) questions never go to them.
+  if (hasKey && question.status === "archived") {
+    return Response.json({ error: "Question not found." }, { status: 404 });
+  }
   const url = new URL(request.url);
   const parse = (key: string) => {
     const raw = url.searchParams.get(key);

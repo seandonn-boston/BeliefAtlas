@@ -79,6 +79,8 @@ async function apply(account: Account, input: VoteInput): Promise<VoteOutcome> {
       return { outcome: "limit_reached", questionId, message: result.error, holdToken: "" };
     case "closed":
       return { outcome: "closed", questionId, message: result.error };
+    case "banned":
+      return { outcome: "invalid", questionId, message: result.error };
     default:
       return { outcome: "change_used", questionId, message: result.error };
   }

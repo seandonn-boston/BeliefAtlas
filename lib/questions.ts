@@ -3,6 +3,7 @@ import { LIMITS, TODAY_UTC } from "./limits";
 import type { Account } from "./auth";
 import { activeBan, addDemerit, classify, sweep, type Ban, type HarmKind } from "./moderation";
 import { checkQuestion, type CheckResult } from "./checks";
+import { tidyIn, yesNoProblemIn } from "./i18n/asking";
 import { meaningMatches } from "./embeddings"; // W3: meaning-based search, off unless EMBEDDINGS_URL is set
 
 export type Question = { id: number; text: string; status: string; category: string; created_at: Date };
@@ -111,6 +112,7 @@ export type AskResult =
       suggestion?: string | null;        // the whole question with the fixes applied
       harmful?: boolean;                 // the denial added a demerit
       ban?: Ban;                         // they can't ask right now
+      messageKey?: string;               // a full message key (e.g. "translate.asking.too_short") for the page to translate
     };
 
 // "Why. Where. Fix." in one English line, for logs and for callers that show a single message.
@@ -136,7 +138,14 @@ async function deny(account: Account, raw: string, results: CheckResult[], harm:
   };
 }
 
-export async function ask(account: Account, raw: string): Promise<AskResult> {
+// Checks that read the same in every language. The rest (spelling, "Is / Did / Will" openers,
+// lowercase "i", open-ended English words) are English rules and only apply to English.
+const ANY_LANGUAGE_CHECKS = new Set(["link", "personal_data", "too_short", "too_long", "repeated_word"]);
+
+// `lang` is the language the question is asked in (the asker's interface language). A question
+// keeps the language it was asked in; translations hang off its one canonical id.
+export async function ask(account: Account, raw: string, lang = "en"): Promise<AskResult> {
+  const english = lang === "en";
   // A ban from asking: they can still vote and browse.
   const ban = await activeBan(account.id, "asking");
   if (ban) return { ok: false, error: banMessage(ban), ban };
@@ -147,14 +156,19 @@ export async function ask(account: Account, raw: string): Promise<AskResult> {
 
   // The same checks the search page shows with their fixes; here they refuse.
   const checked = checkQuestion(raw);
-  if (checked.blocked) {
-    const blocking = checked.results.filter((r) => r.blocking);
+  const blocking = checked.results.filter((r) => r.blocking && (english || ANY_LANGUAGE_CHECKS.has(r.code)));
+  if (blocking.length) {
     return { ok: false, error: describeResult(blocking[0], checked.text), results: blocking, text: checked.text, suggestion: checked.suggestion };
   }
-  const problem = booleanProblem(raw);
-  if (problem) return { ok: false, error: problem };
+  if (english) {
+    const problem = booleanProblem(raw);
+    if (problem) return { ok: false, error: problem };
+  } else {
+    const problem = yesNoProblemIn(lang, raw);
+    if (problem) return { ok: false, error: `Question refused: ${problem}`, messageKey: `translate.asking.${problem}` };
+  }
 
-  const text = tidy(raw);
+  const text = english ? tidy(raw) : tidyIn(lang, raw);
   const matches = await search(text, 5);
   const exact = matches.find((m) => normalize(m.text) === normalize(text));
   if (exact) return { ok: false, error: "That question has already been asked.", existingId: exact.id };
@@ -175,10 +189,10 @@ export async function ask(account: Account, raw: string): Promise<AskResult> {
   const hold = swept.decision === "hold" ? swept.hold ?? "Held for review" : null;
 
   const rows = await query<{ id: number }>(
-    `insert into questions (text, normalized, asked_by, category, status, held_reason)
-     values ($1, $2, $3, $4, $5, $6)
+    `insert into questions (text, normalized, asked_by, category, status, held_reason, lang)
+     values ($1, $2, $3, $4, $5, $6, $7)
      on conflict (normalized) do nothing returning id`,
-    [text, normalize(text), account.id, swept.category, hold ? "review" : "active", hold],
+    [text, normalize(text), account.id, swept.category, hold ? "review" : "active", hold, lang],
   );
   if (!rows[0]) return { ok: false, error: "That question has already been asked." };
   return { ok: true, id: rows[0].id, held: Boolean(hold) };

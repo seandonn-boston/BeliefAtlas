@@ -1,4 +1,5 @@
 import { query, transaction } from "../db";
+import { scanForManipulation } from "../moderation";
 import { registerHandler } from "./registry";
 
 // The jobs W1 runs. Both are safe to run any number of times, and at the same time on two
@@ -6,6 +7,9 @@ import { registerHandler } from "./registry";
 
 export const PARTITIONS_JOB = "partitions.vote_events";
 export const ROLLUP_JOB = "stats.rollup";
+// W2: looks for bursts of new accounts voting the same way. It only records signals; a person
+// reviews each one on /mod, and only a confirmed signal can lead to a ban.
+export const MANIPULATION_JOB = "moderation.scan_manipulation";
 
 // ---------- Monthly partitions of vote_events ----------
 // Creates this month's partition and the next few, ahead of time, so rows never have to sit
@@ -76,4 +80,5 @@ export function registerDefaultHandlers(): void {
     { everySeconds: 24 * 3600 },
   );
   registerHandler<{ day?: string }>(ROLLUP_JOB, (payload) => rollup(payload), { everySeconds: 3600 });
+  registerHandler(MANIPULATION_JOB, async () => { await scanForManipulation(); }, { everySeconds: 600 });
 }

@@ -13,7 +13,7 @@ export type MyVote = { question_id: number; value: VoteValue; is_private: boolea
 
 // Why a vote didn't count, for callers that route people (to sign up, to upgrade, to try
 // again tomorrow) instead of only showing the message.
-export type VoteFailure = "closed" | "change_used" | "limit_reached" | "private_limit" | "no_vote";
+export type VoteFailure = "closed" | "change_used" | "limit_reached" | "private_limit" | "no_vote" | "banned";
 export type VoteResult =
   | { ok: true; outcome?: "cast" | "same" | "changed" }
   | { ok: false; error: string; code?: VoteFailure };
@@ -40,6 +40,7 @@ export function cleanLang(lang: unknown): string | null {
 const fail = (error: string, code?: VoteFailure): VoteResult => ({ ok: false, error, code });
 const CHANGE_USED = "You already changed your vote on this question today. Try again tomorrow.";
 const CLOSED = "This question is closed to new votes.";
+const BANNED = "This account can't vote. You can appeal at /appeals.";
 const CLOSED_EDIT = "This question is closed, so votes on it can't be changed.";
 
 // Archived and removed questions take no answers and no edits. A question under review takes
@@ -201,6 +202,14 @@ export function castVote(
     // the rules need in the same round trip.
     const state = await lockAndRead(client, account.id, questionId, true);
     if (!state.status || !isEditable(state.status)) return fail(CLOSED, "closed");
+    // A ban from everything (only ever for confirmed vote manipulation) stops voting too; a ban
+    // from asking never does. Bans are rare and indexed by account, so this stays cheap.
+    const banned = await client.query(
+      `select 1 from bans where account_id = $1 and scope = 'all' and lifted_at is null
+          and starts_at <= now() and (permanent or ends_at > now()) limit 1`,
+      [account.id],
+    );
+    if (banned.rowCount) return fail(BANNED, "banned");
 
     if (!state.value) {
       if (!isActive(state.status)) return fail(CLOSED, "closed");

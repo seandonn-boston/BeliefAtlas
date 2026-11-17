@@ -22,6 +22,7 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { report, REPORT_REASONS, type ReportReason } from "@/lib/moderation";
 import { ask, type AskResult } from "@/lib/questions";
 import { VIEW_COOKIE, VIEWS, type View } from "@/lib/view";
+import { askingLanguage } from "@/lib/i18n/asking";
 import {
   castVote, deleteVote, myVotes, reveal, setVisibility, skip, SOURCES, VOTE_VALUES, type Source, type VoteValue,
 } from "@/lib/votes";
@@ -128,7 +129,7 @@ export async function askAction(form: FormData) {
   const account = await requireAccount(form);
   const limited = await hit([RULES.asksPerAccount, String(account.id)]);
   if (limited) redirect(withError(backPath(form), tooMany(limited)));
-  const result = await ask(account, str(form, "text"));
+  const result = await ask(account, str(form, "text"), await askingLanguage());
   if (result.ok) redirect(`/q/${result.id}${result.held ? "?held=1" : ""}`);
   if (result.existingId) redirect(withError(`/q/${result.existingId}`, result.error));
   redirect(withError(backPath(form), await askRefusal(result, str(form, "text"))));
@@ -143,6 +144,10 @@ async function askRefusal(result: Exclude<AskResult, { ok: true }>, raw: string)
     return result.ban.permanent || !result.ban.ends_at
       ? appeals("permanent")
       : appeals("until", { date: format.dateTime(result.ban.ends_at, { dateStyle: "medium", timeStyle: "short" }) });
+  }
+  if (result.messageKey) {
+    const all = await getTranslations();
+    return all.has(result.messageKey) ? all(result.messageKey) : result.error;
   }
   const first = result.results?.[0];
   if (!first) return result.error;
