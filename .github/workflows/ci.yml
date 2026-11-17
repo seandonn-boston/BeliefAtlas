@@ -41,6 +41,13 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # The runner's own pg_dump is newer than the Postgres 16 service and writes settings
+      # (transaction_timeout) that 16 can't restore, so use the matching client tools.
+      - name: Postgres 16 client tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-16
+          echo /usr/lib/postgresql/16/bin >> "$GITHUB_PATH"
       # Keeps the backup and restore scripts working: dump the CI database, restore it into a
       # scratch database, check the row counts, drop it.
       - name: Backup and restore drill
