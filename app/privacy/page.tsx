@@ -22,7 +22,12 @@ export default function PrivacyPage() {
           <li><strong>Your username and password.</strong> The password is stored only as a salted hash.</li>
           <li>
             <strong>Your phone number, as a one-way hash.</strong> We use it to allow one account per number. The number
-            itself is held for at most 15 minutes while we confirm it, then deleted.
+            itself is held for at most 15 minutes while we confirm it, then deleted. We also keep what kind of line it
+            is (for example mobile), because virtual numbers can&apos;t be used.
+          </li>
+          <li>
+            <strong>That you are 18 or older,</strong> and how that was checked. Your date of birth is checked when you
+            sign up and not kept.
           </li>
           <li>
             <strong>Your votes and every change to them, with the time.</strong> We also note whether you saw the results
@@ -53,7 +58,14 @@ export default function PrivacyPage() {
 
         <h2>Who else handles your information</h2>
         <ul>
-          <li><strong>Twilio</strong> sends the code that confirms your phone number.</li>
+          <li>
+            <strong>Twilio</strong> sends the code that confirms your phone number and may look up what kind of line it
+            is.
+          </li>
+          <li>
+            <strong>Cloudflare</strong> runs an invisible check on the signup form that tells people from automated
+            scripts.
+          </li>
           <li><strong>Stripe</strong> processes membership payments.</li>
           <li><strong>Vercel and Neon</strong> host the site and its database.</li>
           <li>
@@ -64,8 +76,9 @@ export default function PrivacyPage() {
 
         <h2>Cookies</h2>
         <p>
-          We use one cookie to keep you signed in and one to remember which layout you prefer. There are no advertising or
-          tracking cookies.
+          We use one cookie to keep you signed in, one to remember which layout you prefer, and one with a random id for
+          this browser, used only to limit how many accounts can be made from it. If a date of birth under 18 is entered,
+          a cookie stops this browser from trying again for a day. There are no advertising or tracking cookies.
         </p>
 
         <h2>Your choices</h2>
@@ -84,7 +97,10 @@ export default function PrivacyPage() {
         </ul>
 
         <h2>Age</h2>
-        <p>Belief Map is for adults. You must be 18 or older to create an account.</p>
+        <p>
+          Belief Map is for adults. You must be 18 or older to create an account, and we ask for your date of birth to
+          check.
+        </p>
 
         <h2>Contact</h2>
         <p>Questions about privacy go to {CONTACT_EMAIL}.</p>

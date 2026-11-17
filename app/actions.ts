@@ -6,6 +6,9 @@ import { query } from "@/lib/db";
 import { endSession, getAccount, startSession, verifyPassword } from "@/lib/auth";
 import { hit, RULES, tooMany } from "@/lib/rate-limit";
 import { clientIp } from "@/lib/request";
+import { AGE_GATE_COOKIE, AGE_GATE_HOURS } from "@/lib/age";
+import { deviceId } from "@/lib/device";
+import { CHALLENGE_FIELD } from "@/lib/human-check";
 import { resendCode, startSignup, verifySignup } from "@/lib/signup";
 import { toCard, type CardItem } from "@/lib/cards";
 import { deleteAccount } from "@/lib/account";
@@ -63,15 +66,22 @@ const source = (form: FormData): Source => {
 
 export async function signupAction(form: FormData) {
   const next = backPath(form);
+  const jar = await cookies();
+  if (jar.get(AGE_GATE_COOKIE)) redirect(`/signup?next=${encodeURIComponent(next)}`);
   const result = await startSignup({
     username: str(form, "username"),
     phone: str(form, "phone"),
     password: String(form.get("password") ?? ""),
-    adult: form.get("adult") === "on",
+    dob: str(form, "dob"),
     consent: form.get("consent") === "on",
     next,
     ip: await clientIp(),
+    device: await deviceId(),
+    challengeToken: str(form, CHALLENGE_FIELD),
   });
+  if (!result.ok && result.underage) {
+    jar.set(AGE_GATE_COOKIE, "1", { path: "/", httpOnly: true, sameSite: "lax", maxAge: AGE_GATE_HOURS * 3600 });
+  }
   if (!result.ok) redirect(withError(`/signup?next=${encodeURIComponent(next)}`, result.error));
   redirect(`/signup/verify?t=${result.token}`);
 }
@@ -124,10 +134,20 @@ export async function askAction(form: FormData) {
   redirect(withError(backPath(form), result.error));
 }
 
+// Per account to stop one account voting by script, per IP to stop many accounts doing it
+// together from one place.
+async function voteLimit(accountId: number) {
+  return hit(
+    [RULES.votesPerAccount, String(accountId)],
+    [RULES.votesPerAccountHour, String(accountId)],
+    [RULES.votesPerIp, await clientIp()],
+  );
+}
+
 export async function voteAction(form: FormData) {
   const account = await requireAccount(form);
   const back = backPath(form);
-  const limited = await hit([RULES.votesPerAccount, String(account.id)]);
+  const limited = await voteLimit(account.id);
   if (limited) redirect(withError(back, tooMany(limited)));
   const id = questionId(form);
   const value = str(form, "value") as VoteValue;
@@ -199,7 +219,7 @@ const validId = (id: number) => Number.isInteger(id) && id > 0;
 export async function voteInline(input: InlineInput & { value: string; isPrivate: boolean }): Promise<InlineResult> {
   const account = await getAccount();
   if (!account) return { ok: false, error: "Sign in to vote." };
-  const limited = await hit([RULES.votesPerAccount, String(account.id)]);
+  const limited = await voteLimit(account.id);
   if (limited) return { ok: false, error: tooMany(limited) };
   if (!validId(input.questionId) || !VOTE_VALUES.includes(input.value as VoteValue)) {
     return { ok: false, error: "That vote wasn't valid." };

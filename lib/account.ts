@@ -6,7 +6,7 @@ import { query, transaction } from "./db";
 // Everything the site holds about one account, in a form the owner can read.
 export async function exportData(accountId: number) {
   const [account] = await query(
-    `select username, created_at, consented_at, phone_verified_at, tier, subscription_status, role, last_active_at
+    `select username, created_at, consented_at, phone_verified_at, age_verified_at, age_method, phone_line_type, tier, subscription_status, role, last_active_at
        from accounts where id = $1`,
     [accountId],
   );

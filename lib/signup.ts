@@ -3,9 +3,16 @@ import { query, transaction } from "./db";
 import { hashPassword, hashPhone, normalizePhone } from "./auth";
 import { hit, RULES, tooMany } from "./rate-limit";
 import { checkCode, sendCode } from "./sms";
+import { checkAdult } from "./age";
+import { humanChallenge } from "./human-check";
+import { lineTypeChecker } from "./phone-check";
 
 // Signing up is two steps: details first, then the code texted to the phone. The account is
 // only created once the code checks out.
+//
+// Before any text is sent, the details pass four filters in this order: an adult date of
+// birth (checked, then discarded), the invisible human challenge, rate limits per IP address
+// and per browser, and a line-type check that turns away virtual and VoIP numbers.
 
 const EXPIRY_MINUTES = 15;
 const MAX_ATTEMPTS = 5;
@@ -13,8 +20,12 @@ const RESEND_AFTER_SECONDS = 30;
 
 const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
 
-export type StartInput = { username: string; phone: string; password: string; adult: boolean; consent: boolean; next: string; ip: string };
-export type StartResult = { ok: true; token: string } | { ok: false; error: string };
+export type StartInput = {
+  username: string; phone: string; password: string; dob: string; consent: boolean; next: string; ip: string;
+  device: string; challengeToken: string;
+};
+// `underage` tells the caller to lock this browser out of retrying with another date.
+export type StartResult = { ok: true; token: string } | { ok: false; error: string; underage?: boolean };
 
 export async function startSignup(input: StartInput): Promise<StartResult> {
   const username = input.username.trim().toLowerCase();
@@ -24,12 +35,18 @@ export async function startSignup(input: StartInput): Promise<StartResult> {
   if (input.password.length < 8) return { ok: false, error: "Passwords need at least 8 characters." };
   if (input.password.length > 200) return { ok: false, error: "Passwords can be at most 200 characters." };
   if (!digits) return { ok: false, error: "Enter a valid phone number, with country code if outside the US or Canada." };
-  if (!input.adult) return { ok: false, error: "You must be 18 or older to hold an account." };
+  const age = checkAdult(input.dob);
+  if (!age.ok) return { ok: false, error: age.error, underage: age.underage };
   if (!input.consent) return { ok: false, error: "You need to accept the terms and privacy policy to create an account." };
+
+  const human = await humanChallenge().verify(input.challengeToken, input.ip, "signup");
+  if (!human.ok) return human;
 
   const phoneHash = hashPhone(digits);
   const limited = await hit(
     [RULES.signupPerIp, input.ip],
+    [RULES.signupPerIpDay, input.ip],
+    [RULES.signupPerDevice, input.device],
     [RULES.smsPerIp, input.ip],
     [RULES.smsPerPhone, phoneHash],
     [RULES.smsPerPhoneDay, phoneHash],
@@ -45,15 +62,19 @@ export async function startSignup(input: StartInput): Promise<StartResult> {
   if (taken.username) return { ok: false, error: "That username is taken." };
 
   const e164 = `+${digits}`;
+  const line = await lineTypeChecker().check(e164);
+  if (!line.ok) return line;
   const sent = await sendCode(e164);
   if (!sent.ok) return sent;
 
   const token = randomBytes(24).toString("base64url");
   await query("delete from pending_signups where phone_hash = $1 or expires_at < now()", [phoneHash]);
   await query(
-    `insert into pending_signups (token_hash, username, phone, phone_hash, password_hash, code_hash, next_path, expires_at)
-     values ($1, $2, $3, $4, $5, $6, $7, now() + interval '${EXPIRY_MINUTES} minutes')`,
-    [hashToken(token), username, e164, phoneHash, hashPassword(input.password), sent.devCodeHash ?? null, input.next],
+    `insert into pending_signups (token_hash, username, phone, phone_hash, password_hash, code_hash, next_path,
+                                  age_method, phone_line_type, expires_at)
+     values ($1, $2, $3, $4, $5, $6, $7, 'dob', $8, now() + interval '${EXPIRY_MINUTES} minutes')`,
+    [hashToken(token), username, e164, phoneHash, hashPassword(input.password), sent.devCodeHash ?? null, input.next,
+     line.lineType],
   );
   return { ok: true, token };
 }
@@ -61,6 +82,7 @@ export async function startSignup(input: StartInput): Promise<StartResult> {
 type Pending = {
   token_hash: string; username: string; phone: string; phone_hash: string; password_hash: string;
   code_hash: string | null; attempts: number; next_path: string; seconds_since_send: number;
+  age_method: string; age_verified_at: Date; phone_line_type: string | null;
 };
 
 async function pending(token: string): Promise<Pending | null> {
@@ -97,9 +119,10 @@ export async function verifySignup(token: string, code: string): Promise<VerifyR
   try {
     return await transaction(async (client) => {
       const created = await client.query<{ id: number }>(
-        `insert into accounts (username, phone_hash, password_hash, consented_at, phone_verified_at)
-         values ($1, $2, $3, now(), now()) returning id`,
-        [row.username, row.phone_hash, row.password_hash],
+        `insert into accounts (username, phone_hash, password_hash, consented_at, phone_verified_at,
+                               age_verified_at, age_method, phone_line_type)
+         values ($1, $2, $3, now(), now(), $4, $5, $6) returning id`,
+        [row.username, row.phone_hash, row.password_hash, row.age_verified_at, row.age_method, row.phone_line_type],
       );
       await client.query("delete from pending_signups where token_hash = $1", [row.token_hash]);
       return { ok: true as const, accountId: created.rows[0].id, next: row.next_path };

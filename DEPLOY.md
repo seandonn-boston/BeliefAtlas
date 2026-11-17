@@ -39,6 +39,16 @@ Signups stay closed in production until this is set up.
 2. **Verify → Services → Create**. Name it Belief Map, code length 6, SMS channel on.
 3. Under **Verify → Settings → Geo permissions**, allow only the countries you want to accept signups from. This is the main defence against SMS fraud.
 4. Add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_VERIFY_SERVICE_SID` to Vercel and redeploy.
+5. Optional, recommended before launch: set `PHONE_LINE_CHECK=twilio` to look up each number's line type before texting it and turn away VoIP and virtual numbers. Twilio bills each lookup. Leave `PHONE_ALLOW_UNKNOWN` unset (true) unless bots get through with numbers the lookup can't classify.
+
+## 4b. Bot check on signup (Cloudflare Turnstile)
+
+Signups stay closed in production until this is set up. It is free.
+
+1. In Cloudflare, **Turnstile → Add widget**. Add your domain, widget mode **Managed**.
+2. Add `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` to Vercel and redeploy.
+
+See `docs/human-verification.md` for how this fits with the age and phone checks.
 
 ## 5. Membership (Stripe)
 

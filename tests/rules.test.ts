@@ -303,7 +303,10 @@ test("signup needs the texted code before an account exists", async () => {
   process.env.SMS_DEV_CODE = "246810";
   const username = `${tag}_new`.slice(0, 20);
   const phone = `617${String(Date.now()).slice(-7)}`;
-  const base = { username, phone, password: "correct horse", adult: true, consent: true, next: "/", ip: `ip-${tag}` };
+  const base = {
+    username, phone, password: "correct horse", dob: "1990-05-01", consent: true, next: "/", ip: `ip-${tag}`,
+    device: `dev-${tag}`, challengeToken: "",
+  };
 
   assert.equal((await startSignup({ ...base, consent: false })).ok, false);
   assert.equal((await startSignup({ ...base, username: "deleted_x" })).ok, false);
@@ -320,8 +323,12 @@ test("signup needs the texted code before an account exists", async () => {
   assert.equal(resend.ok, false); // too soon
   const right = await verifySignup(started.token, "246 810");
   assert.ok(right.ok);
-  const [account] = await query<{ phone_verified_at: Date | null }>("select phone_verified_at from accounts where username = $1", [username]);
+  const [account] = await query<{ phone_verified_at: Date | null; age_verified_at: Date | null; age_method: string }>(
+    "select phone_verified_at, age_verified_at, age_method from accounts where username = $1", [username],
+  );
   assert.ok(account.phone_verified_at);
+  assert.ok(account.age_verified_at);
+  assert.equal(account.age_method, "dob");
   const left = await query("select 1 from pending_signups where username = $1", [username]);
   assert.equal(left.length, 0);
   // The same phone can't start another account.
@@ -332,7 +339,7 @@ test("signup needs the texted code before an account exists", async () => {
 test("wrong codes run out", async () => {
   const started = await startSignup({
     username: `${tag}_x`.slice(0, 20), phone: `508${String(Date.now()).slice(-7)}`, password: "correct horse",
-    adult: true, consent: true, next: "/", ip: `ip2-${tag}`,
+    dob: "1990-05-01", consent: true, next: "/", ip: `ip2-${tag}`, device: `dev2-${tag}`, challengeToken: "",
   });
   assert.ok(started.ok);
   if (!started.ok) return;
@@ -340,6 +347,63 @@ test("wrong codes run out", async () => {
   const last = await verifySignup(started.token, process.env.SMS_DEV_CODE ?? "");
   assert.equal(last.ok, false);
   assert.equal(!last.ok && last.restart, true);
+});
+
+test("signup: under 18 is refused before anything is sent or stored", async () => {
+  const username = `${tag}_kid`.slice(0, 20);
+  const now = new Date();
+  const seventeen = `${now.getUTCFullYear() - 17}-01-01`;
+  const result = await startSignup({
+    username, phone: `781${String(Date.now()).slice(-7)}`, password: "correct horse", dob: seventeen, consent: true,
+    next: "/", ip: `ip3-${tag}`, device: `dev3-${tag}`, challengeToken: "",
+  });
+  assert.equal(result.ok, false);
+  assert.equal(!result.ok && result.underage, true);
+  assert.equal((await query("select 1 from pending_signups where username = $1", [username])).length, 0);
+  const missing = await startSignup({
+    username, phone: `781${String(Date.now()).slice(-7)}`, password: "correct horse", dob: "", consent: true,
+    next: "/", ip: `ip3-${tag}`, device: `dev3-${tag}`, challengeToken: "",
+  });
+  assert.equal(!missing.ok && missing.underage, false);
+});
+
+test("signup: one browser can start at most three signups a day", async () => {
+  const results = [];
+  for (let i = 0; i < 4; i++) {
+    results.push(await startSignup({
+      username: `${tag}_d${i}`.slice(0, 20), phone: `339${String(Date.now() + i).slice(-7)}`, password: "correct horse",
+      dob: "1985-02-28", consent: true, next: "/", ip: `ip4-${tag}-${i}`, device: `dev4-${tag}`, challengeToken: "",
+    }));
+  }
+  assert.deepEqual(results.map((r) => r.ok), [true, true, true, false]);
+  assert.match(!results[3].ok ? results[3].error : "", /Too many attempts/);
+  await query("delete from pending_signups where username like $1", [`${tag}\\_d%`]);
+});
+
+test("signup: a virtual number is turned away before a code is texted", async () => {
+  const saved = { ...process.env };
+  const realFetch = globalThis.fetch;
+  process.env.PHONE_LINE_CHECK = "twilio";
+  process.env.TWILIO_ACCOUNT_SID = "AC_test";
+  process.env.TWILIO_AUTH_TOKEN = "token_test";
+  globalThis.fetch = (async () =>
+    new Response(JSON.stringify({ valid: true, line_type_intelligence: { type: "nonFixedVoip" } }), { status: 200 })) as typeof fetch;
+  try {
+    const username = `${tag}_voip`.slice(0, 20);
+    const result = await startSignup({
+      username, phone: `857${String(Date.now()).slice(-7)}`, password: "correct horse", dob: "1990-05-01",
+      consent: true, next: "/", ip: `ip5-${tag}`, device: `dev5-${tag}`, challengeToken: "",
+    });
+    assert.equal(result.ok, false);
+    assert.match(!result.ok ? result.error : "", /virtual/);
+    assert.equal((await query("select 1 from pending_signups where username = $1", [username])).length, 0);
+  } finally {
+    globalThis.fetch = realFetch;
+    for (const key of ["PHONE_LINE_CHECK", "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN"]) {
+      if (saved[key] === undefined) delete process.env[key];
+      else process.env[key] = saved[key];
+    }
+  }
 });
 
 test("rate limits stop at the limit", async () => {
