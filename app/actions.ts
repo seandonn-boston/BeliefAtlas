@@ -94,8 +94,10 @@ export async function verifySignupAction(form: FormData) {
     redirect(result.restart ? withError("/signup", result.error) : withError(`/signup/verify?t=${token}`, result.error));
   }
   await startSession(result.accountId);
-  // New accounts land on Security, which offers a passkey first.
   const next = result.next.startsWith("/") && !result.next.startsWith("//") ? result.next : "/";
+  // A vote held while they signed up lands first, so they're back where they tapped; everyone
+  // else lands on Security, which offers a passkey first.
+  if (next.startsWith("/v/resume")) redirect(next);
   redirect(`/settings/security?welcome=1&next=${encodeURIComponent(next)}`);
 }
 

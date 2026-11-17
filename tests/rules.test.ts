@@ -75,9 +75,9 @@ test("asking: new questions are accepted, repeats point at the original", async 
 
 test("one change per question per day", async () => {
   const id = await makeQuestion(`Does the ${tag} lighthouse still work`);
-  assert.deepEqual(await castVote(free, id, "true", false, "search"), { ok: true });
-  assert.deepEqual(await castVote(free, id, "true", false, "search"), { ok: true }); // same value: no-op
-  assert.deepEqual(await castVote(free, id, "false", false, "direct"), { ok: true });
+  assert.deepEqual(await castVote(free, id, "true", false, "search"), { ok: true, outcome: "cast" });
+  assert.deepEqual(await castVote(free, id, "true", false, "search"), { ok: true, outcome: "same" }); // no-op
+  assert.deepEqual(await castVote(free, id, "false", false, "direct"), { ok: true, outcome: "changed" });
   const again = await castVote(free, id, "unsure", false, "direct");
   assert.equal(again.ok, false);
   const del = await deleteVote(free, id, "direct");
@@ -324,9 +324,10 @@ test("signup needs the texted code before an account exists", async () => {
   assert.equal(resend.ok, false); // too soon
   const right = await verifySignup(started.token, "246 810");
   assert.ok(right.ok);
-  const [account] = await query<{ phone_verified_at: Date | null; age_verified_at: Date | null; age_method: string }>(
-    "select phone_verified_at, age_verified_at, age_method from accounts where username = $1", [username],
+  const [account] = await query<{ phone_verified_at: Date | null; age_verified_at: Date | null; age_method: string; terms_version: string }>(
+    "select phone_verified_at, age_verified_at, age_method, terms_version from accounts where username = $1", [username],
   );
+  assert.equal(account.terms_version, TERMS_VERSION);
   assert.ok(account.phone_verified_at);
   assert.ok(account.age_verified_at);
   assert.equal(account.age_method, "dob");

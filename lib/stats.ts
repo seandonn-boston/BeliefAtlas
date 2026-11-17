@@ -96,7 +96,7 @@ export async function questionStats(questionId: number, opts: StatsOptions = {})
                                      and e.created_at > $2::timestamptz - interval '7 days') as recent,
                   (array_agg(e.blind order by e.created_at, e.id) filter (where e.action = 'cast'))[1] as first_blind
              from vote_events e join accounts a on a.id = e.account_id
-            where e.question_id = $1 and e.created_at <= $2
+            where e.question_id = $1 and e.created_at <= $2 and e.action <> 'skip'
               and ($3::timestamptz is null or a.last_active_at >= $3)
             group by e.account_id
          ) per_account`,
