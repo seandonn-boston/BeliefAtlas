@@ -1,5 +1,7 @@
 import { query } from "./db";
 import { MIN_GROUP_SIZE } from "./limits";
+// W4 small-slice guard (lib/consent/slices.ts): hides slices a total could give back.
+import { hideAllIfAnySmall, hideSmallSlices } from "./consent/slices";
 
 export type Tally = { true: number; false: number; unsure: number; total: number };
 
@@ -150,8 +152,11 @@ export async function questionStats(questionId: number, opts: StatsOptions = {})
       pctChangedInLast7Days: pct(churn.recent, churn.ever),
     },
     blindFirstVotes: { count: churn.blind_n, pct: pct(churn.blind_n, churn.ever) },
-    visibility: { public: group(now.pub_n, now.pub_t, now.pub_f), private: group(now.priv_n, now.priv_t, now.priv_f) },
-    sources: sources.filter((s) => s.votes >= MIN_GROUP_SIZE),
+    visibility: hideAllIfAnySmall(
+      { public: group(now.pub_n, now.pub_t, now.pub_f), private: group(now.priv_n, now.priv_t, now.priv_f) },
+      { public: now.pub_n, private: now.priv_n }, MIN_GROUP_SIZE,
+    ),
+    sources: hideSmallSlices(sources, (s) => s.votes, MIN_GROUP_SIZE),
     history: history.map((h) => {
       const total = h.t + h.f + h.u;
       return { day: h.day, total, pctTrue: pct(h.t, total), pctFalse: pct(h.f, total), pctUnsure: pct(h.u, total) };

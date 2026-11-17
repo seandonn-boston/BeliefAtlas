@@ -1,16 +1,19 @@
 import { randomBytes } from "crypto";
 import { query, transaction } from "./db";
+import { consentHistory } from "./consent/ledger";
+import { getDemographics, listChildren } from "./demographics";
 
 // ---------- Export ----------
 
 // Everything the site holds about one account, in a form the owner can read.
 export async function exportData(accountId: number) {
   const [account] = await query(
-    `select username, created_at, consented_at, phone_verified_at, age_verified_at, age_method, phone_line_type, tier, subscription_status, role, last_active_at
+    `select username, created_at, consented_at, phone_verified_at, age_verified_at, age_method, phone_line_type, tier, subscription_status, role, last_active_at,
+            region, lang
        from accounts where id = $1`,
     [accountId],
   );
-  const [votes, history, asked, reports] = await Promise.all([
+  const [votes, history, asked, reports, consent, demographics, children] = await Promise.all([
     query(
       `select q.id as question_id, q.text as question, v.value, v.is_private, v.first_cast_at, v.updated_at
          from votes v join questions q on q.id = v.question_id where v.account_id = $1 order by v.first_cast_at`,
@@ -27,6 +30,9 @@ export async function exportData(accountId: number) {
          from reports r join questions q on q.id = r.question_id where r.account_id = $1 order by r.created_at`,
       [accountId],
     ),
+    consentHistory(accountId),
+    getDemographics(accountId),
+    listChildren(accountId),
   ]);
   return {
     exportedAt: new Date().toISOString(),
@@ -36,6 +42,19 @@ export async function exportData(accountId: number) {
     voteHistory: history,
     questionsAsked: asked,
     reportsFiled: reports,
+    // Every consent choice ever recorded, oldest first, with the text version shown, the
+    // surface and region it was made on, and whether Global Privacy Control was on.
+    consentRecords: consent.reverse().map((r) => ({
+      choice: r.choice, granted: r.granted, textVersion: r.textVersion, lang: r.lang, surface: r.surface,
+      region: r.region, globalPrivacyControl: r.gpc, at: r.createdAt,
+    })),
+    aboutYou: {
+      ageRange: demographics.ageRange,
+      country: demographics.country,
+      isParent: demographics.isParent,
+      updatedAt: demographics.updatedAt,
+      children: children.map((c) => ({ relation: c.relation, ageRange: c.ageRange, addedAt: c.createdAt })),
+    },
   };
 }
 
@@ -47,7 +66,9 @@ export async function exportData(accountId: number) {
 //     new id and no username, phone, password or payment details, so nothing links it back;
 //   - keeps questions the person asked (they were always anonymous) and their reports, also
 //     moved to the stand-in;
-//   - removes the account, its sessions, skips and everything else tied to it.
+//   - removes the account, its sessions, skips and everything else tied to it, including its
+//     consent records, the optional details about the person and anything they said about
+//     their children.
 export async function deleteAccount(accountId: number): Promise<void> {
   await transaction(async (client) => {
     const { rows } = await client.query<{ consented_at: Date; last_active_at: Date }>(
@@ -73,6 +94,10 @@ export async function deleteAccount(accountId: number): Promise<void> {
     await client.query("update reports set account_id = $2 where account_id = $1", [accountId, standIn.id]);
     // Questions stay marked as asked by a person (not part of the catalog), via the stand-in.
     await client.query("update questions set asked_by = $2 where asked_by = $1", [accountId, standIn.id]);
+    await client.query("delete from account_children where account_id = $1", [accountId]);
+    await client.query("delete from account_demographics where account_id = $1", [accountId]);
+    // consent_records go with the account row (on delete cascade). They are append-only, and
+    // the database allows removing them only once the account row itself is gone.
     await client.query("delete from accounts where id = $1", [accountId]);
   });
 }

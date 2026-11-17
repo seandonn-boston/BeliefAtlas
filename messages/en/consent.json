@@ -1,0 +1,27 @@
+{
+  "metaTitle": "Before your first answer",
+  "title": "Before your first answer counts",
+  "intro": "Browsing is open to everyone. Before any answer of yours is counted, we ask once, here.",
+  "draft": "Draft. These words have not yet been reviewed by a lawyer and may change before BeliefAtlas opens to the public.",
+  "held": "Your answer, {choice}, is waiting. It counts as soon as you agree.",
+  "heldPrivate": "It will count as a private answer.",
+  "points": {
+    "kept": "We keep your answers and when and where you gave them, and use them for the results and your belief map.",
+    "private": "Any answer can be private: it counts in the totals but is never shown with your name.",
+    "sale": "Selling data is a separate choice. It is off unless you turn it on, and you never need it to answer."
+  },
+  "answeringHeading": "What you're agreeing to",
+  "saleHeading": "Data sales (optional)",
+  "version": "Version {version}",
+  "saleCheckbox": "Also include my answers, without my name, in data that is sold. I can turn this off at any time in Settings.",
+  "saleGpc": "Your browser sent a Global Privacy Control signal, so your answers are never included in data that is sold.",
+  "saleClosed": "Data sales aren't offered where you are, so nothing about you is sold.",
+  "agree": "I agree",
+  "notNow": "Not now",
+  "notNowNote": "Without agreeing you can still browse every question. A held answer waits for 24 hours.",
+  "settingsNote": "You can see and change these choices at any time in <link>Settings</link>.",
+  "errors": {
+    "textChanged": "The wording changed while you were reading. Please read it again.",
+    "missingText": "The agreement text isn't available right now. Try again in a minute."
+  }
+}

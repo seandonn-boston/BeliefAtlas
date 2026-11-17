@@ -1,0 +1,32 @@
+{
+  "metaTitle": "Crear una cuenta",
+  "closedTitle": "Los registros aún no están abiertos",
+  "closedBody": "Estamos terminando las comprobaciones que mantienen BeliefAtlas para personas reales. Vuelve pronto.",
+  "haveAccount": "¿Ya tienes una cuenta? <link>Inicia sesión</link>.",
+  "title": "Crear una cuenta",
+  "underage": "Lo sentimos, necesitas tener 18 años o más para crear una cuenta.",
+  "optional": "(opcional)",
+  "username": "Nombre de usuario",
+  "usernameNote": "Déjalo en blanco y elegiremos uno. Puedes cambiarlo después.",
+  "dob": "Fecha de nacimiento",
+  "dobNote": "La comprobamos una vez y no la guardamos. Necesitas tener 18 años o más.",
+  "phone": "Número de teléfono",
+  "phoneNote": "Te enviamos un código por SMS para confirmar que es tuyo. Usa un número móvil; no se pueden usar números de internet ni virtuales. Una cuenta por número; solo se guarda como un hash de un solo sentido y nunca se comparte.",
+  "password": "Contraseña",
+  "passwordNote": "Sin ella, entras con una llave de acceso o un código por SMS.",
+  "terms": "Al continuar, aceptas los <terms>términos</terms> y la <privacy>política de privacidad</privacy>. Antes de que cuente tu primera respuesta, te preguntamos por separado cómo pueden usarse tus respuestas.",
+  "continue": "Continuar",
+  "haveOne": "¿Ya tienes una? <link>Inicia sesión</link>.",
+  "verify": {
+    "title": "Escribe el código que te enviamos",
+    "codeLabel": "Código enviado al número que termina en {ending}",
+    "newCode": "Va un código nuevo de camino.",
+    "preview": "Vista previa: no se envía ningún SMS. El código es {code}.",
+    "dev": "Modo de desarrollo: el código está en el registro del servidor.",
+    "create": "Crear la cuenta",
+    "noText": "¿Ningún SMS después de un minuto?",
+    "sendNew": "Enviar un código nuevo",
+    "differentNumber": "Usar otro número",
+    "expired": "Ese código ha caducado. Empieza de nuevo."
+  }
+}

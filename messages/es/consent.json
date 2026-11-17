@@ -1,0 +1,27 @@
+{
+  "metaTitle": "Antes de tu primera respuesta",
+  "title": "Antes de que cuente tu primera respuesta",
+  "intro": "Cualquiera puede explorar las preguntas. Antes de contar cualquier respuesta tuya, te lo preguntamos una vez, aquí.",
+  "draft": "Borrador. Este texto aún no lo ha revisado un abogado y puede cambiar antes de que BeliefAtlas abra al público.",
+  "held": "Tu respuesta, {choice}, está en espera. Cuenta en cuanto aceptes.",
+  "heldPrivate": "Contará como una respuesta privada.",
+  "points": {
+    "kept": "Guardamos tus respuestas, cuándo y dónde las diste, y las usamos para los resultados y tu mapa de creencias.",
+    "private": "Cualquier respuesta puede ser privada: cuenta en los totales, pero nunca se muestra con tu nombre.",
+    "sale": "Vender datos es una elección aparte. Está desactivada a menos que la actives, y nunca la necesitas para responder."
+  },
+  "answeringHeading": "Lo que aceptas",
+  "saleHeading": "Venta de datos (opcional)",
+  "version": "Versión {version}",
+  "saleCheckbox": "Incluir también mis respuestas, sin mi nombre, en datos que se venden. Puedo desactivarlo cuando quiera en Ajustes.",
+  "saleGpc": "Tu navegador envió una señal de Control Global de Privacidad (GPC), así que tus respuestas nunca se incluyen en datos que se venden.",
+  "saleClosed": "La venta de datos no se ofrece donde estás, así que no se vende nada sobre ti.",
+  "agree": "Acepto",
+  "notNow": "Ahora no",
+  "notNowNote": "Sin aceptar puedes seguir viendo todas las preguntas. Una respuesta en espera se guarda 24 horas.",
+  "settingsNote": "Puedes ver y cambiar estas elecciones cuando quieras en <link>Ajustes</link>.",
+  "errors": {
+    "textChanged": "El texto cambió mientras lo leías. Vuelve a leerlo, por favor.",
+    "missingText": "El texto del acuerdo no está disponible ahora mismo. Inténtalo de nuevo en un minuto."
+  }
+}

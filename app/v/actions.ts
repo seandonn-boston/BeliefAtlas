@@ -4,7 +4,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getAccount } from "@/lib/auth";
 import { cleanPlacement, cleanSurface, HOLD_COOKIE, HOLD_COOKIE_SECONDS, readShownToken } from "@/lib/front-door";
-import { CHOICES, vote, type Choice } from "@/lib/vote-engine";
+import { CHOICES, type Choice } from "@/lib/vote-engine";
+// W4 consent gate: answers count only after the 'answering' agreement (lib/consent/gate.ts).
+import { consentUrl, voteWithConsent } from "@/lib/consent/gate";
+import { requestContext } from "@/lib/consent/request";
 
 const str = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
 
@@ -26,7 +29,7 @@ export async function tapAction(form: FormData) {
   if (!Number.isInteger(questionId) || questionId <= 0 || !CHOICES.includes(value)) redirect("/");
 
   const account = await getAccount();
-  const outcome = await vote({
+  const outcome = await voteWithConsent({
     account,
     questionId,
     value,
@@ -35,7 +38,7 @@ export async function tapAction(form: FormData) {
     shownAt: readShownToken(shown, questionId),
     // One rendered page, one answer: a double tap or a resubmitted form changes nothing.
     idempotencyKey: shown ? `page:${shown}` : null,
-  });
+  }, await requestContext(via));
 
   const jar = await cookies();
   const hold = (token: string) =>
@@ -46,6 +49,10 @@ export async function tapAction(form: FormData) {
       // Signing up (or signing in) brings them back to /v/resume, which counts the held tap.
       hold(outcome.holdToken);
       return redirect(`/signup?next=${encodeURIComponent("/v/resume")}`);
+    case "needs_consent":
+      // W4: held until they agree on /consent, which then counts it through /v/resume.
+      hold(outcome.holdToken);
+      return redirect(consentUrl("/v/resume", via));
     case "limit_reached":
       hold(outcome.holdToken);
       return redirect(page({ done: "limit_reached" }));

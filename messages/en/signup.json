@@ -1,0 +1,32 @@
+{
+  "metaTitle": "Create an account",
+  "closedTitle": "Signups aren't open yet",
+  "closedBody": "We're finishing the checks that keep BeliefAtlas to real people. Check back soon.",
+  "haveAccount": "Already have an account? <link>Sign in</link>.",
+  "title": "Create an account",
+  "underage": "Sorry, you need to be 18 or older to create an account.",
+  "optional": "(optional)",
+  "username": "Username",
+  "usernameNote": "Leave it blank and we'll pick one. You can change it later.",
+  "dob": "Date of birth",
+  "dobNote": "We check it once and don't keep it. You need to be 18 or older.",
+  "phone": "Phone number",
+  "phoneNote": "We text it a code to confirm it is yours. Use a mobile number; internet and virtual numbers can't be used. One account per number; it is stored only as a one-way hash and never shared.",
+  "password": "Password",
+  "passwordNote": "Without one, you sign in with a passkey or a texted code.",
+  "terms": "By continuing, you agree to the <terms>terms</terms> and <privacy>privacy policy</privacy>. Before your first answer counts, we ask you separately how your answers may be used.",
+  "continue": "Continue",
+  "haveOne": "Already have one? <link>Sign in</link>.",
+  "verify": {
+    "title": "Enter the code we texted you",
+    "codeLabel": "Code sent to the number ending {ending}",
+    "newCode": "A new code is on its way.",
+    "preview": "Preview: no text is sent. The code is {code}.",
+    "dev": "Development mode: the code is in the server log.",
+    "create": "Create account",
+    "noText": "No text after a minute?",
+    "sendNew": "Send a new code",
+    "differentNumber": "Use a different number",
+    "expired": "That code has expired. Start again."
+  }
+}

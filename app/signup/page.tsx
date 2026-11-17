@@ -1,18 +1,29 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Script from "next/script";
 import { cookies } from "next/headers";
+import { getTranslations } from "next-intl/server";
 import { signupAction } from "@/app/actions";
 import { ErrorBanner, Header } from "@/components/Header";
 import { AGE_GATE_COOKIE } from "@/lib/age";
 import { humanChallenge, TURNSTILE_SCRIPT } from "@/lib/human-check";
 import { smsMode } from "@/lib/sms";
 
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("signup");
+  return { title: `${t("metaTitle")} · BeliefAtlas` };
+}
+
 type Props = { searchParams: Promise<{ error?: string; next?: string }> };
 
+// No accounts for anyone under 18, ever: the date of birth is checked (and not kept), and a
+// browser that gave an under-18 date is shown only the refusal for a while (lib/age.ts).
 export default async function SignupPage({ searchParams }: Props) {
   const { error, next = "/" } = await searchParams;
   const gated = Boolean((await cookies()).get(AGE_GATE_COOKIE));
   const challenge = humanChallenge();
+  const t = await getTranslations("signup");
+  const signIn = (x: React.ReactNode) => <Link href={`/login?next=${encodeURIComponent(next)}`}>{x}</Link>;
 
   // In production, signups stay closed until both the bot check and phone codes are set up.
   if (challenge.name === "off" || smsMode === "off") {
@@ -20,9 +31,9 @@ export default async function SignupPage({ searchParams }: Props) {
       <>
         <Header />
         <main className="wrap wrap-narrow">
-          <h1 className="page-title">Signups aren&apos;t open yet</h1>
-          <p>We&apos;re finishing the checks that keep BeliefAtlas to real people. Check back soon.</p>
-          <p className="q-join">Already have an account? <Link href={`/login?next=${encodeURIComponent(next)}`}>Sign in</Link>.</p>
+          <h1 className="page-title">{t("closedTitle")}</h1>
+          <p>{t("closedBody")}</p>
+          <p className="q-join">{t.rich("haveAccount", { link: signIn })}</p>
         </main>
       </>
     );
@@ -33,8 +44,8 @@ export default async function SignupPage({ searchParams }: Props) {
       <>
         <Header />
         <main className="wrap wrap-narrow">
-          <h1 className="page-title">Create an account</h1>
-          <p>Sorry, you need to be 18 or older to create an account.</p>
+          <h1 className="page-title">{t("title")}</h1>
+          <p>{t("underage")}</p>
         </main>
       </>
     );
@@ -44,33 +55,30 @@ export default async function SignupPage({ searchParams }: Props) {
     <>
       <Header />
       <main className="wrap wrap-narrow">
-        <h1 className="page-title">Create an account</h1>
+        <h1 className="page-title">{t("title")}</h1>
         <ErrorBanner message={error} />
         <form action={signupAction} className="form">
           <input type="hidden" name="back" value={next} />
           <label>
-            Username <span className="field-note">(optional)</span>
+            {t("username")} <span className="field-note">{t("optional")}</span>
             <input name="username" autoComplete="username" minLength={3} maxLength={20} />
-            <span className="field-note">Leave it blank and we&apos;ll pick one. You can change it later.</span>
+            <span className="field-note">{t("usernameNote")}</span>
           </label>
           <label>
-            Date of birth
+            {t("dob")}
             {/* autocomplete="bday" lets phones and browsers fill this from the person's own contact card. */}
             <input name="dob" type="date" autoComplete="bday" required />
-            <span className="field-note">We check it once and don&apos;t keep it.</span>
+            <span className="field-note">{t("dobNote")}</span>
           </label>
           <label>
-            Phone number
+            {t("phone")}
             <input name="phone" type="tel" autoComplete="tel" required />
-            <span className="field-note">
-              We text it a code to confirm it is yours. Use a mobile number; internet and virtual numbers can&apos;t be used.
-              One account per number; it is stored only as a one-way hash and never shared.
-            </span>
+            <span className="field-note">{t("phoneNote")}</span>
           </label>
           <label>
-            Password <span className="field-note">(optional)</span>
+            {t("password")} <span className="field-note">{t("optional")}</span>
             <input name="password" type="password" autoComplete="new-password" minLength={8} />
-            <span className="field-note">Without one, you sign in with a passkey or a texted code.</span>
+            <span className="field-note">{t("passwordNote")}</span>
           </label>
           {challenge.siteKey && (
             <>
@@ -79,13 +87,14 @@ export default async function SignupPage({ searchParams }: Props) {
             </>
           )}
           <p className="field-note">
-            By continuing, you agree to the <Link href="/terms">terms</Link> and <Link href="/privacy">privacy
-            policy</Link>, including that your votes are recorded and used, without your name, in published results and
-            data.
+            {t.rich("terms", {
+              terms: (x) => <Link href="/terms">{x}</Link>,
+              privacy: (x) => <Link href="/privacy">{x}</Link>,
+            })}
           </p>
-          <button className="btn solid">Continue</button>
+          <button className="btn solid">{t("continue")}</button>
         </form>
-        <p className="q-join">Already have one? <Link href={`/login?next=${encodeURIComponent(next)}`}>Sign in</Link>.</p>
+        <p className="q-join">{t.rich("haveOne", { link: signIn })}</p>
       </main>
     </>
   );

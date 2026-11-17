@@ -73,7 +73,7 @@ async function apply(account: Account, input: VoteInput): Promise<VoteOutcome> {
 
 // Hold a tap for a day, to be counted once the person signs up, signs in or upgrades.
 // Returns the token; only its hash is stored.
-export async function holdVote(input: VoteInput, reason: "needs_signup" | "limit_reached"): Promise<string> {
+export async function holdVote(input: VoteInput, reason: "needs_signup" | "limit_reached" | "needs_consent"): Promise<string> {
   const token = randomBytes(24).toString("base64url");
   await query(
     `insert into pending_votes (token_hash, question_id, value, surface, placement, surface_context, shown_at, tapped_at, reason)
