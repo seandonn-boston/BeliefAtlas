@@ -69,6 +69,12 @@ export default async function SettingsPage({ searchParams }: Props) {
         <AboutSection accountId={account.id} />
 
         <section className="block">
+          <h2>{t("appeals.title")}</h2>
+          <p className="note">{t("appeals.body")}</p>
+          <p><Link href="/appeals">{t("appeals.link")}</Link></p>
+        </section>
+
+        <section className="block">
           <h2>{t("data.title")}</h2>
           <p className="note">{t("data.body")}</p>
           <p><a className="btn" href="/api/me/export" download>{t("data.download")}</a></p>

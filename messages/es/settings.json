@@ -71,13 +71,28 @@
     "childrenNote": "Solo hijo, hija o hijo/a y un rango de edad. Nunca un nombre, una fecha de nacimiento ni una cuenta: nadie menor de 18 años puede tener una.",
     "noChildren": "Ninguno en la lista.",
     "relation": "Quién",
-    "relations": { "son": "Hijo", "daughter": "Hija", "child": "Hijo/a" },
+    "relations": {
+      "son": "Hijo",
+      "daughter": "Hija",
+      "child": "Hijo/a"
+    },
     "childAge": "Edad",
     "childAges": {
-      "0-2": "0 a 2", "3-5": "3 a 5", "6-9": "6 a 9", "10-12": "10 a 12", "13-15": "13 a 15", "16-17": "16 a 17", "18+": "18 o más"
+      "0-2": "0 a 2",
+      "3-5": "3 a 5",
+      "6-9": "6 a 9",
+      "10-12": "10 a 12",
+      "13-15": "13 a 15",
+      "16-17": "16 a 17",
+      "18+": "18 o más"
     },
     "ages": {
-      "18-24": "18 a 24", "25-34": "25 a 34", "35-44": "35 a 44", "45-54": "45 a 54", "55-64": "55 a 64", "65+": "65 o más"
+      "18-24": "18 a 24",
+      "25-34": "25 a 34",
+      "35-44": "35 a 44",
+      "45-54": "45 a 54",
+      "55-64": "55 a 64",
+      "65+": "65 o más"
     },
     "childLine": "{relation}, {age}",
     "addChild": "Añadir",
@@ -135,5 +150,10 @@
     "idCheckOn": "Confirma tu identidad con un escaneo facial y un documento con foto para el nivel verificado.",
     "idCheckOff": "El escaneo facial con documento con foto, para el nivel verificado, aún no está disponible.",
     "back": "Volver a ajustes"
+  },
+  "appeals": {
+    "title": "Tus preguntas y la moderación",
+    "body": "Mira las preguntas tuyas que se eliminaron y cualquier falta o suspensión, y apela cada una una vez.",
+    "link": "Preguntas eliminadas, suspensiones y apelaciones"
   }
 }

@@ -47,7 +47,34 @@ export default function PrivacyPage() {
             only the Stripe customer reference.
           </li>
           <li><strong>When you were last active,</strong> to the nearest hour.</li>
+          <li>
+            <strong>Your agreements.</strong> Each time you agree to something or change your mind, we keep which choice
+            it was, the exact wording you were shown (by version), when, where (for example the home feed or a shared
+            link), the country your connection came from, and whether your browser sent a Global Privacy Control signal.
+            These records are never edited, only added to, so they are an accurate history.
+          </li>
+          <li>
+            <strong>Details about you, only if you add them:</strong> an age range, a country, whether you are a parent,
+            and for each child only son, daughter or child and an age range. Never a child&apos;s name, birth date or
+            account. You can clear any of these in <Link href="/settings">Settings</Link>.
+          </li>
         </ul>
+
+        <h2>Agreeing before your first answer</h2>
+        <p>
+          You can read questions and results without agreeing to anything. Your answers say what you believe, which the
+          law treats as especially sensitive, so before your first answer counts we ask you to agree, once, to us keeping
+          your answers. Until you agree, the answer you tapped is held and not counted. You can withdraw this agreement
+          in Settings; after that no new answer of yours counts.
+        </p>
+
+        <h2>Selling your answers is off unless you turn it on</h2>
+        <p>
+          Including your answers in data we sell is a separate choice. It is off unless you tick it, you never need it
+          to vote, and you can turn it off at any time in Settings with one switch, which leaves you out of every later
+          sale. If your browser sends a Global Privacy Control signal, we treat it as a no and record it. Some countries
+          stay closed to sale whatever you choose. Private answers are never sold. Nothing has been sold yet.
+        </p>
 
         <h2>Public and private votes</h2>
         <p>
@@ -56,10 +83,10 @@ export default function PrivacyPage() {
           that is what lets you change or withdraw it later, and it counts toward results like any other vote.
         </p>
 
-        <h2>What we publish and sell</h2>
+        <h2>What we publish</h2>
         <p>
-          We publish and sell results in aggregate: percentages, counts, how often people change their minds, and how
-          results move over time. We never publish or sell anything that names you, includes your phone number, or lets
+          We publish results in aggregate: percentages, counts, how often people change their minds, and how
+          results move over time. We never publish anything that names you, includes your phone number, or lets
           someone look up how you voted. Breakdowns of fewer than {MIN_GROUP_SIZE} people are withheld so that small
           groups can&apos;t be picked out.
         </p>
@@ -84,15 +111,18 @@ export default function PrivacyPage() {
 
         <h2>Cookies</h2>
         <p>
-          We use one cookie to keep you signed in, one to remember which layout you prefer, and one with a random id for
-          this browser, used only to limit how many accounts can be made from it. If a date of birth under 18 is entered,
-          a cookie stops this browser from trying again for a day. There are no advertising or tracking cookies.
+          We only use cookies the site needs to work, so there is no cookie banner: one keeps you signed in, three remember
+          your layout, theme and language, one holds an answer you tapped until you sign up or agree, and one holds a
+          random id for this browser, used only to limit how many accounts can be made from it. If a date of birth under
+          18 is entered, a cookie stops this browser from trying again for a day. There are no advertising or tracking
+          cookies.
         </p>
 
         <h2>Your choices</h2>
         <ul>
           <li>Change or withdraw any vote, once per question per day.</li>
           <li>Make a public vote private, or a private vote public.</li>
+          <li>Turn selling your answers on or off, and see every choice you have made, in Settings.</li>
           <li>
             Download everything we hold about your account from <Link href="/settings">Settings</Link>.
           </li>

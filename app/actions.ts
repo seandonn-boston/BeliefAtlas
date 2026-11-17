@@ -25,6 +25,7 @@ import { VIEW_COOKIE, VIEWS, type View } from "@/lib/view";
 import { askingLanguage } from "@/lib/i18n/asking";
 // W4 consent gate: no answer counts before the 'answering' agreement (lib/consent/gate.ts).
 import { consentUrl, holdIfNoConsent } from "@/lib/consent/gate";
+import { hasAnsweringConsent } from "@/lib/consent/ledger";
 import { requestContext } from "@/lib/consent/request";
 import { HOLD_COOKIE, HOLD_COOKIE_SECONDS } from "@/lib/front-door";
 import {
@@ -230,7 +231,9 @@ export async function visibilityAction(form: FormData) {
 export async function skipAction(form: FormData) {
   const account = await requireAccount(form);
   const id = questionId(form);
-  if (id) await skip(account, id);
+  // A skip is a record about the person too, so it's only kept once they've agreed to answering;
+  // before that, Skip just moves on.
+  if (id && (await hasAnsweringConsent(account.id))) await skip(account, id);
   redirect(withoutError(backPath(form)));
 }
 
@@ -335,7 +338,8 @@ export async function deleteVoteInline(input: InlineInput): Promise<InlineResult
 export async function skipInline(input: InlineInput): Promise<{ ok: boolean }> {
   const account = await getAccount();
   if (!account || !validId(input.questionId)) return { ok: false };
-  await skip(account, input.questionId);
+  // Before agreeing to answering, Skip moves on without keeping a record (see skipAction).
+  if (await hasAnsweringConsent(account.id)) await skip(account, input.questionId);
   return { ok: true };
 }
 

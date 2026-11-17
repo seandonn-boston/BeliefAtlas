@@ -157,7 +157,7 @@ export type QuestionStats = {
   blindFirstVotes: { count: number; pct: number };
   visibility: { public: GroupStat; private: GroupStat };
   sources: { source: string; votes: number }[];
-  history: { day: string; total: number; pctTrue: number; pctFalse: number; pctUnsure: number }[];
+  history: { day: string; total: number; pctTrue: number; pctFalse: number; pctUnsure: number; hidden?: boolean }[];
 };
 
 // The state of each account's vote at $2: its most recent event at or before that moment.
@@ -266,9 +266,14 @@ export async function questionStats(questionId: number, opts: StatsOptions = {})
       { public: now.pub_n, private: now.priv_n }, MIN_GROUP_SIZE,
     ),
     sources: hideSmallSlices(sources, (s) => s.votes, MIN_GROUP_SIZE),
+    // A day with fewer voters than the minimum group would let a small slice be read off.
+    // Such a day keeps its place (so the chart keeps 14 days) but shows nothing: `hidden`, with
+    // zeros that the chart draws as a gap.
     history: history.map((h) => {
       const total = h.t + h.f + h.u;
-      return { day: h.day, total, pctTrue: pct(h.t, total), pctFalse: pct(h.f, total), pctUnsure: pct(h.u, total) };
+      return total < MIN_GROUP_SIZE
+        ? { day: h.day, total: 0, pctTrue: 0, pctFalse: 0, pctUnsure: 0, hidden: total > 0 }
+        : { day: h.day, total, pctTrue: pct(h.t, total), pctFalse: pct(h.f, total), pctUnsure: pct(h.u, total) };
     }),
   };
 }
