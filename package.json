@@ -22,6 +22,8 @@
     "translate:grant": "tsx --env-file-if-exists=.env.local db/translator.ts",
     "embeddings:index": "tsx --env-file-if-exists=.env.local db/embed-questions.ts",
     "jobs:work": "tsx --env-file-if-exists=.env.local lib/jobs/cli.ts",
+    "sanctions:refresh": "tsx --env-file-if-exists=.env.local scripts/sanctions/refresh.ts",
+    "sanctions:actions": "tsx --env-file-if-exists=.env.local scripts/sanctions/ofac-actions.ts",
     "load:votes": "tsx --env-file-if-exists=.env.local scripts/load/votes.ts",
     "load:test": "npm run load:votes -- --rate=1000 --seconds=10",
     "db:migrate:deploy": "tsx db/migrate.ts",

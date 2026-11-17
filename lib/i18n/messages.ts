@@ -7,6 +7,8 @@ export const NAMESPACES = [
   "translate", "mod", "appeals",
   // W4: consent, settings and signup.
   "consent", "settings", "signup",
+  // S1: sanctions screening on /mod/compliance.
+  "compliance",
 ] as const;
 export type Namespace = (typeof NAMESPACES)[number];
 

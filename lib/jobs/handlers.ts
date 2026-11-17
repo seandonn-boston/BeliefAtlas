@@ -1,6 +1,7 @@
 import { query, transaction } from "../db";
 import { scanForManipulation } from "../moderation";
 import { registerHandler } from "./registry";
+import { registerSanctionsHandlers } from "./sanctions-handlers";
 
 // The jobs W1 runs. Both are safe to run any number of times, and at the same time on two
 // workers: the queue delivers a job at least once, not exactly once.
@@ -81,4 +82,6 @@ export function registerDefaultHandlers(): void {
   );
   registerHandler<{ day?: string }>(ROLLUP_JOB, (payload) => rollup(payload), { everySeconds: 3600 });
   registerHandler(MANIPULATION_JOB, async () => { await scanForManipulation(); }, { everySeconds: 600 });
+  // S1: the daily sanctions list refresh and OFAC recent-actions check (lib/jobs/sanctions-handlers.ts).
+  registerSanctionsHandlers();
 }
