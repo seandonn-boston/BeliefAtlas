@@ -9,6 +9,8 @@ export const NAMESPACES = [
   "consent", "settings", "signup",
   // S1: sanctions screening on /mod/compliance.
   "compliance",
+  // Headless front door: org accounts on /org (switched off by HEADLESS_ORG_ACCOUNTS_ENABLED).
+  "org",
 ] as const;
 export type Namespace = (typeof NAMESPACES)[number];
 

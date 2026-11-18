@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "crypto";
 import { readShownToken } from "../front-door";
 import { voteWithConsent } from "../consent/gate";
-import { hit, RULES, tooMany } from "../rate-limit";
+import { hit, RULES, tooMany, type Rule } from "../rate-limit";
 import { accountForIdentity, CHOICES, type Choice } from "../vote-engine";
 import { answerUrl } from "./cards";
 import { testOrgKeys } from "./config";
@@ -32,8 +32,8 @@ export type RelayOutcome =
   | { outcome: "needs_link" | "needs_consent"; questionId: number; linkUrl: string }
   | { outcome: "limit_reached" | "change_used" | "closed" | "slow_down" | "invalid" | "forbidden"; questionId: number; message: string };
 
-// Which test org a relay credential belongs to, or null. Only test credentials exist; real
-// issuance waits for Sean (decision 3).
+// Which test org a test credential belongs to, or null. Real keys go through callerFor() in
+// credentials.ts, which also accepts these.
 export function orgForCredential(authorization: string | null, env: Record<string, string | undefined> = process.env): string | null {
   const given = authorization?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
   if (!given) return null;
@@ -51,7 +51,8 @@ export const cleanUserId = (raw: unknown): string | null => {
   return v;
 };
 
-export async function relayVote(orgSlug: string, input: RelayInput): Promise<RelayOutcome> {
+// The org's rate limit comes from its plan (relayRule) for a real key, or the fixed test rule.
+export async function relayVote(orgSlug: string, input: RelayInput, orgRule: Rule = RULES.relayPerOrg): Promise<RelayOutcome> {
   const questionId = input.questionId;
   const bad = (message: string): RelayOutcome => ({ outcome: "invalid", questionId, message });
   if (!Number.isInteger(questionId) || questionId <= 0 || !CHOICES.includes(input.value)) return bad("That vote wasn't valid.");
@@ -67,7 +68,7 @@ export async function relayVote(orgSlug: string, input: RelayInput): Promise<Rel
   }
 
   const identity = { provider: `org:${placement.orgSlug}`, tenant: String(placement.orgId), userId };
-  const limited = await hit([RULES.relayPerOrg, placement.orgSlug], [RULES.votesPerIdentity, `${identity.provider}:${identity.tenant}:${userId}`]);
+  const limited = await hit([orgRule, placement.orgSlug], [RULES.votesPerIdentity, `${identity.provider}:${identity.tenant}:${userId}`]);
   if (limited) return { outcome: "slow_down", questionId, message: tooMany(limited) };
 
   const surface = surfaceFor(placement.kind);

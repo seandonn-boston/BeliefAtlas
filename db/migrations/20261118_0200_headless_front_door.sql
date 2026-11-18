@@ -1,8 +1,8 @@
 -- The headless front door: organizations show BeliefAtlas questions inside their own sites, apps,
 -- checkout screens and CMSs (design: belief-map/headless-front-door.md).
 --
--- Built switched off (HEADLESS_ENABLED). Nothing here holds a secret: no API keys, no billing,
--- no bank details. Placement ids are public, like a publishable key: they identify a spot where
+-- Built switched off (HEADLESS_ENABLED). Nothing here holds a secret. Org keys and plans are in
+-- the next migration (20261118_0210). Placement ids are public, like a publishable key: they identify a spot where
 -- an org shows questions; they authorize nothing beyond reading public question cards.
 --
 -- No org from a place lib/sanctions/places.ts refuses (sanctioned places, Russia, Belarus, China

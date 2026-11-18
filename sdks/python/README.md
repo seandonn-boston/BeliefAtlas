@@ -14,7 +14,7 @@ html = render_card_html(cards[0])   # escaped; each choice links to BeliefAtlas'
 For a CMS (Django, Wagtail, Plone) or a server-rendered checkout page: fetch the card on the
 server, render it, and let the person's tap open BeliefAtlas's vote page.
 
-`relay_vote()` is server to server, needs a credential, and is switched off; no real credentials exist yet.
+`relay_vote()` and `results()` are server to server and need an org key (`cm_live_...`) with the `relay` or `results` scope. BeliefAtlas's keys are built and switched off until it turns them on.
 
 Tests: `python3 -I -m unittest discover -s tests -t .` from this folder. Set
 `BELIEFATLAS_LIVE_BASE_URL` and `BELIEFATLAS_LIVE_PLACEMENT` to also run them against a running dev server.

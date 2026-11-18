@@ -1,8 +1,8 @@
 import { isProductionEnv } from "../provenance";
 
 // The headless front door's switches (belief-map/headless-front-door.md section 13). All off by
-// default. Nothing here is a secret; the only credentials the relay accepts today are test-only
-// ones, refused in production, because no org keys are issued until Sean decides (decision 3).
+// default. Org keys, org accounts and paid plans are built complete and wait behind their own
+// switches: Sean's freeze on keys and billing is temporary (18 Nov), not a design choice.
 
 type Env = Record<string, string | undefined>;
 
@@ -32,3 +32,15 @@ export function testOrgKeys(env: Env = process.env): Map<string, string> {
   }
   return keys;
 }
+
+// Org accounts in the app (/org): create an org, add members, make placements, see results.
+export const orgAccountsEnabled = (env: Env = process.env) => headlessEnabled(env) && env.HEADLESS_ORG_ACCOUNTS_ENABLED === "true";
+
+// Real org server keys: issued on /org and accepted by the relay and results routes. Hashed with a
+// key derived from PHONE_PEPPER (lib/secrets.ts pattern), so there is no new secret to manage.
+export const keysEnabled = (env: Env = process.env) => orgAccountsEnabled(env) && env.HEADLESS_KEYS_ENABLED === "true";
+
+// Paid org plans through Stripe. Also needs Stripe itself on (lib/billing.ts) and a price id per
+// paid plan (STRIPE_ORG_PRICE_PRO, STRIPE_ORG_PRICE_BUSINESS). Off, plans change only by a
+// BeliefAtlas admin.
+export const orgBillingEnabled = (env: Env = process.env) => orgAccountsEnabled(env) && env.HEADLESS_ORG_BILLING_ENABLED === "true";

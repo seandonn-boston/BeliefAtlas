@@ -29,6 +29,16 @@ export type Placement = {
   serving: boolean;
 };
 
+// Whether an org may serve at all: active (not suspended), real (test only outside production),
+// not based in a country lib/sanctions/places.ts refuses, and its sanctions screening approved.
+export function orgServes(
+  o: { status: string; origin: Origin; country: string | null; screening: string | null },
+  env: Record<string, string | undefined> = process.env,
+): boolean {
+  const originOk = o.origin === "real" || (o.origin === "test" && !isProductionEnv(env));
+  return o.status === "active" && originOk && !noBuyersFrom(o.country) && o.screening === "approved";
+}
+
 export const isPlacementId = (id: unknown): id is string => typeof id === "string" && /^pl-[a-z0-9]{12}$/.test(id);
 
 // The vote surface a placement's taps are labelled with.
@@ -56,7 +66,6 @@ export async function getPlacement(id: string, env: Record<string, string | unde
     [id],
   );
   if (!row) return null;
-  const originOk = row.origin === "real" || (row.origin === "test" && !isProductionEnv(env));
   return {
     id: row.id,
     orgId: Number(row.org_id),
@@ -66,8 +75,7 @@ export async function getPlacement(id: string, env: Record<string, string | unde
     kind: row.kind,
     allowedOrigins: row.allowed_origins,
     questionIds: row.question_ids,
-    serving: row.status === "active" && !row.disabled_at && row.not_child_directed && originOk
-      && !noBuyersFrom(row.country) && row.screening === "approved",
+    serving: !row.disabled_at && row.not_child_directed && orgServes(row, env),
   };
 }
 

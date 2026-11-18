@@ -9,7 +9,12 @@ info:
 
     Votes are never cast by opening a link. A hosted tap opens BeliefAtlas's own vote page (a
     choice's `answerUrl`), where the person taps once more, signed in as themselves. The server
-    relay (`POST /votes`) is switched off and has no real credentials yet.
+    relay (`POST /votes`) is switched off.
+
+    Org server keys look like `cm_live_<10-character id>_<43-character secret>` and are made by
+    an org admin in the BeliefAtlas app, each with scopes (`relay`, `results`). They are built and
+    switched off until BeliefAtlas turns them on. A key is refused from a browser (any request with
+    an Origin header). Replacing a key leaves the old one working for 24 hours.
 
     The API never creates or edits questions: organizations ask in the BeliefAtlas app.
 
@@ -88,9 +93,9 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
   /placements/{placementId}/results:
     get:
-      summary: Aggregate answers given through a placement (org members, signed in to BeliefAtlas)
-      description: Small groups are hidden; seed votes never count; nothing is person-level.
-      security: [{ beliefatlasSession: [] }]
+      summary: Aggregate answers given through a placement (org members signed in, or the org's server with a key)
+      description: Small groups are hidden; seed votes never count; nothing is person-level. A key needs the results scope and is refused from a browser.
+      security: [{ beliefatlasSession: [] }, { orgCredential: [] }]
       parameters:
         - { name: placementId, in: path, required: true, schema: { $ref: "#/components/schemas/PlacementId" } }
       responses:
@@ -137,7 +142,7 @@ paths:
         "429": { description: slow_down }
 components:
   securitySchemes:
-    orgCredential: { type: http, scheme: bearer, description: Not issued yet. }
+    orgCredential: { type: http, scheme: bearer, description: "Org server key, cm_live_..., with the relay or results scope. Built and switched off until BeliefAtlas turns keys on." }
     beliefatlasSession: { type: apiKey, in: cookie, name: bm_session }
   parameters:
     QuestionId: { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }

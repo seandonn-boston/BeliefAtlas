@@ -133,6 +133,10 @@ test("relayVote() refuses without a credential, and in a browser", async () => {
   }
 });
 
+test("results() needs a key and refuses a browser", () => {
+  assert.throws(() => client().results(), /key/);
+});
+
 test("describeOutcome() draws every outcome in the contract", () => {
   for (const [name, outcome] of Object.entries(contract.relayOutcomes)) {
     const d = describeOutcome(outcome as Parameters<typeof describeOutcome>[0]);

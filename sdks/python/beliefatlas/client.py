@@ -47,7 +47,8 @@ class BeliefAtlas:
     placement    your placement id ("pl-..."), to label answers and read your placement.
     lang         reader language, e.g. "es".
     origin       your page's origin, to be told when a hosted tap counts (web pages only).
-    credential   server relay only (switched off on BeliefAtlas's side). Keep it on your server.
+    credential   an org server key (cm_live_...) for the relay or results (switched off on
+                 BeliefAtlas's side). Keep it on your server.
     """
 
     def __init__(
@@ -153,6 +154,20 @@ class BeliefAtlas:
         if lang:
             body["lang"] = lang
         return self._request("POST", self._api("/votes"), body, {"Authorization": f"Bearer {self._credential}"})
+
+    def results(self, *, lang: Optional[str] = None) -> dict:
+        """Your placement's aggregate results, read with a key that has the results scope.
+
+        Small groups are hidden and nothing is person-level. Keys are switched off on BeliefAtlas's
+        side until it's decided.
+        """
+        if not self._credential:
+            raise BeliefAtlasError("results needs an organization key with the results scope.", 0, "unauthorized")
+        if not self.placement_id:
+            raise ValueError("placement is required")
+        return self._request("GET", self._api(f"/placements/{urllib.parse.quote(self.placement_id)}/results", {
+            "lang": lang or self.lang,
+        }), None, {"Authorization": f"Bearer {self._credential}"})
 
 
 def answer_url(card: Mapping[str, Any], value: str) -> Optional[str]:

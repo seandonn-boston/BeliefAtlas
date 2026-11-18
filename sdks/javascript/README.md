@@ -17,6 +17,6 @@ if (result.status === "counted") showSplit(await cm.split(questions[0].id));
 
 - A tap never votes by itself: the person confirms on BeliefAtlas's own page, signed in as themselves.
 - `answer()` trusts only a message from BeliefAtlas's origin, from the window it opened, about that question. The message carries no answer and no handle.
-- `relayVote()` is server only, needs a credential, and is switched off; no real credentials exist yet.
+- `relayVote()` and `results()` are server only and need an org key (`cm_live_...`) with the `relay` or `results` scope. BeliefAtlas's keys are built and switched off until it turns them on.
 
 Tests: `npm test` at the repo root runs `tests/headless-sdk.test.ts` against the real route handlers.

@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { query } from "./db";
 import { previewTestMode } from "./preview";
 import { logger } from "@/lib/log";
+import { applyOrgSubscription, isOrgSubscription } from "./headless/org-billing";
 
 // Membership is a Stripe subscription. Stripe is the source of truth: every webhook re-reads
 // the subscription from Stripe and sets the account's tier from its status.
@@ -18,6 +19,8 @@ export const billingMode: "stripe" | "dev" | "off" =
 
 let client: Stripe | null = null;
 const stripe = () => (client ??= new Stripe(KEY!));
+// The same client for org plans (lib/headless/org-billing.ts), only while Stripe is on.
+export const stripeClient = (): Stripe | null => (billingMode === "stripe" ? stripe() : null);
 
 // Statuses that keep membership benefits. past_due covers Stripe's retry window after a
 // failed renewal.
@@ -108,7 +111,11 @@ export async function handleWebhook(payload: string, signature: string | null): 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
     const accountId = Number(session.client_reference_id);
-    if (session.mode === "subscription" && session.subscription && Number.isInteger(accountId)) {
+    if (session.mode === "subscription" && session.subscription && session.metadata?.org_id) {
+      // An org plan (lib/headless/org-billing.ts), never a person's membership.
+      const subId = typeof session.subscription === "string" ? session.subscription : session.subscription.id;
+      await applyOrgSubscription(subId);
+    } else if (session.mode === "subscription" && session.subscription && Number.isInteger(accountId)) {
       const subId = typeof session.subscription === "string" ? session.subscription : session.subscription.id;
       await applySubscription(subId, accountId);
     }
@@ -119,7 +126,8 @@ export async function handleWebhook(payload: string, signature: string | null): 
     event.type === "customer.subscription.paused" ||
     event.type === "customer.subscription.resumed"
   ) {
-    await applySubscription(event.data.object.id);
+    if (isOrgSubscription(event.data.object)) await applyOrgSubscription(event.data.object.id);
+    else await applySubscription(event.data.object.id);
   }
 
   await query("insert into stripe_events (id) values ($1) on conflict do nothing", [event.id]);

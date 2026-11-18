@@ -82,7 +82,7 @@ export interface ClientOptions {
   placement?: string;            // your placement id, "pl-…"
   lang?: string;                 // reader language, e.g. "es"
   origin?: string;               // your page's origin, to be told when a hosted tap counts
-  credential?: string;           // server relay only; never put this in a browser
+  credential?: string;           // an org server key (cm_live_...); server only, never in a browser
   fetch?: typeof fetch;
   timeoutMs?: number;
 }
@@ -168,6 +168,19 @@ export class BeliefAtlas {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${this.opts.credential}` },
       body: JSON.stringify({ placementId: this.opts.placement, ...input }),
+    });
+  }
+
+  /**
+   * Your placement's aggregate results, read from your server with a key that has the results
+   * scope. Small groups are hidden. Keys are switched off on BeliefAtlas's side until it's decided.
+   */
+  results(opts: { lang?: string } = {}): Promise<PlacementResults> {
+    if (isBrowser()) throw new BeliefAtlasError("results with a key runs on your server, never in a browser.", 0, "server_only");
+    if (!this.opts.credential) throw new BeliefAtlasError("results needs an organization key with the results scope.", 0, "unauthorized");
+    if (!this.opts.placement) throw new TypeError("placement is required");
+    return this.request(this.api(`/placements/${encodeURIComponent(this.opts.placement)}/results`, { lang: opts.lang ?? this.opts.lang }), {
+      headers: { authorization: `Bearer ${this.opts.credential}` },
     });
   }
 }
