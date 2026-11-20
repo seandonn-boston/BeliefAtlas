@@ -12,6 +12,8 @@ name: Neon load test
 # session-level advisory lock, which a transaction-mode pooler can't keep. Never Production's: the guard step refuses a database marked as production or holding
 # any real account, and the load test refuses a production database on its own as well.
 #
+# The secret was added on 20 Nov 2026, from the Development database (neon-cobalt-prism).
+#
 # Free tier only: one short run on GitHub's runners and a few minutes of Neon compute.
 
 on:
