@@ -7,8 +7,9 @@ name: Neon load test
 # Runs only on a push to the working branch whose commit message contains the marker
 # "[neon-load-test]" (with the brackets),
 # so ordinary pushes never touch Neon. It needs one repository secret,
-# NEON_LOADTEST_DATABASE_URL: the Development (or Preview) branch's connection string from
-# Neon. Never Production's: the guard step refuses a database marked as production or holding
+# NEON_LOADTEST_DATABASE_URL: the Development (or Preview) branch's DIRECT connection string
+# from Neon (no "-pooler" in the host). The job migrates first, and migrations hold a
+# session-level advisory lock, which a transaction-mode pooler can't keep. Never Production's: the guard step refuses a database marked as production or holding
 # any real account, and the load test refuses a production database on its own as well.
 #
 # Free tier only: one short run on GitHub's runners and a few minutes of Neon compute.
