@@ -21,5 +21,6 @@
   },
   "createAccountTo": "<link>Create an account</link> to {what, select, vote {vote} ask {ask it} other {continue}}.",
   "unofficial": { "label": "Unofficial", "full": "Unofficial. Opinions of BeliefAtlas users, not official statistics, polls or law.", "detail": "Opinions of BeliefAtlas users, not official statistics, polls or law." },
+  "sample": { "label": "Includes sample answers", "labelCount": "Includes {n, plural, one {# sample answer} other {# sample answers}}", "detail": "Sample answers were made up by BeliefAtlas to get the site started. They aren't real people's opinions and will be removed.", "mapNote": "Some of the answers you're compared with are sample answers made up by BeliefAtlas to get the site started." },
   "unavailable": { "title": "Not available here", "body": "BeliefAtlas isn't available in your country or region." }
 }

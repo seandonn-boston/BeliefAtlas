@@ -6,7 +6,7 @@ import { assertNoSeedData, SeedDataPresent } from "@/lib/provenance";
 import { getQuestion } from "@/lib/questions";
 import { questionStats } from "@/lib/stats";
 import { myVotes } from "@/lib/votes";
-import { UNOFFICIAL_NOTICE } from "@/lib/legal";
+import { SAMPLE_ANSWERS_NOTE, UNOFFICIAL_NOTICE } from "@/lib/legal";
 
 // GET /api/questions/:id/stats
 //
@@ -74,5 +74,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     question: { id: question.id, text: question.text, status: question.status, askedAt: question.created_at },
     access: level,
     stats: shapeStats(stats, level, estimated),
+    // Sample answers (fictional launch votes) inside these figures. The count goes only to
+    // viewers who may see exact counts.
+    sampleAnswers: stats.tally.sample
+      ? { included: true, ...(level === "visitor" ? {} : { count: stats.tally.sample }), note: SAMPLE_ANSWERS_NOTE }
+      : { included: false },
   });
 }

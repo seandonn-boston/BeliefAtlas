@@ -7,6 +7,7 @@ export function Split({ shown, reveal = false }: { shown: Shown; reveal?: boolea
   const t = useTranslations("question");
   const c = useTranslations("common.choices");
   const u = useTranslations("common.unofficial");
+  const sm = useTranslations("common.sample");
   const format = useFormatter();
   const { split, sides, count } = shown;
   if (!split) return null;
@@ -32,6 +33,11 @@ export function Split({ shown, reveal = false }: { shown: Shown; reveal?: boolea
       <p className="split-foot">
         <span><i className="swatch unsure" />{c("unsure")} {split.unsure}%{sides && <em>{n(sides.unsure)}</em>}</span>
         <span className="split-unofficial">{u("label")}</span>
+        {shown.sample && (
+          <span className="split-sample" title={sm("detail")}>
+            {shown.sample.n === null ? sm("label") : sm("labelCount", { n: shown.sample.n })}
+          </span>
+        )}
         {count && <span>{t("count", { kind: count.kind, n: count.kind === "exact" ? count.n : 0, e: count.kind === "exact" ? "" : count.e })}</span>}
       </p>
     </div>

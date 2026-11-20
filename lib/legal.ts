@@ -12,3 +12,8 @@ export const OPERATOR = process.env.OPERATOR_NAME ?? "the operator of BeliefAtla
 // Recorded on each account at signup, so we know which terms someone agreed to. Change it
 // whenever /terms or /privacy changes in substance.
 export const TERMS_VERSION = "2026-11-13";
+
+// Wherever a split includes seed votes (fictional launch answers, lib/provenance.ts), it says so
+// (Sean, 20 Nov 2026). The translated versions live in messages/<lang>/common.json under "sample".
+export const SAMPLE_ANSWERS_NOTE =
+  "Includes sample answers made up by BeliefAtlas to get the site started. They aren't real people's opinions and will be removed.";

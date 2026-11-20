@@ -378,7 +378,7 @@ export class CounterMismatch extends Error {
 
 // Removes every account of this origin and, with them (foreign keys cascade), their votes,
 // vote events, skips, reveals, sessions and the rest. The counter trigger takes their votes off
-// questions.true_count etc.; before committing, the counters of every touched question are
+// questions.true_count etc. (and seed votes off sample_count); before committing, the counters of every touched question are
 // compared with a fresh count of the votes table, and any difference rolls everything back.
 // Afterwards the daily rollups of the days their events fell on are rebuilt.
 export async function removeOrigin(origin: "seed" | "test", opts: { dryRun?: boolean } = {}): Promise<RemoveResult> {
@@ -432,10 +432,12 @@ export async function removeOrigin(origin: "seed" | "test", opts: { dryRun?: boo
          left join (select question_id,
                            count(*) filter (where value = 'true')   as t,
                            count(*) filter (where value = 'false')  as f,
-                           count(*) filter (where value = 'unsure') as u
+                           count(*) filter (where value = 'unsure') as u,
+                           count(*) filter (where origin = 'seed')  as s
                       from votes where question_id = any($1::int[]) group by question_id) c on c.question_id = q.id
         where q.id = any($1::int[])
-          and (q.true_count, q.false_count, q.unsure_count) is distinct from (coalesce(c.t, 0), coalesce(c.f, 0), coalesce(c.u, 0))`,
+          and (q.true_count, q.false_count, q.unsure_count, q.sample_count)
+              is distinct from (coalesce(c.t, 0), coalesce(c.f, 0), coalesce(c.u, 0), coalesce(c.s, 0))`,
       [questionIds],
     );
     if (mismatched.rows.length) throw new CounterMismatch(mismatched.rows.map((r) => r.id));

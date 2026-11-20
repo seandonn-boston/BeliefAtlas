@@ -20,5 +20,6 @@
   },
   "createAccountTo": "<link>Crea una cuenta</link> para {what, select, vote {votar} ask {preguntarlo} other {continuar}}.",
   "unofficial": { "label": "No oficial", "full": "No oficial. Opiniones de usuarios de BeliefAtlas, no estadísticas oficiales, encuestas ni leyes.", "detail": "Opiniones de usuarios de BeliefAtlas, no estadísticas oficiales, encuestas ni leyes." },
+  "sample": { "label": "Incluye respuestas de muestra", "labelCount": "Incluye {n, plural, one {# respuesta de muestra} other {# respuestas de muestra}}", "detail": "BeliefAtlas inventó las respuestas de muestra para poner en marcha el sitio. No son opiniones de personas reales y se eliminarán.", "mapNote": "Algunas de las respuestas con las que se te compara son respuestas de muestra que BeliefAtlas inventó para poner en marcha el sitio." },
   "unavailable": { "title": "No disponible aquí", "body": "BeliefAtlas no está disponible en tu país o región." }
 }

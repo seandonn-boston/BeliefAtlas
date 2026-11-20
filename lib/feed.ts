@@ -40,7 +40,7 @@ export function decodeCursor(raw: string | null | undefined): Cursor | null {
   }
 }
 
-const COLUMNS = "q.id, q.text, q.lang, q.status, q.category, q.true_count as t, q.false_count as f, q.unsure_count as u, q.shuffle, q.closeness, q.approved_at is not null as approved";
+const COLUMNS = "q.id, q.text, q.lang, q.status, q.category, q.true_count as t, q.false_count as f, q.unsure_count as u, q.sample_count as s, q.shuffle, q.closeness, q.approved_at is not null as approved";
 
 export type FeedPage = { rows: FeedRow[]; next: string | null };
 

@@ -184,6 +184,7 @@ input[type="checkbox"] { accent-color: var(--ink); width: 16px; height: 16px; ma
 .split-bar { display: flex; gap: 2px; height: 10px; margin: 8px 0 7px; border-radius: 4px; overflow: hidden; }
 .seg { flex: 0 0 0; min-width: 2px; }
 .split-unofficial { border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+.split-sample { border: 1px dashed var(--line); border-radius: 4px; padding: 0 5px; cursor: help; }
 .split-foot { margin: 0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; font-size: 0.8rem; color: var(--dim); }
 
 /* The one piece of motion: the bar opens when you have just voted. */

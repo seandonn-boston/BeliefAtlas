@@ -29,7 +29,7 @@ export default async function Home({ searchParams }: Props) {
     const mine = await myVotes(account.id, [votedId]);
     // W3: localizeQuestions keeps the card in the reader's language.
     const [row] = await localizeQuestions(await query<{ id: number; text: string; status: string; category: string; t: number; f: number; u: number; approved: boolean }>(
-      `select id, text, status, category, true_count as t, false_count as f, unsure_count as u, approved_at is not null as approved
+      `select id, text, status, category, true_count as t, false_count as f, unsure_count as u, sample_count as s, approved_at is not null as approved
          from questions where id = $1 and status <> 'removed'`,
       [votedId],
     ));

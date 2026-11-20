@@ -290,7 +290,7 @@ export type InlineResult = { ok: true; card: CardItem } | { ok: false; error: st
 
 async function cardFor(questionId: number, account: { id: number; tier: "free" | "paid" }, slot: Source): Promise<InlineResult> {
   const rows = await query<{ id: number; text: string; status: string; category: string; t: number; f: number; u: number; approved: boolean }>(
-    `select id, text, status, category, true_count as t, false_count as f, unsure_count as u, approved_at is not null as approved
+    `select id, text, status, category, true_count as t, false_count as f, unsure_count as u, sample_count as s, approved_at is not null as approved
        from questions where id = $1 and status <> 'removed'`,
     [questionId],
   );

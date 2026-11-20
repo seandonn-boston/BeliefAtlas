@@ -42,6 +42,7 @@ export type BeliefMap = {
   changedMind: number;   // questions where your current answer differs from your first
   comparable: number;
   withMost: number;
+  includesSample: boolean; // some comparison counts sample answers (fictional launch votes)
   subjects: SubjectSummary[];
   entries: MapEntry[];
 };
@@ -49,6 +50,7 @@ export type BeliefMap = {
 type Row = {
   question_id: number; text: string; lang: string; category: string; value: Answer; first_value: Answer | null;
   change_count: number; first_cast_at: Date; true_count: number; false_count: number; unsure_count: number;
+  sample_count: number;
 };
 
 export function placeOf(value: Answer, counts: Record<Answer, number>) {
@@ -71,7 +73,7 @@ export async function beliefMap(
 ): Promise<BeliefMap> {
   const rows = await query<Row>(
     `select v.question_id, q.text, q.lang, q.category, v.value, v.first_value, v.change_count, v.first_cast_at,
-            q.true_count, q.false_count, q.unsure_count
+            q.true_count, q.false_count, q.unsure_count, q.sample_count
        from votes v join questions q on q.id = v.question_id
       where v.account_id = $1 and q.status <> 'removed'
       order by v.updated_at desc, v.question_id desc`,
@@ -79,7 +81,7 @@ export async function beliefMap(
   );
 
   const empty = (): Record<Answer, number> => ({ true: 0, false: 0, unsure: 0 });
-  const map: BeliefMap = { answered: 0, counts: empty(), changedMind: 0, comparable: 0, withMost: 0, subjects: [], entries: [] };
+  const map: BeliefMap = { answered: 0, counts: empty(), changedMind: 0, comparable: 0, withMost: 0, includesSample: false, subjects: [], entries: [] };
   const bySubject = new Map<string, SubjectSummary>();
   const limit = opts.limit ?? 100;
 
@@ -91,6 +93,7 @@ export async function beliefMap(
     if (place.withMost !== null) {
       map.comparable++;
       if (place.withMost) map.withMost++;
+      if (r.sample_count > 0) map.includesSample = true;
     }
     const s = bySubject.get(r.category) ?? {
       category: r.category, label: labelOf(r.category), answered: 0, counts: empty(), comparable: 0, withMost: 0,

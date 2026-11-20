@@ -31,9 +31,9 @@ export default async function MapPage({ searchParams }: Props) {
   const account = await getAccount();
   if (!account) redirect("/login?next=%2Fme");
   const { subject } = await searchParams;
-  const [map, t, c, cats, format] = await Promise.all([
+  const [map, t, c, cats, format, sm] = await Promise.all([
     beliefMap(account.id, { subject }), getTranslations("map"), getTranslations("common.choices"),
-    getTranslations("common.categories"), getFormatter(),
+    getTranslations("common.categories"), getFormatter(), getTranslations("common.sample"),
   ]);
   const WORD = (a: Answer) => c(a);
   const label = (slug: string) => (cats.has(slug) ? cats(slug) : slug);
@@ -54,6 +54,7 @@ export default async function MapPage({ searchParams }: Props) {
               <div><dt>{t("withMost")}</dt><dd>{map.comparable ? `${pct(map.withMost, map.comparable)}%` : "–"}</dd></div>
               <div><dt>{t("changedMind")}</dt><dd>{format.number(map.changedMind)}</dd></div>
             </dl>
+            {map.includesSample && <p className="field-note">{sm("mapNote")}</p>}
             <p className="map-legend">
               <span><i className="swatch true" />{c("true")} {format.number(map.counts.true)}</span>
               <span><i className="swatch false" />{c("false")} {format.number(map.counts.false)}</span>

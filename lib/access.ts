@@ -48,6 +48,9 @@ export type Shown = {
   split: { true: number; false: number; unsure: number } | null; // null while results are hidden
   sides: Tally | null;        // exact per-answer counts
   count: VoteCount | null;    // the total, as far as this viewer may know it
+  // Sample answers (fictional launch votes) inside the split: null when there are none. `n` is
+  // the exact number for viewers who may see exact counts, null for everyone else.
+  sample: { n: number | null } | null;
 };
 
 type Viewer = {
@@ -70,6 +73,7 @@ export function present(tally: Tally, viewer: Viewer): Shown {
       access === "full" ? { kind: "exact", n: tally.total }
       : access === "estimate" ? estimateCount(tally.total)
       : null,
+    sample: tally.sample ? { n: access === "full" ? tally.sample : null } : null,
   };
 }
 

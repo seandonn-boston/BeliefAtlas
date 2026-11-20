@@ -61,7 +61,10 @@ export async function closeReplica(): Promise<void> {
   if (pool) await pool.end();
 }
 
-export type Tally = { true: number; false: number; unsure: number; total: number };
+// `sample`, when present, is how many of `total` are sample answers: fictional seed votes made up
+// for launch (lib/provenance.ts). It is left out when there are none, and every place that shows
+// a split says "includes sample answers" when it is there (Sean, 20 Nov 2026).
+export type Tally = { true: number; false: number; unsure: number; total: number; sample?: number };
 
 export const pct = (n: number, total: number) => (total ? Math.round((n / total) * 1000) / 10 : 0);
 
@@ -120,12 +123,12 @@ export async function tallies(questionIds: number[]): Promise<Map<number, Tally>
     }
   }
   if (!missing.length) return map;
-  const rows = await readQuery<{ id: number; t: number; f: number; u: number }>(
-    "select id, true_count as t, false_count as f, unsure_count as u from questions where id = any($1::int[])",
+  const rows = await readQuery<{ id: number; t: number; f: number; u: number; s: number }>(
+    "select id, true_count as t, false_count as f, unsure_count as u, sample_count as s from questions where id = any($1::int[])",
     [missing],
   );
   for (const r of rows) {
-    const tally = { true: r.t, false: r.f, unsure: r.u, total: r.t + r.f + r.u };
+    const tally: Tally = { true: r.t, false: r.f, unsure: r.u, total: r.t + r.f + r.u, ...(r.s > 0 ? { sample: r.s } : {}) };
     storeSplit(r.id, tally, now);
     map.set(r.id, { ...tally });
   }
@@ -162,7 +165,7 @@ export type QuestionStats = {
 
 // The state of each account's vote at $2: its most recent event at or before that moment.
 const LATEST = `
-  select distinct on (e.account_id) e.account_id, e.value, e.is_private
+  select distinct on (e.account_id) e.account_id, e.value, e.is_private, e.origin
     from vote_events e join accounts a on a.id = e.account_id
    where e.question_id = $1 and e.created_at <= $2
      and ($3::timestamptz is null or a.last_active_at >= $3)
@@ -180,11 +183,12 @@ export async function questionStats(questionId: number, opts: StatsOptions = {})
   const params = [questionId, asOf, activeSince];
 
   const [[now], [churn], sources, history] = await Promise.all([
-    readQuery<{ t: number; f: number; u: number; pub_n: number; pub_t: number; pub_f: number; priv_n: number; priv_t: number; priv_f: number }>(
+    readQuery<{ t: number; f: number; u: number; s: number; pub_n: number; pub_t: number; pub_f: number; priv_n: number; priv_t: number; priv_f: number }>(
       `with latest as (${LATEST})
        select count(*) filter (where value = 'true')::int   as t,
               count(*) filter (where value = 'false')::int  as f,
               count(*) filter (where value = 'unsure')::int as u,
+              count(*) filter (where origin = 'seed')::int  as s,
               count(*) filter (where not is_private)::int                    as pub_n,
               count(*) filter (where not is_private and value = 'true')::int as pub_t,
               count(*) filter (where not is_private and value = 'false')::int as pub_f,
@@ -244,7 +248,9 @@ export async function questionStats(questionId: number, opts: StatsOptions = {})
     ),
   ]);
 
-  const tally: Tally = { true: now.t, false: now.f, unsure: now.u, total: now.t + now.f + now.u };
+  const tally: Tally = {
+    true: now.t, false: now.f, unsure: now.u, total: now.t + now.f + now.u, ...(now.s > 0 ? { sample: now.s } : {}),
+  };
   return {
     asOf: asOf.toISOString(),
     activeSince: activeSince ? activeSince.toISOString() : null,

@@ -19,12 +19,13 @@ export type CardItem = {
 
 type Row = {
   id: number; text: string; status: string; category: string; t: number; f: number; u: number; slot?: Source;
+  s?: number;        // sample answers among the votes (questions.sample_count)
   lang?: string;     // W3: set when the row has been through localizeQuestions
   approved?: boolean; // M1
 };
 
 export function toCard(row: Row, account: { tier: Tier } | null, myVote: MyVote | null = null): CardItem {
-  const tally = { true: row.t, false: row.f, unsure: row.u, total: row.t + row.f + row.u };
+  const tally = { true: row.t, false: row.f, unsure: row.u, total: row.t + row.f + row.u, ...(row.s ? { sample: row.s } : {}) };
   return {
     id: row.id,
     text: row.text,
