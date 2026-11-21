@@ -1,6 +1,6 @@
 # BeliefAtlas
 
-The product is BeliefAtlas. It was renamed on 21 Nov 2026 because its earlier name is shared with a malware family. The GitHub repository keeps its old name until it is renamed in the repository settings; a few internal database keys (`beliefatlas.seed_load`, the seed phone-hash prefix and an advisory-lock key) keep the old spelling on purpose so existing databases keep working.
+The product is BeliefAtlas. It was renamed on 21 Nov 2026 because its earlier name is shared with a malware family. The repository is now seandonn-boston/BeliefAtlas (GitHub redirects the old addresses).
 
 A belief map: people answer true-or-false questions, can change their minds, and every change is kept. The result is not a database of what is true but a record of what people believe, how firmly, and how that moves over time.
 
