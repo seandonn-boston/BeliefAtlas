@@ -27,7 +27,8 @@
     "load:votes": "tsx --env-file-if-exists=.env.local scripts/load/votes.ts",
     "load:test": "npm run load:votes -- --rate=1000 --seconds=10",
     "db:migrate:deploy": "tsx db/migrate.ts",
-    "vercel-build": "npm run db:migrate:deploy && tsx db/preview-seed.ts && next build"
+    "vercel-build": "npm run db:migrate:deploy && tsx db/preview-seed.ts && next build",
+    "plugin:build": "tsx scripts/plugin/build.ts"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",

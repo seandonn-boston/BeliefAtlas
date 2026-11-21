@@ -44,3 +44,6 @@ next-env.d.ts
 # Agent worktrees
 /.claude/
 /backups
+
+# built plugin (scripts/plugin/build.ts)
+/dist/

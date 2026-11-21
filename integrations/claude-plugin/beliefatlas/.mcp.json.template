@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "beliefatlas": {
+      "type": "http",
+      "url": "{{BASE}}/api/mcp"
+    }
+  }
+}

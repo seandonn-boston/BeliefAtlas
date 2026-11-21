@@ -1,0 +1,8 @@
+{
+  "name": "beliefatlas",
+  "displayName": "BeliefAtlas",
+  "version": "0.1.0",
+  "description": "Show BeliefAtlas's true/false questions and live results in your chats. Only your own tap on a BeliefAtlas card counts as an answer; Claude never answers or votes.",
+  "author": { "name": "BeliefAtlas" },
+  "license": "UNLICENSED"
+}

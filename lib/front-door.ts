@@ -19,6 +19,7 @@ export const SURFACES = [
   "slack", "discord", "teams", "telegram", "messenger", "instagram", "reddit",
   "x", "threads", "bluesky", "mastodon", "truth", "pinterest", "snapchat", "facebook",
   "twitch", "youtube", "wechat", "google", "ad", "extension",
+  "assistant", // an AI assistant's chat, through the AI head (claude-plugin.md); only the person's own tap
 ] as const;
 export type Surface = (typeof SURFACES)[number];
 
