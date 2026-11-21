@@ -77,8 +77,8 @@ test("usernames and PINs have simple rules", () => {
 });
 
 test("passkeys only work from the site's own addresses", () => {
-  const env = { NODE_ENV: "production", SITE_URL: "https://beliefatlas.com", VERCEL_URL: "yes-or-no-abc.vercel.app" } as unknown as NodeJS.ProcessEnv;
-  assert.equal(allowedOrigin("https://beliefatlas.com", env), "https://beliefatlas.com");
+  const env = { NODE_ENV: "production", SITE_URL: "https://beliefatlas.org", VERCEL_URL: "yes-or-no-abc.vercel.app" } as unknown as NodeJS.ProcessEnv;
+  assert.equal(allowedOrigin("https://beliefatlas.org", env), "https://beliefatlas.org");
   assert.equal(allowedOrigin("https://yes-or-no-abc.vercel.app", env), "https://yes-or-no-abc.vercel.app");
   assert.equal(allowedOrigin("https://evil.example", env), null);
   assert.equal(allowedOrigin("http://localhost:3000", env), null);

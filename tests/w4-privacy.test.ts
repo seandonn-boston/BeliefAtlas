@@ -89,7 +89,7 @@ test("the export includes consent records, details and children; deleting remove
   assert.equal(data.consentRecords.length, 1);
   assert.deepEqual(
     { ...data.consentRecords[0], at: undefined },
-    { choice: "answering", granted: true, textVersion: "1", lang: "en", surface: "share", region: "MX", globalPrivacyControl: false, at: undefined },
+    { choice: "answering", granted: true, textVersion: "2", lang: "en", surface: "share", region: "MX", globalPrivacyControl: false, at: undefined },
   );
   assert.equal(data.aboutYou.ageRange, "25-34");
   assert.equal(data.aboutYou.isParent, true);

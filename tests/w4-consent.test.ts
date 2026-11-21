@@ -238,7 +238,7 @@ test("consent records are append-only and keep text version, language, surface a
   const [record] = await consentHistory(me.id);
   assert.equal(record.choice, "answering");
   assert.equal(record.granted, true);
-  assert.equal(record.textVersion, "1");
+  assert.equal(record.textVersion, "2");
   assert.equal(record.lang, "en");
   assert.equal(record.surface, "embed");
   assert.equal(record.region, OPEN);

@@ -201,6 +201,8 @@ export async function assertSeedLoadAllowed(env: Env = process.env): Promise<voi
   }
 }
 
+// The "beliefatlas" keys below are internal and keep the product's old name on purpose: the
+// database trigger checks beliefatlas.seed_load, and seed accounts already loaded use this hash prefix.
 const phoneHashFor = (key: string) => `seed:${createHash("sha256").update(`beliefatlas-seed:${key}`).digest("hex")}`;
 // Not a scrypt "salt:hash" pair, so no password ever signs in (lib/auth.ts verifyPassword).
 const NO_LOGIN = "seed-origin-no-login";
