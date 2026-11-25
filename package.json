@@ -18,6 +18,7 @@
     "test-data:remove": "tsx --env-file-if-exists=.env.local db/seed-data.ts remove-test",
     "ai:answers": "tsx --env-file-if-exists=.env.local db/ai-answers.ts",
     "admin:role": "tsx --env-file-if-exists=.env.local db/set-role.ts",
+    "evidence:wire": "tsx --env-file-if-exists=.env.local db/evidence-wire.ts",
     "translate:drafts": "tsx --env-file-if-exists=.env.local db/translate-drafts.ts",
     "translate:grant": "tsx --env-file-if-exists=.env.local db/translator.ts",
     "embeddings:index": "tsx --env-file-if-exists=.env.local db/embed-questions.ts",

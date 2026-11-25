@@ -2,6 +2,7 @@ import type { PoolClient } from "pg";
 import { query, transaction } from "./db";
 import { LIMITS } from "./limits";
 import type { Account } from "./auth";
+import { cleanDeviceRegion, interfaceFor, recordEvidence, type Interface } from "./evidence";
 
 export type VoteValue = "true" | "false" | "unsure";
 export const VOTE_VALUES: VoteValue[] = ["true", "false", "unsure"];
@@ -26,6 +27,8 @@ export type VoteMeta = {
   shownAt?: Date | null;                         // when the question was put in front of them
   tappedAt?: Date;                               // when they tapped; earlier than now for held votes
   lang?: string | null;                          // the language the question was shown in (see cleanLang)
+  region?: string | null;                        // E1: a coarse region the phone worked out itself ("US-MA")
+  interface?: Interface;                         // E1: web, app, ai_head or integration; from the surface if unset
 };
 
 // A language tag as stored in votes.lang and vote_events.lang ("en", "pt-BR"): the shape
@@ -119,6 +122,9 @@ type VoteState = {
   revealed: boolean;
   skipped: boolean;
   first: { value: VoteValue; at: string; surface: string; answer_ms: number | null; blind: boolean | null } | null;
+  value_at: Date | null;                // E1: when the current answer was given or last changed
+  change_count: number | null;          // E1: changes so far on the current vote
+  evidence: boolean;                    // E1: this question is wired for vote evidence
 };
 
 async function lockAndRead(client: PoolClient, accountId: number, questionId: number, withFirst: boolean): Promise<VoteState> {
@@ -129,7 +135,8 @@ async function lockAndRead(client: PoolClient, accountId: number, questionId: nu
   // vote, more than everything else in a vote together, and capped the engine near 700 a second.
   const res = await client.query<VoteState>({
     name: "vote-state",
-    text: `select q.status, v.value, v.is_private,
+    text: `select q.status, v.value, v.is_private, v.updated_at as value_at, v.change_count,
+            exists (select 1 from vote_evidence_questions eq where eq.question_id = $2) as evidence,
             (select count(*)::int from vote_events e
               where e.account_id = $1 and ${TODAY_RANGE} and e.action = 'cast') as casts_today,
             exists (select 1 from vote_events e
@@ -171,21 +178,27 @@ const OPEN_FOR_EDIT = "status not in ('archived', 'removed')";
 // one that commits later comes after the vote. Either way no vote lands on a closed question.
 // M1: `mergeReview` marks a change made in answer to a merge heads-up (it doesn't use up the
 // day's change).
-async function insertEvent(client: PoolClient, action: "cast" | "change", open: string, params: unknown[], mergeReview: number | null = null) {
+async function insertEvent(
+  client: PoolClient, action: "cast" | "change", open: string, params: unknown[], mergeReview: number | null = null,
+): Promise<{ id: string; created_at: string }> {
   const res = await client.query(
     `insert into vote_events (account_id, question_id, action, value, is_private, source, blind,
                               surface, placement, surface_context, shown_at, tapped_at, answer_ms, lang, merge_review)
      select $1::int, $2::int, '${action}', $3::text, $4::boolean, $5::text, $6::boolean,
             $7::text, $8::text, $9::jsonb, $10::timestamptz, $11::timestamptz, $12::int, $13::text, $14::bigint
-       from questions where id = $2::int and ${open}`,
+       from questions where id = $2::int and ${open}
+     returning id, created_at::text`,
     [...params, mergeReview],
   );
   if (res.rowCount !== 1) throw new QuestionClosed();
+  return res.rows[0];
 }
 
 async function currentVote(client: PoolClient, accountId: number, questionId: number) {
-  const res = await client.query<{ value: VoteValue; is_private: boolean }>(
-    "select value, is_private from votes where account_id = $1 and question_id = $2 for update",
+  const res = await client.query<{ value: VoteValue; is_private: boolean; updated_at: Date; change_count: number; evidence: boolean }>(
+    `select value, is_private, updated_at, change_count,
+            exists (select 1 from vote_evidence_questions eq where eq.question_id = v.question_id) as evidence
+       from votes v where account_id = $1 and question_id = $2 for update of v`,
     [accountId, questionId],
   );
   return res.rows[0] ?? null;
@@ -209,6 +222,8 @@ export function castVote(
   const context = meta.surfaceContext ? JSON.stringify(meta.surfaceContext) : null;
   const lang = cleanLang(meta.lang);
   const { tappedAt, shownAt, answerMs } = timing(meta);
+  const region = cleanDeviceRegion(meta.region);
+  const iface = interfaceFor(surface, meta.interface);
   return transaction(async (client): Promise<VoteResult> => {
     // Serialise this account's votes so daily limits can't be raced past, and read everything
     // the rules need in the same round trip.
@@ -256,9 +271,15 @@ export function castVote(
              first.blind, priorChanges + 1, tappedAt, lang]
           : [account.id, questionId, value, isPrivate, value, tappedAt, surface, answerMs, blind, 0, null, lang],
       );
-      await insertEvent(client, "cast", OPEN_FOR_CAST, [
+      const event = await insertEvent(client, "cast", OPEN_FOR_CAST, [
         account.id, questionId, value, isPrivate, source, blind, surface, placement, context, shownAt, tappedAt, answerMs, lang,
       ]);
+      if (state.evidence) {
+        await recordEvidence(client, {
+          eventId: event.id, eventCreatedAt: event.created_at, accountId: account.id, region, interface: iface,
+          previousValue: null, changeNumber: first ? priorChanges + 1 : 0, previousAt: null, at: tappedAt,
+        });
+      }
       return { ok: true, outcome: "cast" };
     }
 
@@ -274,9 +295,16 @@ export function castVote(
         where account_id = $1 and question_id = $2`,
       [account.id, questionId, value, tappedAt, lang],
     );
-    await insertEvent(client, "change", OPEN_FOR_EDIT, [
+    const event = await insertEvent(client, "change", OPEN_FOR_EDIT, [
       account.id, questionId, value, state.is_private, source, null, surface, placement, context, shownAt, tappedAt, answerMs, lang,
     ], state.merge_review);
+    if (state.evidence) {
+      await recordEvidence(client, {
+        eventId: event.id, eventCreatedAt: event.created_at, accountId: account.id, region, interface: iface,
+        previousValue: state.value, changeNumber: (state.change_count ?? 0) + 1,
+        previousAt: state.value_at ? new Date(state.value_at) : null, at: tappedAt,
+      });
+    }
     if (state.merge_review) {
       // M1: the heads-up is answered.
       await client.query(
@@ -290,7 +318,7 @@ export function castVote(
 
 // Remove your vote. The question stays, and can come back around in your feed. A vote on an
 // archived or removed question stays as it was (it goes when the account is deleted).
-export function deleteVote(account: Account, questionId: number, source: Source): Promise<VoteResult> {
+export function deleteVote(account: Account, questionId: number, source: Source, meta: VoteMeta = {}): Promise<VoteResult> {
   return transaction(async (client): Promise<VoteResult> => {
     await client.query("select 1 from accounts where id = $1 for update", [account.id]);
     const existing = await currentVote(client, account.id, questionId);
@@ -300,11 +328,19 @@ export function deleteVote(account: Account, questionId: number, source: Source)
     if (await changedToday(client, account.id, questionId)) return fail(CHANGE_USED, "change_used");
     await client.query("delete from votes where account_id = $1 and question_id = $2", [account.id, questionId]);
     await assertStillOpen(client, questionId, isEditable);
-    await client.query(
+    const event = await client.query<{ id: string; created_at: string }>(
       `insert into vote_events (account_id, question_id, action, value, is_private, source)
-       values ($1, $2, 'delete', null, $3, $4)`,
+       values ($1, $2, 'delete', null, $3, $4) returning id, created_at::text`,
       [account.id, questionId, existing.is_private, source],
     );
+    if (existing.evidence) {
+      const at = new Date();
+      await recordEvidence(client, {
+        eventId: event.rows[0].id, eventCreatedAt: event.rows[0].created_at, accountId: account.id,
+        region: cleanDeviceRegion(meta.region), interface: interfaceFor(meta.surface, meta.interface),
+        previousValue: existing.value, changeNumber: existing.change_count + 1, previousAt: existing.updated_at, at,
+      });
+    }
     return { ok: true };
   }).catch(closedOr(CLOSED_EDIT));
 }
@@ -355,12 +391,20 @@ export function skip(account: Account, questionId: number, source: Source = "dir
   return transaction(async (client) => {
     const state = await lockAndRead(client, account.id, questionId, false);
     if (!state.status || !isEditable(state.status) || state.value) return false;
-    await client.query(
+    const event = await client.query<{ id: string; created_at: string }>(
       `insert into vote_events (account_id, question_id, action, value, is_private, source,
                                 surface, placement, surface_context, shown_at, tapped_at, answer_ms, lang)
-       values ($1, $2, 'skip', null, false, $3, $4, $5, $6, $7, $8, $9, $10)`,
+       values ($1, $2, 'skip', null, false, $3, $4, $5, $6, $7, $8, $9, $10)
+       returning id, created_at::text`,
       [account.id, questionId, source, surface, meta.placement ?? null, context, shownAt, tappedAt, answerMs, lang],
     );
+    if (state.evidence) {
+      await recordEvidence(client, {
+        eventId: event.rows[0].id, eventCreatedAt: event.rows[0].created_at, accountId: account.id,
+        region: cleanDeviceRegion(meta.region), interface: interfaceFor(surface, meta.interface),
+        previousValue: null, changeNumber: 0, previousAt: null, at: tappedAt,
+      });
+    }
     await client.query(
       `insert into skips (account_id, question_id) values ($1, $2)
        on conflict (account_id, question_id) do update set skipped_at = now()`,

@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "crypto";
 import { query, transaction } from "./db";
 import type { Account } from "./auth";
+import type { Interface } from "./evidence";
 import { cleanPlacement, cleanSurface, type Surface } from "./front-door";
 import { hit, RULES, tooMany } from "./rate-limit";
 import { invalidateSplits } from "./stats";
@@ -31,6 +32,8 @@ export type VoteInput = {
   isPrivate?: boolean;
   source?: Source;
   lang?: string | null;             // the language the question was shown in, e.g. "en" or "pt-BR"
+  region?: string | null;           // E1: a coarse region the phone worked out itself ("US-MA"); never coordinates
+  interface?: Interface;            // E1: set by the phone app and the AI head; otherwise taken from the surface
 };
 
 export type VoteOutcome =
@@ -54,6 +57,8 @@ async function apply(account: Account, input: VoteInput): Promise<VoteOutcome> {
     shownAt: input.shownAt ?? null,
     tappedAt: input.tappedAt ?? new Date(),
     lang: cleanLang(input.lang),
+    region: input.region ?? null,
+    interface: input.interface,
   };
   const source = input.source ?? "direct";
   if (input.value === "skip") {

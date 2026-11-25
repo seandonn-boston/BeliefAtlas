@@ -16,7 +16,7 @@ export async function exportData(accountId: number) {
   );
   // M1: answers on removed (denied or merged-away) questions count nowhere and are kept only for
   // the moderation ledger, so they are left out of the answers and history and listed apart.
-  const [votes, history, removedAnswers, asked, reports, consent, demographics, children] = await Promise.all([
+  const [votes, history, removedAnswers, asked, reports, consent, demographics, children, evidence] = await Promise.all([
     query(
       `select q.id as question_id, q.text as question, v.value, v.is_private, v.first_cast_at, v.updated_at
          from votes v join questions q on q.id = v.question_id where v.account_id = $1 and q.status <> 'removed'
@@ -45,6 +45,16 @@ export async function exportData(accountId: number) {
     consentHistory(accountId),
     getDemographics(accountId),
     listChildren(accountId),
+    query(
+      `select e.question_id, q.text as question, e.action, e.value, e.created_at, ve.previous_value, ve.change_number,
+              ve.seconds_since_previous, ve.age_range, ve.home_country, ve.region, ve.interface
+         from vote_evidence ve
+         join vote_events e on e.id = ve.event_id and e.created_at = ve.event_created_at
+         join questions q on q.id = e.question_id
+        where e.account_id = $1 and q.status <> 'removed'
+        order by e.created_at, e.id`,
+      [accountId],
+    ),
   ]);
   return {
     exportedAt: new Date().toISOString(),
@@ -58,6 +68,10 @@ export async function exportData(accountId: number) {
     // Answers on questions that were removed. They count nowhere and are kept only as a record of
     // moderation decisions; they are listed so this download holds everything about you.
     answersOnRemovedQuestions: removedAnswers,
+    // E1: on the few questions wired for it, what was kept beside each action: your age range and
+    // home country as they stood then, the region your device reported, the interface, and the
+    // answer it replaced.
+    voteEvidence: evidence,
     questionsAsked: asked,
     reportsFiled: reports,
     // Every consent choice ever recorded, oldest first, with the text version shown, the
@@ -109,6 +123,14 @@ export async function deleteAccount(accountId: number): Promise<void> {
       `insert into accounts (username, phone_hash, password_hash, consented_at, last_active_at, deleted_at, origin)
        values ($1, $2, '!', $3, $4, now(), $5) returning id`,
       [`deleted_${stand}`, `deleted:${stand}`, rows[0].consented_at, rows[0].last_active_at, rows[0].origin],
+    );
+    // E1: the dated history keeps what was answered and when, but not who they said they were or
+    // where they were: the attribute snapshot and region on their vote evidence are cleared.
+    await client.query(
+      `update vote_evidence ve set age_range = null, home_country = null, region = null
+         from vote_events e
+        where e.account_id = $1 and ve.event_id = e.id and ve.event_created_at = e.created_at`,
+      [accountId],
     );
     await client.query("update vote_events set account_id = $2 where account_id = $1", [accountId, standIn.id]);
     await client.query("update reports set account_id = $2 where account_id = $1", [accountId, standIn.id]);

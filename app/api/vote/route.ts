@@ -8,6 +8,7 @@ import { accountForIdentity, CHOICES, type Choice, type PlatformIdentity } from 
 // W4 consent gate: no answer counts before the 'answering' agreement (lib/consent/gate.ts).
 import { consentUrl, voteWithConsent } from "@/lib/consent/gate";
 import { contextFromRequest } from "@/lib/consent/request";
+import { cleanDeviceRegion } from "@/lib/evidence";
 
 // POST /api/vote — the one vote API every surface calls.
 //
@@ -20,6 +21,8 @@ import { contextFromRequest } from "@/lib/consent/request";
 //   idempotencyKey  optional; a platform's interaction id. Repeats get the same answer.
 //   identity        adapters only: { provider, tenant, userId } of the person who tapped
 //   context         adapters only: platform ids (team, channel, message), no personal data
+//   region          optional, our own pages and app only: an ISO 3166-2 code the device worked
+//                   out itself ("US-MA"). Kept only on questions wired for vote evidence (E1).
 //
 // Two ways in:
 //   * From our own pages, with the session cookie. Same-site requests only.
@@ -95,6 +98,8 @@ export async function POST(request: Request) {
     surfaceContext: adapter && body.context && typeof body.context === "object" ? (body.context as Record<string, unknown>) : null,
     shownAt: readShownToken(body.shown, questionId),
     idempotencyKey: typeof body.idempotencyKey === "string" ? body.idempotencyKey : null,
+    // E1: only the tapper's own device can say where it is, so a platform adapter's region is ignored.
+    region: adapter ? null : cleanDeviceRegion(body.region),
   }, ctx, { hold: !adapter });
 
   if (outcome.outcome === "needs_signup" || ((outcome.outcome === "limit_reached" || outcome.outcome === "needs_consent") && !adapter)) {
