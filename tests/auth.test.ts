@@ -3,6 +3,7 @@
 // removes what it creates.
 import assert from "node:assert/strict";
 import { after, test } from "node:test";
+import { verifyPassword } from "../lib/auth";
 import { pool, query } from "../lib/db";
 import { passwordLogin, startSmsLogin, verifyMfa, verifySmsLogin } from "../lib/login";
 import { beginTotp, checkSecondFactor, confirmTotp, disableTotp } from "../lib/mfa";
@@ -169,7 +170,10 @@ test("account PIN guards sensitive actions", async () => {
   assert.equal((await setPin(id, "1234")).ok, false);
   assert.ok((await setPin(id, "4829")).ok);
   const [row] = await query<{ pin_hash: string }>("select pin_hash from accounts where id = $1", [id]);
-  assert.ok(!row.pin_hash.includes("4829"));
+  // Stored as a salted scrypt hash of the peppered PIN. (A substring check for "4829" was flaky:
+  // the random hex can contain those digits by chance.) The bare PIN must not verify on its own.
+  assert.match(row.pin_hash, /^[0-9a-f]{32}:[0-9a-f]{128}$/);
+  assert.equal(verifyPassword("4829", row.pin_hash), false);
   assert.equal((await confirmIdentity(id, { pin: "0000" })).ok, false);
   assert.ok((await confirmIdentity(id, { pin: "4829" })).ok);
   // Changing it needs the current one.
